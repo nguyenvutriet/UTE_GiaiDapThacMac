@@ -18,7 +18,7 @@ public class Notification {
     private String content;
 
     @Column(name = "notificationtype", nullable = false, unique = true, columnDefinition = "VARCHAR(255) CHECK (notificationtype IN ('VOTE_FORUM_POST_NOTIFICATION', 'COMMENT_FORUM_POST_NOTIFICATION', 'REPLY_COMMENT_FORUM_POST_NOTIFICATION', 'NEW_ANNOUNCEMENT_NOTIFICATION'" +
-            ", 'VOTE_ANNOUNCEMENT_NOTIFICATION', 'COMMENT_ANNOUNCEMENT_NOTIFICATION', 'REPLY_COMMENT_ANNOUNCEMENT_NOTIFICATION', 'REPORT_SUBMITTED_CONFIRMATION', 'REPORT_RESOLVED_VIOLATION', 'REPORT_RESOLVED_NO_VIOLATION', 'YOUR_COMMENT_WAS_DELETED', 'MESSAGE_NEW_NOTIFICATION'," +
+            ", 'VOTE_ANNOUNCEMENT_NOTIFICATION', 'COMMENT_ANNOUNCEMENT_NOTIFICATION', 'REPLY_COMMENT_ANNOUNCEMENT_NOTIFICATION', 'REPORT_SUBMITTED_CONFIRMATION', 'REPORT_RESOLVED_VIOLATION', 'REPORT_RESOLVED_NO_VIOLATION', 'YOUR_COMMENT_WAS_DELETED', 'MESSAGE_NEW_NOTIFICATION' " +
             ", 'FEEDBACK_SUBMITTED_NOTIFICATION', 'FEEDBACK_PROCESSING_NOTIFICATION', 'FEEDBACK_RESOLVED_NOTIFICATION', 'FEEDBACK_REJECTED_NOTIFICATION', 'NEW_FEEDBACK_RECEIVED', 'FEEDBACK_FORWARDED_TO_YOU', 'NEW_COMMENT_REPORT_FOR_ADMIN', 'ADMIN_NOTIFICATION', 'SYSTEM_ANNOUNCEMENT_NOTIFICATION'))")
     private String notificationType;
 
@@ -32,7 +32,7 @@ public class Notification {
     private LocalDate createAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "userreceivenotofication", joinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")},
+    @JoinTable(name = "userreceivenotification", joinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")},
     inverseJoinColumns = {@JoinColumn(name = "userid", referencedColumnName = "id")})
     private List<Users> users = new ArrayList<>();
 

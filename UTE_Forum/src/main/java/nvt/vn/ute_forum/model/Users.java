@@ -27,7 +27,7 @@ public class Users {
     private String role;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "userreceivenotofication", joinColumns = {@JoinColumn(name = "userid", referencedColumnName = "id")},
+    @JoinTable(name = "userreceivenotification", joinColumns = {@JoinColumn(name = "userid", referencedColumnName = "id")},
     inverseJoinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")})
     private List<Notification> notifications = new ArrayList<>();
 
