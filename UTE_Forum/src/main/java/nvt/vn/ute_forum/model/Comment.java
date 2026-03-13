@@ -1,0 +1,85 @@
+package nvt.vn.ute_forum.model;
+
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "comment")
+public class Comment {
+
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    @Column(name = "content", nullable = false)
+    private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private Request request;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
+    private List<CommentReport> commentReports = new ArrayList<>();
+
+    public Comment() {
+    }
+
+    public Comment(String id, String content) {
+        this.id = id;
+        this.content = content;
+    }
+
+    public Comment(String id, String content, Request request, Users user, List<CommentReport> commentReports) {
+        this.id = id;
+        this.content = content;
+        this.request = request;
+        this.user = user;
+        this.commentReports = commentReports;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Request getRequest() {
+        return request;
+    }
+
+    public void setRequest(Request request) {
+        this.request = request;
+    }
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
+    }
+
+    public List<CommentReport> getCommentReports() {
+        return commentReports;
+    }
+
+    public void setCommentReports(List<CommentReport> commentReports) {
+        this.commentReports = commentReports;
+    }
+}

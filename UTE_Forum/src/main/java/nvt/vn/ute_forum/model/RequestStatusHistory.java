@@ -1,0 +1,58 @@
+package nvt.vn.ute_forum.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "requeststatushistory")
+public class RequestStatusHistory {
+
+    @Id
+    @Column(name = "id")
+    private String id;
+
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(100) CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'RESOLVED', 'FORWARDING'))")
+    private String status;
+
+    @Column(name = "createat", nullable = false)
+    private LocalDate createAt;
+
+
+
+    public RequestStatusHistory() {
+    }
+
+    public RequestStatusHistory(String id, String status, LocalDate createAt) {
+        this.id = id;
+        this.status = status;
+        this.createAt = createAt;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDate getCreateAt() {
+        return createAt;
+    }
+
+    public void setCreateAt(LocalDate createAt) {
+        this.createAt = createAt;
+    }
+}
