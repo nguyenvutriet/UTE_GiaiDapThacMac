@@ -1,9 +1,6 @@
 package nvt.vn.ute_forum.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -21,7 +18,9 @@ public class RequestStatusHistory {
     @Column(name = "createat", nullable = false)
     private LocalDate createAt;
 
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id", nullable = false)
+    private Request request;
 
     public RequestStatusHistory() {
     }

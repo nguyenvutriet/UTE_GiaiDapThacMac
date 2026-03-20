@@ -55,6 +55,9 @@ public class Request {
     @OneToMany(mappedBy = "request", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ForwardingLog> forwardingLogs = new ArrayList<>();
 
+    @OneToMany(mappedBy = "request", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<RequestStatusHistory> statusHistory = new ArrayList<>();
+
     public Request() {
     }
 
