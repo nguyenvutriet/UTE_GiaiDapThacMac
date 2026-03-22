@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quên mật khẩu</title>
+    <link rel="stylesheet" th:href="@{/css/ForgotPassword.css}">
+</head>
+<body>
+
+<div class="wrapper">
+
+    <!-- LEFT -->
+    <div class="left">
+        <img th:src="@{/images/ute.jpg}" alt="">
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+
+        <!-- HEADER -->
+        <div class="header">
+            <img th:src="@{/images/logo_no_bg.png}" alt="">
+            <p>TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+            <h3>CỔNG THÔNG TIN ĐÀO TẠO</h3>
+        </div>
+
+        <!-- CARD -->
+        <div class="card">
+            <h2>XÁC NHẬN OTP</h2>
+            <p class="sub-text">Nhập mã OTP đã gửi đến email của bạn</p>
+
+            <form th:action="@{/verify-otp}" method="post">
+
+                <input type="hidden" name="email" th:value="${user.getEmail()}">
+
+                <!-- OTP INPUT -->
+                <div class="otp-container">
+                    <input type="text" maxlength="1" class="otp-input" />
+                    <input type="text" maxlength="1" class="otp-input" />
+                    <input type="text" maxlength="1" class="otp-input" />
+                    <input type="text" maxlength="1" class="otp-input" />
+                    <input type="text" maxlength="1" class="otp-input" />
+                    <input type="text" maxlength="1" class="otp-input" />
+                </div>
+
+                <!-- hidden input để gửi OTP -->
+                <input type="hidden" name="otp" id="otpValue">
+
+                <button type="submit">Xác nhận</button>
+
+            </form>
+
+            <div th:if="${error}" class="error-text">
+                <p th:text="${error}"></p>
+            </div>
+
+            <!-- LINE -->
+            <div class="divider"></div>
+
+            <!-- RESEND -->
+            <div class="login">
+                <a th:href="@{/forgot-password}">Gửi lại OTP</a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    const inputs = document.querySelectorAll(".otp-input");
+    const hiddenInput = document.getElementById("otpValue");
+
+    inputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+            if (input.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+            updateOTP();
+        });
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Backspace" && !input.value && index > 0) {
+                inputs[index - 1].focus();
+            }
+        });
+    });
+
+    function updateOTP() {
+        let otp = "";
+        inputs.forEach(input => otp += input.value);
+        hiddenInput.value = otp;
+    }
+</script>
+
+</body>
+</html>
