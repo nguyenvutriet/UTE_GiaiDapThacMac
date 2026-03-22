@@ -53,7 +53,7 @@ public class LoginController {
 
         model.addAttribute("user", user);
 
-        return "/verify-otp";
+        return "redirect:/verify-otp";
     }
 
     @GetMapping("/verify-otp")

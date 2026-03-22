@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .formLogin(
                         form ->  form.loginPage("/login")
                                 .loginProcessingUrl("/process-login")
+                                .usernameParameter("email")
                                 .successHandler(successHandler())
                                 .failureHandler(formFailureHandler())
                                 .permitAll()

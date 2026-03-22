@@ -17,9 +17,9 @@ public class UsersService implements UserDetailsService {
     private UsersRepo usersRepo;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        Users user = usersRepo.findByEmail(username);
+        Users user = usersRepo.findByEmail(email);
 
         if(user == null){
             throw new UsernameNotFoundException("Tài khoản không tồn tại");
