@@ -34,8 +34,8 @@ public class Request {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "categorycontainrequest",
-    joinColumns = {@JoinColumn(name = "request_id", referencedColumnName = "id")},
-    inverseJoinColumns = {@JoinColumn(name = "category_id", referencedColumnName = "id")})
+            joinColumns = {@JoinColumn(name = "request_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "category_id", referencedColumnName = "id")})
     private List<Category> categories = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
