@@ -1,5 +1,6 @@
 package nvt.vn.ute_forum.service;
 
+import nvt.vn.ute_forum.dto.ReactionUserDTO;
 import nvt.vn.ute_forum.dto.VoteResponse;
 import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.CommentRepo;
@@ -83,5 +84,15 @@ public class VoteCommentService {
 
 // 🔥 TRẢ FULL DATA
         return new VoteResponse(isVoted, finalType, count, reactions);
+    }
+    public List<ReactionUserDTO> getReactionUsers(String commentId) {
+        return voteCommentRepository.findAllByCommentId(commentId)
+                .stream()
+                .map(row -> new ReactionUserDTO(
+                        String.valueOf(row[0]),
+                        (String) row[1],
+                        row[2].toString()
+                ))
+                .toList();
     }
 }

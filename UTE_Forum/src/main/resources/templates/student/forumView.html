@@ -277,7 +277,8 @@
 
                 <!-- COUNT -->
                 <div id="reaction-count-container-${cmt.id}"
-                     style="display:${totalCount > 0 ? 'flex' : 'none'}; align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+     onclick="showReactionDetail('${cmt.id}')"
+     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
 
                     <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
                         ${iconsHTML}
@@ -594,6 +595,60 @@
 
         } catch (err) {
             console.error("Lỗi reaction:", err);
+        }
+    }
+
+    async function showReactionDetail(commentId) {
+        try {
+            const res = await fetch(`/api/vote-comment/detail/${commentId}`);
+            const data = await res.json();
+
+            renderReactionModal(data);
+
+        } catch (err) {
+            console.error("Lỗi load reaction detail:", err);
+        }
+    }
+
+    function renderReactionModal(list) {
+
+        const reactionData = {
+            LIKE: '👍',
+            LOVE: '❤️',
+            HAHA: '😆',
+            WOW: '😮',
+            SAD: '😢',
+            ANGRY: '😡'
+        };
+
+        let html = `
+    <div class="reaction-modal-overlay" onclick="closeReactionModal(event)">
+        <div class="reaction-modal">
+<h3 class="reaction-title">Người bày tỏ cảm xúc</h3>
+            <div class="reaction-list">
+    `;
+
+        list.forEach(u => {
+            html += `
+        <div class="reaction-user">
+            <span>${reactionData[u.type]}</span>
+            <b>${u.userName}</b>
+            <small style="color:gray;">(${u.userId})</small>
+        </div>
+        `;
+        });
+
+        html += `
+            </div>
+        </div>
+    </div>
+    `;
+
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+    function closeReactionModal(e) {
+        if (e.target.classList.contains("reaction-modal-overlay")) {
+            e.target.remove();
         }
     }
 </script>

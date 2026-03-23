@@ -21,7 +21,12 @@ WHERE v.comment.id = :commentId
 GROUP BY v.type
 """)
     List<Object[]> countReactionsByCommentId(@Param("commentId") String commentId);
-
+    @Query("""
+SELECT v.user.id, v.user.fullName, v.type
+FROM VoteComment v
+WHERE v.comment.id = :commentId
+""")
+    List<Object[]> findAllByCommentId(@Param("commentId") String commentId);
     // Tìm reaction của 1 user cụ thể trên 1 comment cụ thể
     Optional<VoteComment> findByIdUserIdAndIdCommentId(String userId, String commentId);
 }

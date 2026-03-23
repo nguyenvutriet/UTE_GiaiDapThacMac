@@ -27,4 +27,8 @@ public class VoteCommentController {
         String userId = principal.getName();
         return ResponseEntity.ok(voteCommentService.toggleReaction(userId, commentId, type));
     }
+    @GetMapping("/detail/{commentId}")
+    public ResponseEntity<?> getReactionDetail(@PathVariable String commentId) {
+        return ResponseEntity.ok(voteCommentService.getReactionUsers(commentId));
+    }
 }
