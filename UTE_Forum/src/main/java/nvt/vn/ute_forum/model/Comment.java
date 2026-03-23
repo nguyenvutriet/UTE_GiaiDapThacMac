@@ -2,6 +2,7 @@ package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,9 @@ public class Comment {
 
     @Column(name = "content", nullable = false)
     private String content;
+
+    @Column(name = "date")
+    private LocalDateTime date;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id")
@@ -30,14 +34,16 @@ public class Comment {
     public Comment() {
     }
 
-    public Comment(String id, String content) {
+    public Comment(String id, String content, LocalDateTime date) {
         this.id = id;
         this.content = content;
+        this.date = date;
     }
 
-    public Comment(String id, String content, Request request, Users user, List<CommentReport> commentReports) {
+    public Comment(String id, String content, LocalDateTime date, Request request, Users user, List<CommentReport> commentReports) {
         this.id = id;
         this.content = content;
+        this.date = date;
         this.request = request;
         this.user = user;
         this.commentReports = commentReports;
@@ -57,6 +63,14 @@ public class Comment {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
     }
 
     public Request getRequest() {

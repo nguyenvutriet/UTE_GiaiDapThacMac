@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn</title>
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+
+
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-post-info .post-avatar { width: 45px; height: 45px; border-radius: 50%; }
+        .modal-post-text h3 { margin: 15px 0 10px 0; font-size: 1.4rem; }
+        .modal-post-text p { line-height: 1.5; color: #1c1e21; font-size: 1.05rem; }
+
+        /* CSS CHO BÌNH LUẬN TẠI CHỖ */
+        .comment-container {
+            border-top: 1px solid #eee;
+            background: #f8fafc;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" href="#"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+        <a class="logout-btn" href="#">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item active">💬 Thảo luận</button>
+                <button class="tab-item">📢 Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">Diễn đàn</h1></div>
+        </header>
+
+        <section class="forum-container">
+            <div class="post-list">
+                <div class="quick-post-card">
+                    <img th:src="@{/images/student.png}" class="mini-avatar">
+                    <button class="fake-input">Bạn muốn chia sẻ điều gì?</button>
+                </div>
+
+                <article class="post-card" th:each="post : ${requests}">
+                    <div th:onclick="openPostModal([[${post}]])" style="cursor: pointer;">
+                        <div class="post-header">
+                            <div class="user-meta">
+                                <img th:src="@{/images/student.png}" class="post-avatar">
+                                <div class="user-info">
+                                    <b class="user-name" th:text="${post.userName}">Tên</b>
+<!--                                    <time class="post-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>-->
+                                    <time class="post-date display-date-text" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            <h3 class="post-title" th:text="${post.subject}">Tiêu đề</h3>
+                            <p class="post-text" th:text="${post.description}">Nội dung...</p>
+                        </div>
+                    </div>
+
+                    <div class="post-tags">
+                        <span class="tag dept-tag" th:text="${post.departmentName}">Phòng Đào tạo</span>
+                        <span class="tag cat-tag" th:each="cat : ${post.categories}" th:text="${'#' + cat}">#Học tập</span>
+                    </div>
+
+                    <div class="post-actions">
+                        <button class="action-btn">👍 <span>12 Thích</span></button>
+                        <button class="action-btn"
+                                th:data-id="${post.id}"
+                                onclick="toggleComments(this.getAttribute('data-id'))">
+                            💬 <span th:text="${post.commentCount} + ' Bình luận'">0 Bình luận</span>
+                        </button>
+                        <button class="action-btn">🔗 <span>Chia sẻ</span></button>
+                    </div>
+
+                    <div th:id="'comment-box-' + ${post.id}" class="comment-container" >
+                        <div th:id="'comment-list-' + ${post.id}" class="comment-list"></div>
+                        <div class="comment-input-area" style="display: flex; gap: 10px; margin-top: 10px;">
+                            <img th:src="@{/images/student.png}" class="mini-avatar" style="width:30px; height:30px; border-radius:50%;">
+                            <div style="flex:1; display:flex; background:#fff; border:1px solid #ddd; border-radius:20px; padding: 5px 15px;">
+                                <input type="text" th:id="'input-cmt-' + ${post.id}" placeholder="Viết bình luận..." style="flex:1; border:none; outline:none;">
+                                <button th:onclick="sendComment([[${post.id}]])" style="border:none; background:none; color:#00558b; cursor:pointer;">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+
+                <div class="pagination" th:if="${totalPages > 0}">
+                    <a th:href="@{/api/forum/view(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> Trước </a>
+                    <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}"></span>
+                    <a th:href="@{/api/forum/view(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> Sau </a>
+                </div>
+            </div>
+
+            <aside class="forum-sidebar">
+                <div class="sidebar-widget">
+                    <h3>🔍 Tìm kiếm</h3>
+                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3>⏳ Bộ lọc</h3>
+                    <div class="filter-stack">
+                        <select><option>Tất cả danh mục</option></select>
+                        <select><option>Tất cả phòng ban</option></select>
+                        <select><option>Mới nhất</option></select>
+                    </div>
+                    <button class="btn-apply">Áp dụng lọc</button>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3>📈 Xu hướng</h3>
+                    <ul class="trending-list">
+                        <li>#DangKyHocPhan</li>
+                        <li>#TuyenSinh2026</li>
+                        <li>#GopYGiangDuong</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<div id="postModal" class="modal-overlay" onclick="closeModalOutside(event)">
+    <div class="modal-container">
+        <div class="modal-main-content">
+            <div class="modal-header">
+                <h2 id="modal-header-text">Bài viết</h2>
+                <button class="modal-close-btn" onclick="closePostModal()">&times;</button>
+            </div>
+            <div class="modal-scrollable-body">
+                <div class="modal-post-info">
+                    <div class="user-meta" style="display: flex; gap: 10px;">
+                        <img th:src="@{/images/student.png}" class="post-avatar">
+                        <div class="user-info">
+                            <b id="detail-user-name" style="display: block;"></b>
+                            <time id="detail-post-date" class="post-date" style="font-size: 13px; color: gray;"></time>
+                        </div>
+                    </div>
+                    <div class="modal-post-text">
+                        <h3 id="detail-subject"></h3>
+                        <p id="detail-description"></p>
+                    </div>
+                </div>
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+                <div class="modal-comments-area">
+                    <h4 style="margin-bottom: 15px;">
+                        Tất cả bình luận (<span id="modal-total-count">0</span>)
+                    </h4>
+                    <div id="modal-comment-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="comment-input-area" style="display: flex; gap: 10px;">
+                    <img th:src="@{/images/student.png}" class="mini-avatar" style="width:35px; height:35px; border-radius:50%;">
+                    <div style="flex:1; display:flex; background:#f0f2f5; border-radius:20px; padding: 8px 15px;">
+                        <input type="text" id="modal-comment-input"
+                               onkeypress="if(event.key === 'Enter') sendModalComment()"
+                               placeholder="Viết câu trả lời..."
+                               style="flex:1; border:none; background:none; outline:none;">
+                        <button onclick="sendModalComment()" style="border:none; background:none; color:#00558b; cursor:pointer;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<script th:inline="javascript">-->
+<!--    let activePostId = null;-->
+
+<!--    // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)-->
+<!--    function toggleComments(requestId) {-->
+<!--        const commentBox = document.getElementById('comment-box-' + requestId);-->
+<!--        const commentList = document.getElementById('comment-list-' + requestId);-->
+
+<!--        if (!commentBox) return;-->
+
+<!--        // Kiểm tra xem đã có class 'show' chưa-->
+<!--        const isOpening = !commentBox.classList.contains('show');-->
+
+<!--        if (isOpening) {-->
+<!--            // 1. Thêm class show để kích hoạt hiệu ứng trượt CSS-->
+<!--            commentBox.classList.add('show');-->
+
+<!--            // 2. Hiện loading trong khi chờ lấy dữ liệu-->
+<!--            commentList.innerHTML = '<p style="font-size:12px; color:gray; text-align:center; padding:10px;">Đang tải...</p>';-->
+
+<!--            // 3. Fetch dữ liệu-->
+<!--            fetch('/api/comments/' + requestId)-->
+<!--                .then(res => res.json())-->
+<!--                .then(data => {-->
+<!--                    commentList.innerHTML = '';-->
+<!--                    if (data.length === 0) {-->
+<!--                        commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';-->
+<!--                    } else {-->
+<!--                        data.forEach(cmt => {-->
+<!--                            commentList.innerHTML += `-->
+<!--    <div class="comment-item" style="display:flex; gap:10px; margin-bottom:12px; align-items: flex-start;">-->
+<!--        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
+<!--        <div style="max-width:85%;">-->
+<!--            <div style="background:#f0f2f5; padding:8px 12px; border-radius:18px;">-->
+<!--                <b style="font-size:12px; display:block; color:#050505;">${cmt.userName}</b>-->
+<!--                <span style="font-size:13px; color:#050505;">${cmt.content}</span>-->
+<!--            </div>-->
+
+<!--            <div style="padding-left:10px; margin-top:2px; display:flex; gap:10px;">-->
+<!--                <small style="color:#65676b; font-size:11px;">-->
+<!--                    ${formatDirectDate(cmt.date)}-->
+<!--                </small>-->
+<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
+<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>`;-->
+<!--                        });-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(err => {-->
+<!--                    commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải bình luận.</p>';-->
+<!--                });-->
+<!--        } else {-->
+<!--            // Nếu đang mở thì đóng lại-->
+<!--            commentBox.classList.remove('show');-->
+<!--        }-->
+<!--    }-->
+
+<!--    function executeSendComment(requestId, content, listElement, inputElement) {-->
+<!--        const payload = { requestId: String(requestId), content: content };-->
+
+<!--        fetch('/api/comments/add', {-->
+<!--            method: 'POST',-->
+<!--            headers: { 'Content-Type': 'application/json' },-->
+<!--            body: JSON.stringify(payload)-->
+<!--        })-->
+<!--            .then(res => {-->
+<!--                if (!res.ok) throw new Error("Lỗi Server");-->
+<!--                return res.json();-->
+<!--            })-->
+<!--            .then(newCmt => {-->
+<!--                // -&#45;&#45; CHỈ CHÈN VÀO DANH SÁCH ĐƯỢC TRUYỀN VÀO -&#45;&#45;-->
+<!--                if (listElement) {-->
+<!--                    if (listElement.innerHTML.includes("Chưa có bình luận")) {-->
+<!--                        listElement.innerHTML = '';-->
+<!--                    }-->
+<!--                    // Chèn bình luận mới (Dùng hàm render đã có của má)-->
+<!--                    listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
+<!--                }-->
+
+<!--                // -&#45;&#45; CẬP NHẬT SỐ LƯỢNG (NHẢY SỐ) -&#45;&#45;-->
+<!--                updateCommentCountUI(requestId);-->
+
+<!--                // -&#45;&#45; NẾU ĐANG MỞ MODAL ĐÚNG BÀI NÀY THÌ CẬP NHẬT LUÔN -&#45;&#45;-->
+<!--                if (activePostId == requestId && listElement.id !== 'modal-comment-list') {-->
+<!--                    const modalList = document.getElementById('modal-comment-list');-->
+<!--                    if (modalList) {-->
+<!--                        if (modalList.innerHTML.includes("Chưa có bình luận")) modalList.innerHTML = '';-->
+<!--                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
+<!--                    }-->
+<!--                }-->
+
+<!--                inputElement.value = ''; // Xóa nội dung ô nhập-->
+
+<!--                // Cuộn xuống nếu là modal-->
+<!--                if (listElement.id === 'modal-comment-list') {-->
+<!--                    const scrollBody = document.querySelector('.modal-scrollable-body');-->
+<!--                    scrollBody.scrollTop = scrollBody.scrollHeight;-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(err => alert("Lỗi: " + err.message));-->
+<!--    }-->
+
+<!--    // Gọi hàm cho nút gửi tại chỗ-->
+<!--    function sendComment(requestId) {-->
+<!--        const input = document.getElementById('input-cmt-' + requestId);-->
+<!--        const list = document.getElementById('comment-list-' + requestId);-->
+<!--        if (input.value.trim()) {-->
+<!--            executeSendComment(requestId, input.value.trim(), list, input);-->
+<!--        }-->
+<!--    }-->
+<!--    function formatDirectDate(dateParam) {-->
+<!--        if (!dateParam) return "Vừa xong";-->
+
+<!--        // Xử lý nếu dateParam là Object của Java LocalDateTime (có year, monthValue, dayOfMonth...)-->
+<!--        if (typeof dateParam === 'object' && dateParam.year) {-->
+<!--            const d = String(dateParam.dayOfMonth).padStart(2, '0');-->
+<!--            const m = String(dateParam.monthValue).padStart(2, '0');-->
+<!--            const y = dateParam.year;-->
+<!--            const h = String(dateParam.hour).padStart(2, '0');-->
+<!--            const min = String(dateParam.minute).padStart(2, '0');-->
+<!--            return `${d}/${m}/${y} ${h}:${min}`;-->
+<!--        }-->
+
+<!--        // Nếu là chuỗi ISO hoặc kiểu Date khác-->
+<!--        const date = new Date(dateParam);-->
+<!--        if (!isNaN(date)) {-->
+<!--            return date.toLocaleDateString('vi-VN') + " " + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});-->
+<!--        }-->
+
+<!--        return dateParam; // Trả về nguyên bản nếu không định dạng được-->
+<!--    }-->
+
+<!--    // 2. TÍNH NĂNG MODAL-->
+<!--    function openPostModal(post) {-->
+<!--        activePostId = post.id;-->
+<!--        document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;-->
+<!--        document.getElementById('detail-user-name').innerText = post.userName;-->
+<!--        // Tìm trong cái bài viết vừa click, lấy cái text của class 'display-date-text'-->
+<!--        const postCard = event.currentTarget; // Lấy cái thẻ div vừa được click-->
+<!--        const dateText = postCard.querySelector('.display-date-text').innerText;-->
+
+<!--        document.getElementById('detail-post-date').innerText = dateText;-->
+<!--        document.getElementById('detail-subject').innerText = post.subject;-->
+<!--        document.getElementById('detail-description').innerText = post.description;-->
+
+<!--        const commentList = document.getElementById('modal-comment-list');-->
+<!--        commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải bình luận...</p>';-->
+
+<!--        fetch('/api/comments/' + post.id)-->
+<!--            .then(res => res.json())-->
+<!--            .then(data => {-->
+<!--                commentList.innerHTML = '';-->
+<!--                const countHeader = document.querySelector('.modal-comments-area h4');-->
+<!--                if (countHeader) {-->
+<!--                    countHeader.innerText = `Tất cả bình luận (${data.length})`;-->
+<!--                }-->
+<!--                if (data.length === 0) {-->
+<!--                    commentList.innerHTML = `-->
+<!--                        <div style="text-align:center; padding: 20px;">-->
+<!--                            <i class="far fa-comments" style="font-size: 40px; color: #ddd;"></i>-->
+<!--                            <p style="color:gray; margin-top:10px;">Chưa có bình luận nào.</p>-->
+<!--                        </div>`;-->
+<!--                } else {-->
+<!--                    data.forEach(cmt => {-->
+<!--                        commentList.innerHTML += `-->
+<!--        <div class="comment-item" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">-->
+<!--            <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
+<!--            <div style="max-width: 85%;">-->
+<!--                <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">-->
+<!--                    <b style="font-size:13px; display:block;">${cmt.userName}</b>-->
+<!--                    <span style="font-size:14px;">${cmt.content}</span>-->
+<!--                </div>-->
+<!--                <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">-->
+<!--                    <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>-->
+<!--                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
+<!--                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>`;-->
+<!--                    });-->
+<!--                }-->
+<!--            });-->
+<!--        // Tìm cái span trong Modal và gán số lượng bình luận vào-->
+<!--        const modalCount = document.getElementById('modal-total-count');-->
+<!--        if (modalCount) {-->
+<!--            modalCount.innerText = post.commentCount || 0;-->
+<!--        }-->
+
+<!--        document.getElementById('postModal').style.display = 'flex';-->
+<!--        document.body.style.overflow = 'hidden';-->
+<!--    }-->
+
+
+<!--    function sendModalComment() {-->
+<!--        const input = document.getElementById('modal-comment-input');-->
+<!--        const content = input.value.trim();-->
+<!--        const commentList = document.getElementById('modal-comment-list');-->
+
+<!--        if (!content || !activePostId) return;-->
+
+<!--        const payload = { requestId: String(activePostId), content: content };-->
+
+<!--        fetch('/api/comments/add', {-->
+<!--            method: 'POST',-->
+<!--            headers: { 'Content-Type': 'application/json' },-->
+<!--            body: JSON.stringify(payload)-->
+<!--        })-->
+<!--            .then(res => {-->
+<!--                if (!res.ok) throw new Error("Lỗi Server");-->
+<!--                return res.json();-->
+<!--            })-->
+<!--            .then(newCmt => {-->
+<!--                // 1. Cập nhật số lượng trong Modal (Thẻ h4)-->
+<!--                const countHeader = document.querySelector('.modal-comments-area h4');-->
+<!--                if (countHeader) {-->
+<!--                    let match = countHeader.innerText.match(/\d+/);-->
+<!--                    let count = match ? parseInt(match[0]) : 0;-->
+<!--                    countHeader.innerText = `Tất cả bình luận (${count + 1})`;-->
+<!--                }-->
+
+<!--                // 2. Cập nhật số lượng ngoài danh sách (Gọi hàm bổ trợ của má)-->
+<!--                updateCommentCountUI(activePostId);-->
+
+<!--                // 3. Hiển thị bình luận mới-->
+<!--                if (commentList.innerHTML.includes("Chưa có bình luận")) commentList.innerHTML = '';-->
+<!--                commentList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
+<!--                input.value = '';-->
+
+<!--                const scrollBody = document.querySelector('.modal-scrollable-body');-->
+<!--                scrollBody.scrollTop = scrollBody.scrollHeight;-->
+<!--            })-->
+<!--            .catch(err => alert("Không gửi được: " + err.message));-->
+<!--    }-->
+
+<!--    // Hàm phụ để render HTML bình luận cho đỡ viết lại nhiều lần-->
+<!--    function renderCommentHTML(cmt) {-->
+<!--        return `-->
+<!--    <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">-->
+<!--        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
+<!--        <div style="max-width: 85%; flex: 1;">-->
+<!--            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px; position: relative; group">-->
+<!--                <b style="font-size:13px; display:block; color:#050505;">${cmt.userName}</b>-->
+<!--                <span style="font-size:14px; color:#050505;">${cmt.content}</span>-->
+
+<!--                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">-->
+<!--                    <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">-->
+<!--                        <i class="fas fa-trash-alt"></i> Xóa-->
+<!--                    </span>-->
+<!--                    <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#65676b; font-size:11px; font-weight:600;">-->
+<!--                        <i class="fas fa-flag"></i> Báo cáo-->
+<!--                    </span>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">-->
+<!--                <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>-->
+<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
+<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>`;-->
+<!--    }-->
+
+<!--    // Đừng quên hàm Enter trong HTML của bạn-->
+
+<!--    function closePostModal() {-->
+<!--        const closedId = activePostId;-->
+<!--        const modalList = document.getElementById('modal-comment-list');-->
+<!--        const targetToggleList = document.getElementById('comment-list-' + closedId);-->
+
+<!--        // Nếu cả 2 cùng tồn tại, bê nguyên HTML từ Modal ra ngoài-->
+<!--        if (modalList && targetToggleList) {-->
+<!--            targetToggleList.innerHTML = modalList.innerHTML;-->
+<!--        }-->
+
+<!--        document.getElementById('postModal').style.display = 'none';-->
+<!--        document.body.style.overflow = 'auto';-->
+<!--        activePostId = null;-->
+<!--    }-->
+
+<!--    function closeModalOutside(event) {-->
+<!--        if (event.target.id === 'postModal') closePostModal();-->
+<!--    }-->
+
+<!--    // function executeSendComment(requestId, content, listElement, inputElement) {-->
+<!--    //     const payload = { requestId: String(requestId), content: content };-->
+<!--    //-->
+<!--    //     fetch('/api/comments/add', {-->
+<!--    //         method: 'POST',-->
+<!--    //         headers: { 'Content-Type': 'application/json' },-->
+<!--    //         body: JSON.stringify(payload)-->
+<!--    //     })-->
+<!--    //         .then(res => {-->
+<!--    //             if (!res.ok) throw new Error("Lỗi Server");-->
+<!--    //             return res.json();-->
+<!--    //         })-->
+<!--    //         .then(newCmt => {-->
+<!--    //             // Thêm đoạn này vào chỗ .then(newCmt => { ... })-->
+<!--    //             const modalCountHeader = document.querySelector('.modal-comments-area h4');-->
+<!--    //             if (modalCountHeader) {-->
+<!--    //                 let count = parseInt(modalCountHeader.innerText.match(/\d+/)) || 0;-->
+<!--    //                 modalCountHeader.innerText = `Tất cả bình luận (${count + 1})`;-->
+<!--    //             }-->
+<!--    //             // -&#45;&#45; LOGIC CẬP NHẬT SỐ LƯỢNG BÌNH LUẬN -&#45;&#45;-->
+<!--    //             updateCommentCountUI(requestId);-->
+<!--    //             // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
+<!--    //-->
+<!--    //             if (listElement.innerHTML.includes("Chưa có bình luận")) listElement.innerHTML = '';-->
+<!--    //             listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
+<!--    //             inputElement.value = '';-->
+<!--    //-->
+<!--    //             if (listElement.id === 'modal-comment-list') {-->
+<!--    //                 const scrollBody = document.querySelector('.modal-scrollable-body');-->
+<!--    //                 scrollBody.scrollTop = scrollBody.scrollHeight;-->
+<!--    //             }-->
+<!--    //         })-->
+<!--    //         .catch(err => alert("Không gửi được bình luận: " + err.message));-->
+<!--    // }-->
+
+<!--    function updateCommentCountUI(requestId) {-->
+<!--        const btn = document.querySelector(`button[data-id="${requestId}"]`);-->
+<!--        if (btn) {-->
+<!--            const span = btn.querySelector('span');-->
+<!--            if (span) {-->
+<!--                // Trích xuất số từ chuỗi (ví dụ: "5 Bình luận" -> 5)-->
+<!--                const match = span.innerText.match(/\d+/);-->
+<!--                let currentCount = match ? parseInt(match[0]) : 0; // Nếu match null thì lấy 0-->
+
+<!--                span.innerText = (currentCount + 1) + " Bình luận";-->
+<!--            }-->
+<!--        }-->
+<!--    }-->
+
+<!--    // Hàm Xóa bình luận-->
+<!--    function deleteComment(commentId) {-->
+<!--        if (confirm("Má có chắc mún xóa bình luận này hông?")) {-->
+<!--            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })-->
+<!--                .then(res => {-->
+<!--                    if (res.ok) {-->
+<!--                        // Xóa phần tử trên giao diện ngay lập tức-->
+<!--                        const cmtElements = document.querySelectorAll(`#cmt-${commentId}`);-->
+<!--                        cmtElements.forEach(el => el.remove());-->
+<!--                        alert("Đã xóa thành công!");-->
+<!--                        // Lưu ý: Má nên viết thêm hàm giảm số lượng (Count - 1) ở đây nữa nhé!-->
+<!--                    } else {-->
+<!--                        alert("Hông xóa được rồi má ơi!");-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(err => console.error("Lỗi xóa:", err));-->
+<!--        }-->
+<!--    }-->
+
+<!--    // Hàm Báo cáo bình luận-->
+<!--    function reportComment(commentId) {-->
+<!--        const reason = prompt("Má mún báo cáo vì lý do gì nè?");-->
+<!--        if (reason) {-->
+<!--            alert("Đã gửi báo cáo bình luận " + commentId + " với lý do: " + reason);-->
+<!--            // Chỗ này má gọi API báo cáo tương tự fetch bên trên nhé-->
+<!--        }-->
+<!--    }-->
+
+<!--</script>-->
+<script th:inline="javascript">
+    let activePostId = null;
+
+    // --- HÀM QUAN TRỌNG NHẤT: ĐÚC HTML BÌNH LUẬN ---
+    function renderCommentHTML(cmt) {
+        return `
+        <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
+            <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+            <div style="max-width: 85%; flex: 1;">
+                <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px; position: relative;">
+                    <b style="font-size:13px; display:block; color:#050505;">${cmt.userName}</b>
+                    <span style="font-size:14px; color:#050505;">${cmt.content}</span>
+
+                    <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
+                        <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
+                            <i class="fas fa-trash-alt"></i> Xóa
+                        </span>
+                        <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
+                            <i class="fas fa-flag"></i> Báo cáo
+                        </span>
+                    </div>
+                </div>
+
+                <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">
+                    <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>
+                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>
+                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
+    function toggleComments(requestId) {
+        const commentBox = document.getElementById('comment-box-' + requestId);
+        const commentList = document.getElementById('comment-list-' + requestId);
+        if (!commentBox) return;
+
+        const isOpening = !commentBox.classList.contains('show');
+        if (isOpening) {
+            commentBox.classList.add('show');
+            commentList.innerHTML = '<p style="font-size:12px; color:gray; text-align:center; padding:10px;">Đang tải...</p>';
+
+            fetch('/api/comments/' + requestId)
+                .then(res => res.json())
+                .then(data => {
+                    commentList.innerHTML = '';
+                    if (data.length === 0) {
+                        commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';
+                    } else {
+                        data.forEach(cmt => {
+                            commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
+                        });
+                    }
+                })
+                .catch(err => commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải.</p>');
+        } else {
+            commentBox.classList.remove('show');
+        }
+    }
+
+    // 2. TÍNH NĂNG MỞ MODAL
+    function openPostModal(post) {
+        activePostId = post.id;
+        document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;
+        document.getElementById('detail-user-name').innerText = post.userName;
+
+        // Lấy ngày tháng từ thẻ ngoài danh sách cho đồng bộ
+        const postCard = event.currentTarget;
+        const dateText = postCard.querySelector('.display-date-text').innerText;
+        document.getElementById('detail-post-date').innerText = dateText;
+        document.getElementById('detail-subject').innerText = post.subject;
+        document.getElementById('detail-description').innerText = post.description;
+
+        const commentList = document.getElementById('modal-comment-list');
+        commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải...</p>';
+
+        fetch('/api/comments/' + post.id)
+            .then(res => res.json())
+            .then(data => {
+                commentList.innerHTML = '';
+                const countHeader = document.querySelector('.modal-comments-area h4');
+                if (countHeader) countHeader.innerText = `Tất cả bình luận (${data.length})`;
+
+                if (data.length === 0) {
+                    commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
+                } else {
+                    data.forEach(cmt => {
+                        commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
+                    });
+                }
+            });
+
+        const modalCount = document.getElementById('modal-total-count');
+        if (modalCount) modalCount.innerText = post.commentCount || 0;
+
+        document.getElementById('postModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    // 3. HÀM GỬI BÌNH LUẬN DÙNG CHUNG
+    function executeSendComment(requestId, content, listElement, inputElement) {
+        const payload = { requestId: String(requestId), content: content };
+        fetch('/api/comments/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(newCmt => {
+                if (listElement.innerHTML.includes("Chưa có bình luận")) listElement.innerHTML = '';
+                listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                inputElement.value = '';
+                updateCommentCountUI(requestId);
+
+                // Nếu gửi ở ngoài mà Modal cũng đang mở đúng bài đó thì cập nhật Modal luôn
+                if (activePostId == requestId && listElement.id !== 'modal-comment-list') {
+                    const modalList = document.getElementById('modal-comment-list');
+                    if (modalList) {
+                        if (modalList.innerHTML.includes("Chưa có bình luận")) modalList.innerHTML = '';
+                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                    }
+                }
+
+                if (listElement.id === 'modal-comment-list') {
+                    const scrollBody = document.querySelector('.modal-scrollable-body');
+                    scrollBody.scrollTop = scrollBody.scrollHeight;
+                }
+            });
+    }
+
+    function sendComment(requestId) {
+        const input = document.getElementById('input-cmt-' + requestId);
+        const list = document.getElementById('comment-list-' + requestId);
+        if (input.value.trim()) executeSendComment(requestId, input.value.trim(), list, input);
+    }
+
+    function sendModalComment() {
+        const input = document.getElementById('modal-comment-input');
+        const list = document.getElementById('modal-comment-list');
+        if (input.value.trim() && activePostId) executeSendComment(activePostId, input.value.trim(), list, input);
+    }
+
+    // 4. CÁC HÀM PHỤ TRỢ
+    function updateCommentCountUI(requestId) {
+        const btn = document.querySelector(`button[data-id="${requestId}"]`);
+        if (btn) {
+            const span = btn.querySelector('span');
+            if (span) {
+                let count = parseInt(span.innerText.match(/\d+/)) || 0;
+                span.innerText = (count + 1) + " Bình luận";
+            }
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (confirm("Xóa thiệt nha má?")) {
+            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        document.querySelectorAll(`#cmt-${commentId}`).forEach(el => el.remove());
+                        alert("Đã xóa!");
+                    } else alert("Lỗi xóa!");
+                });
+        }
+    }
+
+    function reportComment(commentId) {
+        const reason = prompt("Lý do báo cáo:");
+        if (reason) alert("Đã báo cáo bình luận " + commentId);
+    }
+
+    function formatDirectDate(dateParam) {
+        if (!dateParam) return "Vừa xong";
+        if (typeof dateParam === 'object' && dateParam.year) {
+            return `${String(dateParam.dayOfMonth).padStart(2, '0')}/${String(dateParam.monthValue).padStart(2, '0')}/${dateParam.year} ${String(dateParam.hour).padStart(2, '0')}:${String(dateParam.minute).padStart(2, '0')}`;
+        }
+        const date = new Date(dateParam);
+        return isNaN(date) ? dateParam : date.toLocaleString('vi-VN');
+    }
+
+    function closePostModal() {
+        const closedId = activePostId;
+        const modalList = document.getElementById('modal-comment-list');
+        const targetToggleList = document.getElementById('comment-list-' + closedId);
+        if (modalList && targetToggleList) targetToggleList.innerHTML = modalList.innerHTML;
+        document.getElementById('postModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        activePostId = null;
+    }
+
+    function closeModalOutside(event) { if (event.target.id === 'postModal') closePostModal(); }
+</script>
+</body>
+</html>
+

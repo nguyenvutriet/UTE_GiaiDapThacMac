@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class Request {
     private String currentStatus;
 
     @Column(name = "timecreate", nullable = false)
-    private LocalDate timeCreate;
+    private LocalDateTime timeCreate;
 
     @Column(name = "poststatus", nullable = false, columnDefinition = "VARCHAR(50) CHECK (poststatus IN ('PRIVATE', 'PUBLIC', 'HIDDEN'))")
     private String postStatus;          // PRIVATE, PUBLIC, PUBLIC->HIDDEN
@@ -61,7 +62,7 @@ public class Request {
     public Request() {
     }
 
-    public Request(String id, String subject, String description, String currentStatus, LocalDate timeCreate, String postStatus) {
+    public Request(String id, String subject, String description, String currentStatus, LocalDateTime timeCreate, String postStatus) {
         this.id = id;
         this.subject = subject;
         this.description = description;
@@ -70,7 +71,7 @@ public class Request {
         this.postStatus = postStatus;
     }
 
-    public Request(String id, String subject, String description, String currentStatus, LocalDate timeCreate, String postStatus, List<FileAttachment> fileAttachments, Department department, List<Category> categories, Users user, List<Comment> comments, ClarificationConversation clarificationConversation) {
+    public Request(String id, String subject, String description, String currentStatus, LocalDateTime timeCreate, String postStatus, List<FileAttachment> fileAttachments, Department department, List<Category> categories, Users user, List<Comment> comments, ClarificationConversation clarificationConversation) {
         this.id = id;
         this.subject = subject;
         this.description = description;
@@ -85,7 +86,7 @@ public class Request {
         this.clarificationConversation = clarificationConversation;
     }
 
-    public Request(String id, String subject, String description, String currentStatus, LocalDate timeCreate, String postStatus, List<FileAttachment> fileAttachments, List<Category> categories, Department department, Users user, List<Comment> comments, ClarificationConversation clarificationConversation, List<ForwardingLog> forwardingLogs) {
+    public Request(String id, String subject, String description, String currentStatus, LocalDateTime timeCreate, String postStatus, List<FileAttachment> fileAttachments, List<Category> categories, Department department, Users user, List<Comment> comments, ClarificationConversation clarificationConversation, List<ForwardingLog> forwardingLogs) {
         this.id = id;
         this.subject = subject;
         this.description = description;
@@ -133,11 +134,11 @@ public class Request {
         this.currentStatus = currentStatus;
     }
 
-    public LocalDate getTimeCreate() {
+    public LocalDateTime getTimeCreate() {
         return timeCreate;
     }
 
-    public void setTimeCreate(LocalDate timeCreate) {
+    public void setTimeCreate(LocalDateTime timeCreate) {
         this.timeCreate = timeCreate;
     }
 
