@@ -2,7 +2,7 @@ package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "forwardinglog")
@@ -19,7 +19,7 @@ public class ForwardingLog {
     private String note;
 
     @Column(name = "forwardat", nullable = false)
-    private LocalDate forwardAt;
+    private LocalDateTime forwardAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fromdepartment_id", nullable = false)
@@ -40,14 +40,14 @@ public class ForwardingLog {
     public ForwardingLog() {
     }
 
-    public ForwardingLog(String id, String message, String note, LocalDate forwardAt) {
+    public ForwardingLog(String id, String message, String note, LocalDateTime forwardAt) {
         this.id = id;
         this.message = message;
         this.note = note;
         this.forwardAt = forwardAt;
     }
 
-    public ForwardingLog(String id, String message, String note, LocalDate forwardAt, Department fromdepartment, Department todepartment, Request request, Users user) {
+    public ForwardingLog(String id, String message, String note, LocalDateTime forwardAt, Department fromdepartment, Department todepartment, Request request, Users user) {
         this.id = id;
         this.message = message;
         this.note = note;
@@ -82,11 +82,11 @@ public class ForwardingLog {
         this.note = note;
     }
 
-    public LocalDate getForwardAt() {
+    public LocalDateTime getForwardAt() {
         return forwardAt;
     }
 
-    public void setForwardAt(LocalDate forwardAt) {
+    public void setForwardAt(LocalDateTime forwardAt) {
         this.forwardAt = forwardAt;
     }
 

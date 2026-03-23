@@ -28,7 +28,7 @@ public class Users {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "userreceivenotification", joinColumns = {@JoinColumn(name = "userid", referencedColumnName = "id")},
-    inverseJoinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")})
+            inverseJoinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")})
     private List<Notification> notifications = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
@@ -219,7 +219,5 @@ public class Users {
     public void setForwardingLogs(List<ForwardingLog> forwardingLogs) {
         this.forwardingLogs = forwardingLogs;
     }
-
-
 
 }
