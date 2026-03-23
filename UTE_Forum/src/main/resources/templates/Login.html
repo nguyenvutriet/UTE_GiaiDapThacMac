@@ -1,0 +1,74 @@
+<!-- File: src/main/resources/templates/login.html -->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập</title>
+
+    <!-- Link CSS (đặt file trong static/css) -->
+    <link rel="stylesheet" th:href="@{/css/login.css}">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Logo + Title -->
+    <div class="header">
+        <!-- TODO: Thêm logo vào thư mục: src/main/resources/static/images/logo.png -->
+        <img src="/images/logo_no_bg.png" alt="Logo" class="logo">
+        <h2>Cổng Thông Tin Góp Ý & Thảo Luận</h2>
+    </div>
+
+    <div class="login-box">
+        <h3>ĐĂNG NHẬP</h3>
+        <p>Cổng thông tin diễn đàn</p>
+
+        <form th:action="@{/process-login}" method="post">
+
+            <div class="input-group">
+                <label>Email</label>
+                <input type="text" name="email" required>
+            </div>
+
+            <div class="input-group">
+                <label>Mật khẩu</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <button type="submit" class="btn-login">Đăng nhập</button>
+        </form>
+
+        <!-- Google -->
+        <a th:href="@{/oauth2/authorization/google}" class="btn-google">
+            <img src="/images/google.png">
+            Đăng nhập với Google
+        </a>
+
+        <!-- Error login thường -->
+        <div th:if="${param.error}" class="error-text">
+            Email hoặc mật khẩu không hợp lệ, vui lòng thử lại
+        </div>
+
+        <!-- Error Google -->
+        <div th:if="${param.oauth_error == 'not_found'}" class="error-text">
+            Tài khoản Google chưa tồn tại
+        </div>
+
+        <div th:if="${param.oauth_error == 'true'}" class="error-text">
+            Đăng nhập Google thất bại
+        </div>
+
+        <!-- Divider line -->
+        <div class="line"></div>
+
+        <!-- Forgot -->
+        <div class="forgot">
+            <a th:href="@{/forgot-password}">Quên mật khẩu</a>
+        </div>
+    </div>
+    </div>
+</div>
+
+</body>
+</html>
