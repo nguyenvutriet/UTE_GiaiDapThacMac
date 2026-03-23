@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/forgot-password",
                                 "/send-otp",
-                                "/verify-otp"
+                                "/verify-otp",
+                                "/reset-password"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(

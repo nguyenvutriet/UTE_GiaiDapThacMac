@@ -31,7 +31,7 @@
 
             <form th:action="@{/verify-otp}" method="post">
 
-                <input type="hidden" name="email" th:value="${user.getEmail()}">
+                <input type="hidden" name="email" th:value="${user != null ? user.getEmail() : ''}">
 
                 <!-- OTP INPUT -->
                 <div class="otp-container">
@@ -59,7 +59,11 @@
 
             <!-- RESEND -->
             <div class="login">
-                <a th:href="@{/forgot-password}">Gửi lại OTP</a>
+                <form th:action="@{/send-otp}" method="get" style="display: inline;">
+                    <input type="hidden" name="email" th:value="${user != null ? user.getEmail() : ''}">
+                    <button type="submit" style="background: none; border: none; color: blue; cursor: pointer; padding: 0;">Gửi lại OTP</button>
+
+                </form>
             </div>
         </div>
 

@@ -1,9 +1,11 @@
 package nvt.vn.ute_forum.controller;
 
+import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.service.EmailService;
 import nvt.vn.ute_forum.service.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -51,68 +53,86 @@ public class LoginController {
 
         emailService.sendOtpAdmin(email, context, "otp-email");
 
-        model.addAttribute("user", user);
+        model.addFlashAttribute("user", user);
 
         return "redirect:/verify-otp";
     }
 
     @GetMapping("/verify-otp")
-    public String verifyOtpPage(@RequestParam (required = false) String error, @RequestParam Users user, Model model){
+    public String verifyOtpPage(@RequestParam (required = false) String error, Model model){
 
         if(error != null){
             model.addAttribute("error", error);
         }
-        model.addAttribute("user", user);
         return "VerifyOtp";
     }
 
 
 
     @PostMapping("/verify-otp")
-    public String verifyOtp(@RequestParam String email, @RequestParam String otp, Model model){
+    public String verifyOtp(@RequestParam String email , @RequestParam String otp, RedirectAttributes redirectAttributes){
         if(!emailService.verifyOtp(otp)){
-            model.addAttribute("user", usersService.getByEmail(email));
-            return "redirect:/verify-otp?error=OTP không hợp lệ";
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "OTP không hợp lệ");
+            return "redirect:/verify-otp";
         }
 
 
-        model.addAttribute("user", usersService.getByEmail(email));
+        redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
         return "redirect:/reset-password";
     }
 
     @GetMapping("/reset-password")
-    public String resetPasswordPage(@RequestParam (required = false) String error, @RequestParam Users user, Model model){
+    public String resetPasswordPage(@RequestParam (required = false) String error, Model model){
 
         if(error != null){
             model.addAttribute("error", error);
         }
 
-        model.addAttribute("user", user);
         return "ResetPassword";
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestParam String email, @RequestParam String password,  Model model){
+    public String resetPassword(@RequestParam String email, @RequestParam String password, RedirectAttributes redirectAttributes, Model model){
         if(password.length() < 6){
-            model.addAttribute("user", usersService.getByEmail(email));
-            return "redirect:/reset-password?error=Mật khẩu phải có ít nhất 6 ký tự";
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự");
+            return "redirect:/reset-password";
         }
 
-        if(!usersService.overLapByPassword(password, email)){
-            model.addAttribute("user", usersService.getByEmail(email));
-            return "redirect:/reset-password?error=Mật khẩu mới không được trùng với mật khẩu cũ";
+        if(usersService.overLapByPassword(password, email)){
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới không được trùng với mật khẩu cũ");
+            return "redirect:/reset-password";
         }
 
         if(usersService.existPassword(password, email)){
-            model.addAttribute("user", usersService.getByEmail(email));
-            return "redirect:/reset-password?error=Mật khẩu đã tồn tại, vui lòng chọn mật khẩu khác";
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu đã tồn tại, vui lòng chọn mật khẩu khác");
+            return "redirect:/reset-password";
         }
 
         usersService.updateUser(email, password);
         usersService.loadUserByUsername(email);
 
+        redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
         return "redirect:/login";
     }
+
+    @GetMapping("/change-password")
+    public String changePasswordPage(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestParam (required = false) String error, Model model){
+
+        if(error != null){
+            model.addAttribute("error", error);
+        }
+
+        model.addAttribute("user", usersService.getByEmail(userPrincipal.getUsername()));
+
+        return "ChangePassword";
+    }
+
+
+
 
 
 
