@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -21,15 +22,21 @@ public class CommentService {
     @Autowired
     private CommentRepo commentRepo;
 
-    public List<CommentDTO> getCommentsByRequestId(String requestId) {
-        // Lấy dữ liệu từ Repo
+    public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
         return commentRepo.findByRequestId(requestId).stream()
-                .map(c -> new CommentDTO(
-                        c.getUser().getFullName(), // userName
-                        c.getContent(),            // content
-                        c.getDate(),        // date
-                        c.getId()                  // id
-                ))
+                .map(c -> {
+                    // Ép kiểu ID của User về String để so sánh khớp với currentUserId
+                    String commentOwnerId = String.valueOf(c.getUser().getId());
+                    boolean canDelete = commentOwnerId.equals(currentUserId);
+
+                    return new CommentDTO(
+                            c.getUser().getFullName(),
+                            c.getContent(),
+                            c.getDate(),
+                            c.getId(),
+                            canDelete
+                    );
+                })
                 .collect(Collectors.toList());
     }
 
@@ -53,4 +60,31 @@ public class CommentService {
         // 3. Lưu xuống database
         return commentRepo.save(comment);
     }
+
+//    @Transactional
+//    public boolean deleteCommentIfOwner(String commentId, String currentUserId) {
+//        return commentRepo.findById(commentId).map(comment -> {
+//            // Kiểm tra xem ID người xóa có khớp với ID người tạo cmt không
+//            if (String.valueOf(comment.getUser().getId()).equals(currentUserId)) {
+//                commentRepo.delete(comment);
+//                return true;
+//            }
+//            return false;
+//        }).orElse(false);
+//    }
+@Transactional
+public boolean deleteCommentIfOwner(String commentId, String currentUserId) {
+    return commentRepo.findById(commentId).map(comment -> {
+        // .trim() để loại bỏ mọi khoảng trắng thừa thãi ở 2 đầu
+        String ownerId = String.valueOf(comment.getUser().getId()).trim();
+        String visitorId = currentUserId.trim();
+
+        if (ownerId.equals(visitorId)) {
+            commentRepo.delete(comment);
+            return true;
+        }
+        return false;
+    }).orElse(false);
+}
+
 }

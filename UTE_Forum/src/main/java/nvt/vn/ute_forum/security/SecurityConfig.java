@@ -64,7 +64,8 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/reset-password",
                                 "/verify-otp",
-                                "/api/forum/view"
+                                "/api/forum/**",
+                                "/api/comments/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(
@@ -122,7 +123,7 @@ public class SecurityConfig {
             }else if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
                 response.sendRedirect("/department/dashboard");
             }else{
-                response.sendRedirect("/home");
+                response.sendRedirect("/api/forum/view");
             }
         };
     }
@@ -153,7 +154,7 @@ public class SecurityConfig {
             }else if(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
                 response.sendRedirect("/department/dashboard");
             } else {
-                response.sendRedirect("/home");
+                response.sendRedirect("/api/forum/view");
             }
         };
     }

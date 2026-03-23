@@ -1,5 +1,6 @@
 package nvt.vn.ute_forum.controller.forum;
 
+import jakarta.servlet.http.HttpSession;
 import nvt.vn.ute_forum.dto.CommentDTO;
 import nvt.vn.ute_forum.model.Comment;
 import nvt.vn.ute_forum.model.Users;
@@ -10,6 +11,7 @@ import nvt.vn.ute_forum.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -25,10 +27,28 @@ public class CommentController {
     @Autowired
     private CommentService commentService; // Gọi Service thay vì Repo
 
-    @GetMapping("/{requestId}")
-    public List<CommentDTO> getComments(@PathVariable String requestId) {
-        return commentService.getCommentsByRequestId(requestId);
+//    @GetMapping("/{requestId}")
+//    public List<CommentDTO> getComments(@PathVariable String requestId, Model model, HttpSession session) {
+//        Users user = (Users) session.getAttribute("user");
+//        model.addAttribute("user", user);
+//        String currentUserId = (user != null) ? user.getId() : ""; // Nếu chưa đăng nhập thì coi như hông có quyền xóa
+//
+//        return commentService.getCommentsByRequestId(requestId, currentUserId);
+//    }
+@GetMapping("/{requestId}")
+public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
+    String currentUserId = "";
+
+    if (principal != null) {
+        // Lấy user từ DB dựa trên email trong Principal
+        Users user = usersService.getByEmail(principal.getName());
+        if (user != null) {
+            currentUserId = String.valueOf(user.getId());
+        }
     }
+
+    return commentService.getCommentsByRequestId(requestId, currentUserId);
+}
 
     @Autowired
     private UsersService usersService; // Theo ảnh là UsersService (có chữ s)
@@ -54,7 +74,8 @@ public class CommentController {
                     user.getFullName(),          // userName
                     newComment.getContent(),     // content
                     newComment.getDate(),        // date (LocalDateTime)
-                    String.valueOf(newComment.getId()) // id (ép kiểu về String cho khớp DTO)
+                    String.valueOf(newComment.getId()) ,// id (ép kiểu về String cho khớp DTO)
+                    true
             ));
 
         } catch (Exception e) {
@@ -62,4 +83,47 @@ public class CommentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+//    @DeleteMapping("/delete/{id}")
+//    @ResponseBody
+//    public ResponseEntity<?> deleteComment(@PathVariable String id, Principal principal) {
+//        // 1. Lấy thông tin người dùng từ Principal (Spring Security)
+//        if (principal == null) {
+//            return ResponseEntity.status(401).body("Lỗi chưa đăng nập");
+//        }
+//
+//        // 2. Lấy đối tượng Users từ Email/Username
+//        Users user = usersService.getByEmail(principal.getName());
+//
+//        if (user == null) {
+//            return ResponseEntity.status(401).body("Không tìm thấy user!");
+//        }
+//
+//        // 3. Tiến hành xóa
+//        boolean isDeleted = commentService.deleteCommentIfOwner(id, String.valueOf(user.getId()));
+//
+//        if (isDeleted) {
+//            return ResponseEntity.ok().build();
+//        } else {
+//            return ResponseEntity.status(403).body("Không được phép xoá!");
+//        }
+//    }
+@DeleteMapping("/delete/{id}")
+public ResponseEntity<?> deleteComment(@PathVariable String id, Principal principal) {
+    // 1. Lấy thông tin User đầy đủ từ Database dựa vào Email (getName)
+    Users user = usersService.getByEmail(principal.getName());
+
+    if (user == null) return ResponseEntity.status(401).body("Chưa đăng nhập!");
+
+    // 2. PHẢI LẤY ID CỦA USER để truyền vào Service
+    String currentUserId = String.valueOf(user.getId());
+
+    boolean isDeleted = commentService.deleteCommentIfOwner(id, currentUserId);
+
+    if (isDeleted) {
+        return ResponseEntity.ok().build();
+    } else {
+        // Nếu nó nhảy vào đây là do ownerId != currentUserId đó má!
+        return ResponseEntity.status(403).body("Hông phải cmt của má!");
+    }
+}
 }
