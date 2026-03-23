@@ -5,6 +5,7 @@ import nvt.vn.ute_forum.dto.CommentDTO;
 import nvt.vn.ute_forum.model.Comment;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.CommentRepo;
+import nvt.vn.ute_forum.repository.VoteCommentRepo;
 import nvt.vn.ute_forum.service.CommentService;
 import nvt.vn.ute_forum.service.UsersService;
 import nvt.vn.ute_forum.model.Users;
@@ -26,15 +27,10 @@ public class CommentController {
 
     @Autowired
     private CommentService commentService; // Gọi Service thay vì Repo
+    @Autowired
+    private VoteCommentRepo voteCommentRepo;
 
-//    @GetMapping("/{requestId}")
-//    public List<CommentDTO> getComments(@PathVariable String requestId, Model model, HttpSession session) {
-//        Users user = (Users) session.getAttribute("user");
-//        model.addAttribute("user", user);
-//        String currentUserId = (user != null) ? user.getId() : ""; // Nếu chưa đăng nhập thì coi như hông có quyền xóa
-//
-//        return commentService.getCommentsByRequestId(requestId, currentUserId);
-//    }
+
 @GetMapping("/{requestId}")
 public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
     String currentUserId = "";

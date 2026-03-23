@@ -199,16 +199,45 @@
     let activePostId = null;
 
     function renderCommentHTML(cmt) {
+
+        const reactionData = {
+            'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
+            'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
+            'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
+            'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
+            'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
+            'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+        };
+
+        // 🔥 TEXT CỦA USER
+        const reactConfig = reactionData[cmt.reactionType] || {
+            text: "Thích",
+            color: "#65676b",
+            icon: ""
+        };
+
+        // 🔥 BUILD ICON + COUNT
+        let iconsHTML = "";
+        let totalCount = 0;
+
+        if (cmt.reactions) {
+            Object.entries(cmt.reactions).forEach(([key, value]) => {
+                if (value > 0) {
+                    iconsHTML += reactionData[key].icon + " ";
+                    totalCount += value;
+                }
+            });
+        }
+
         return `
     <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
         <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
         <div style="max-width: 85%; flex: 1;">
-            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px; position: relative;">
-                <b style="font-size:13px; display:block; color:#050505;">${cmt.userName}</b>
-                <span style="font-size:14px; color:#050505;">${cmt.content}</span>
+            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
+                <b style="font-size:13px;">${cmt.userName}</b>
+                <span style="font-size:14px;">${cmt.content}</span>
 
                 <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
-
                     ${cmt.canDelete ? `
                         <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
                             <i class="fas fa-trash-alt"></i> Xóa
@@ -220,19 +249,52 @@
                             <i class="fas fa-flag"></i> Báo cáo
                         </span>
                     ` : ''}
-
                 </div>
             </div>
 
-            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">
-                <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>
-                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>
-                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>
+            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
+                <small style="color:#65676b; font-size:11px;">
+                    ${formatDirectDate(cmt.date)}
+                </small>
+
+                <!-- REACTION -->
+                <div class="reaction-container">
+                    <div class="reaction-box">
+                        <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
+                        <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
+                        <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
+                        <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
+                        <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
+                        <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
+                    </div>
+
+                    <small id="react-text-${cmt.id}"
+                        style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
+                        onclick="sendReaction('${cmt.id}', 'LIKE')">
+                        ${reactConfig.text}
+                    </small>
+                </div>
+
+                <!-- COUNT -->
+                <div id="reaction-count-container-${cmt.id}"
+                     style="display:${totalCount > 0 ? 'flex' : 'none'}; align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+
+                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
+                        ${iconsHTML}
+                    </span>
+
+                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
+                        ${totalCount}
+                    </small>
+                </div>
+
+                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">
+                    Phản hồi
+                </small>
             </div>
         </div>
     </div>`;
     }
-
     // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
     function toggleComments(requestId) {
         const commentBox = document.getElementById('comment-box-' + requestId);
@@ -474,6 +536,66 @@
 
 
     function closeModalOutside(event) { if (event.target.id === 'postModal') closePostModal(); }
+
+    const reactionData = {
+        'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
+        'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
+        'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
+        'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
+        'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
+        'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+    };
+
+    async function sendReaction(commentId, type) {
+        try {
+            const res = await fetch(`/api/vote-comment/${commentId}?type=${type}`);
+            const data = await res.json();
+
+            console.log("REACTION:", data); // debug
+
+            const updateAll = (selector, cb) => {
+                document.querySelectorAll(selector).forEach(cb);
+            };
+
+            // 🔥 1. UPDATE TEXT (FIX CHÍNH Ở ĐÂY)
+            if (data.voted && data.type && reactionData[data.type]) {
+                const config = reactionData[data.type];
+
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = config.text;
+                    el.style.color = config.color;
+                });
+
+            } else {
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = "Thích";
+                    el.style.color = "#65676b";
+                });
+            }
+
+            // 🔥 2. UPDATE ICON (trên count)
+            updateAll(`#reaction-icons-${commentId}`, el => {
+                if (data.voted && data.type && reactionData[data.type]) {
+                    el.innerText = reactionData[data.type].icon;
+                } else {
+                    el.innerText = "";
+                }
+            });
+
+            // 🔥 3. UPDATE COUNT
+            updateAll(`#reaction-count-${commentId}`, el => {
+                el.innerText = data.voteCount || 0;
+            });
+
+            // 🔥 4. SHOW / HIDE COUNT BOX
+            updateAll(`#reaction-count-container-${commentId}`, el => {
+                el.style.display = data.voteCount > 0 ? "flex" : "none";
+            });
+
+        } catch (err) {
+            console.error("Lỗi reaction:", err);
+        }
+    }
 </script>
 </body>
 </html>

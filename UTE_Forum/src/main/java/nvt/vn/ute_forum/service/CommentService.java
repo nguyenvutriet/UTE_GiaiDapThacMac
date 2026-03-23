@@ -2,40 +2,64 @@ package nvt.vn.ute_forum.service;
 
 import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.dto.CommentDTO;
-import nvt.vn.ute_forum.model.Comment;
-import nvt.vn.ute_forum.model.Request;
-import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.CommentRepo;
 import nvt.vn.ute_forum.repository.RequestRepo;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.repository.VoteCommentRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
     @Autowired
     private CommentRepo commentRepo;
+    @Autowired
+    private VoteCommentRepo voteCommentRepo;
 
     public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
         return commentRepo.findByRequestId(requestId).stream()
                 .map(c -> {
-                    // Ép kiểu ID của User về String để so sánh khớp với currentUserId
+
                     String commentOwnerId = String.valueOf(c.getUser().getId());
                     boolean canDelete = commentOwnerId.equals(currentUserId);
 
-                    return new CommentDTO(
+                    CommentDTO dto = new CommentDTO(
                             c.getUser().getFullName(),
                             c.getContent(),
                             c.getDate(),
                             c.getId(),
                             canDelete
                     );
+
+                    Optional<VoteComment> userVote = Optional.empty();
+
+                    if (currentUserId != null && !currentUserId.isEmpty()) {
+                        userVote = voteCommentRepo
+                                .findByIdUserIdAndIdCommentId(currentUserId, c.getId());
+                    }
+
+                    dto.setReactionType(
+                            userVote.map(v -> v.getType().name()).orElse(null)
+                    );
+
+                    // 🔥 2. LẤY TỔNG REACTION
+                    List<Object[]> raw = voteCommentRepo.countReactionsByCommentId(c.getId());
+
+                    Map<String, Long> reactions = new HashMap<>();
+
+                    for (Object[] row : raw) {
+                        reactions.put(row[0].toString(), (Long) row[1]);
+                    }
+
+                    dto.setReactions(reactions);
+
+                    return dto;
+
                 })
                 .collect(Collectors.toList());
     }

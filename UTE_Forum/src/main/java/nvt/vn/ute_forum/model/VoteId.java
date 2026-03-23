@@ -2,8 +2,10 @@ package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.Embeddable;
 
+import java.io.Serializable;
+
 @Embeddable
-public class VoteId {
+public class VoteId implements Serializable {
 
     private String userId;
 

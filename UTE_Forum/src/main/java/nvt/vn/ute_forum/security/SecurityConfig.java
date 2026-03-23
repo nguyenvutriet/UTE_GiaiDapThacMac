@@ -65,7 +65,8 @@ public class SecurityConfig {
                                 "/reset-password",
                                 "/verify-otp",
                                 "/api/forum/**",
-                                "/api/comments/**"
+                                "/api/comments/**",
+                                "/api/vote-comment/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(
