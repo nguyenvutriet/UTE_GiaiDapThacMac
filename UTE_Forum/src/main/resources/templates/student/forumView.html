@@ -42,9 +42,9 @@
             <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
             <a class="nav-item active" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
             <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
-            <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
-        <a class="logout-btn" href="#">Đăng xuất</a>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
     </aside>
 
     <main class="main-content">
@@ -71,7 +71,7 @@
                                 <img th:src="@{/images/student.png}" class="post-avatar">
                                 <div class="user-info">
                                     <b class="user-name" th:text="${post.userName}">Tên</b>
-<!--                                    <time class="post-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>-->
+                                    <!--                                    <time class="post-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>-->
                                     <time class="post-date display-date-text" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>
                                 </div>
                             </div>
@@ -195,402 +195,107 @@
     </div>
 </div>
 
-<!--<script th:inline="javascript">-->
-<!--    let activePostId = null;-->
-
-<!--    // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)-->
-<!--    function toggleComments(requestId) {-->
-<!--        const commentBox = document.getElementById('comment-box-' + requestId);-->
-<!--        const commentList = document.getElementById('comment-list-' + requestId);-->
-
-<!--        if (!commentBox) return;-->
-
-<!--        // Kiểm tra xem đã có class 'show' chưa-->
-<!--        const isOpening = !commentBox.classList.contains('show');-->
-
-<!--        if (isOpening) {-->
-<!--            // 1. Thêm class show để kích hoạt hiệu ứng trượt CSS-->
-<!--            commentBox.classList.add('show');-->
-
-<!--            // 2. Hiện loading trong khi chờ lấy dữ liệu-->
-<!--            commentList.innerHTML = '<p style="font-size:12px; color:gray; text-align:center; padding:10px;">Đang tải...</p>';-->
-
-<!--            // 3. Fetch dữ liệu-->
-<!--            fetch('/api/comments/' + requestId)-->
-<!--                .then(res => res.json())-->
-<!--                .then(data => {-->
-<!--                    commentList.innerHTML = '';-->
-<!--                    if (data.length === 0) {-->
-<!--                        commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';-->
-<!--                    } else {-->
-<!--                        data.forEach(cmt => {-->
-<!--                            commentList.innerHTML += `-->
-<!--    <div class="comment-item" style="display:flex; gap:10px; margin-bottom:12px; align-items: flex-start;">-->
-<!--        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
-<!--        <div style="max-width:85%;">-->
-<!--            <div style="background:#f0f2f5; padding:8px 12px; border-radius:18px;">-->
-<!--                <b style="font-size:12px; display:block; color:#050505;">${cmt.userName}</b>-->
-<!--                <span style="font-size:13px; color:#050505;">${cmt.content}</span>-->
-<!--            </div>-->
-
-<!--            <div style="padding-left:10px; margin-top:2px; display:flex; gap:10px;">-->
-<!--                <small style="color:#65676b; font-size:11px;">-->
-<!--                    ${formatDirectDate(cmt.date)}-->
-<!--                </small>-->
-<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
-<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>`;-->
-<!--                        });-->
-<!--                    }-->
-<!--                })-->
-<!--                .catch(err => {-->
-<!--                    commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải bình luận.</p>';-->
-<!--                });-->
-<!--        } else {-->
-<!--            // Nếu đang mở thì đóng lại-->
-<!--            commentBox.classList.remove('show');-->
-<!--        }-->
-<!--    }-->
-
-<!--    function executeSendComment(requestId, content, listElement, inputElement) {-->
-<!--        const payload = { requestId: String(requestId), content: content };-->
-
-<!--        fetch('/api/comments/add', {-->
-<!--            method: 'POST',-->
-<!--            headers: { 'Content-Type': 'application/json' },-->
-<!--            body: JSON.stringify(payload)-->
-<!--        })-->
-<!--            .then(res => {-->
-<!--                if (!res.ok) throw new Error("Lỗi Server");-->
-<!--                return res.json();-->
-<!--            })-->
-<!--            .then(newCmt => {-->
-<!--                // -&#45;&#45; CHỈ CHÈN VÀO DANH SÁCH ĐƯỢC TRUYỀN VÀO -&#45;&#45;-->
-<!--                if (listElement) {-->
-<!--                    if (listElement.innerHTML.includes("Chưa có bình luận")) {-->
-<!--                        listElement.innerHTML = '';-->
-<!--                    }-->
-<!--                    // Chèn bình luận mới (Dùng hàm render đã có của má)-->
-<!--                    listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
-<!--                }-->
-
-<!--                // -&#45;&#45; CẬP NHẬT SỐ LƯỢNG (NHẢY SỐ) -&#45;&#45;-->
-<!--                updateCommentCountUI(requestId);-->
-
-<!--                // -&#45;&#45; NẾU ĐANG MỞ MODAL ĐÚNG BÀI NÀY THÌ CẬP NHẬT LUÔN -&#45;&#45;-->
-<!--                if (activePostId == requestId && listElement.id !== 'modal-comment-list') {-->
-<!--                    const modalList = document.getElementById('modal-comment-list');-->
-<!--                    if (modalList) {-->
-<!--                        if (modalList.innerHTML.includes("Chưa có bình luận")) modalList.innerHTML = '';-->
-<!--                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
-<!--                    }-->
-<!--                }-->
-
-<!--                inputElement.value = ''; // Xóa nội dung ô nhập-->
-
-<!--                // Cuộn xuống nếu là modal-->
-<!--                if (listElement.id === 'modal-comment-list') {-->
-<!--                    const scrollBody = document.querySelector('.modal-scrollable-body');-->
-<!--                    scrollBody.scrollTop = scrollBody.scrollHeight;-->
-<!--                }-->
-<!--            })-->
-<!--            .catch(err => alert("Lỗi: " + err.message));-->
-<!--    }-->
-
-<!--    // Gọi hàm cho nút gửi tại chỗ-->
-<!--    function sendComment(requestId) {-->
-<!--        const input = document.getElementById('input-cmt-' + requestId);-->
-<!--        const list = document.getElementById('comment-list-' + requestId);-->
-<!--        if (input.value.trim()) {-->
-<!--            executeSendComment(requestId, input.value.trim(), list, input);-->
-<!--        }-->
-<!--    }-->
-<!--    function formatDirectDate(dateParam) {-->
-<!--        if (!dateParam) return "Vừa xong";-->
-
-<!--        // Xử lý nếu dateParam là Object của Java LocalDateTime (có year, monthValue, dayOfMonth...)-->
-<!--        if (typeof dateParam === 'object' && dateParam.year) {-->
-<!--            const d = String(dateParam.dayOfMonth).padStart(2, '0');-->
-<!--            const m = String(dateParam.monthValue).padStart(2, '0');-->
-<!--            const y = dateParam.year;-->
-<!--            const h = String(dateParam.hour).padStart(2, '0');-->
-<!--            const min = String(dateParam.minute).padStart(2, '0');-->
-<!--            return `${d}/${m}/${y} ${h}:${min}`;-->
-<!--        }-->
-
-<!--        // Nếu là chuỗi ISO hoặc kiểu Date khác-->
-<!--        const date = new Date(dateParam);-->
-<!--        if (!isNaN(date)) {-->
-<!--            return date.toLocaleDateString('vi-VN') + " " + date.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});-->
-<!--        }-->
-
-<!--        return dateParam; // Trả về nguyên bản nếu không định dạng được-->
-<!--    }-->
-
-<!--    // 2. TÍNH NĂNG MODAL-->
-<!--    function openPostModal(post) {-->
-<!--        activePostId = post.id;-->
-<!--        document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;-->
-<!--        document.getElementById('detail-user-name').innerText = post.userName;-->
-<!--        // Tìm trong cái bài viết vừa click, lấy cái text của class 'display-date-text'-->
-<!--        const postCard = event.currentTarget; // Lấy cái thẻ div vừa được click-->
-<!--        const dateText = postCard.querySelector('.display-date-text').innerText;-->
-
-<!--        document.getElementById('detail-post-date').innerText = dateText;-->
-<!--        document.getElementById('detail-subject').innerText = post.subject;-->
-<!--        document.getElementById('detail-description').innerText = post.description;-->
-
-<!--        const commentList = document.getElementById('modal-comment-list');-->
-<!--        commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải bình luận...</p>';-->
-
-<!--        fetch('/api/comments/' + post.id)-->
-<!--            .then(res => res.json())-->
-<!--            .then(data => {-->
-<!--                commentList.innerHTML = '';-->
-<!--                const countHeader = document.querySelector('.modal-comments-area h4');-->
-<!--                if (countHeader) {-->
-<!--                    countHeader.innerText = `Tất cả bình luận (${data.length})`;-->
-<!--                }-->
-<!--                if (data.length === 0) {-->
-<!--                    commentList.innerHTML = `-->
-<!--                        <div style="text-align:center; padding: 20px;">-->
-<!--                            <i class="far fa-comments" style="font-size: 40px; color: #ddd;"></i>-->
-<!--                            <p style="color:gray; margin-top:10px;">Chưa có bình luận nào.</p>-->
-<!--                        </div>`;-->
-<!--                } else {-->
-<!--                    data.forEach(cmt => {-->
-<!--                        commentList.innerHTML += `-->
-<!--        <div class="comment-item" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;">-->
-<!--            <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
-<!--            <div style="max-width: 85%;">-->
-<!--                <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">-->
-<!--                    <b style="font-size:13px; display:block;">${cmt.userName}</b>-->
-<!--                    <span style="font-size:14px;">${cmt.content}</span>-->
-<!--                </div>-->
-<!--                <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">-->
-<!--                    <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>-->
-<!--                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
-<!--                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>`;-->
-<!--                    });-->
-<!--                }-->
-<!--            });-->
-<!--        // Tìm cái span trong Modal và gán số lượng bình luận vào-->
-<!--        const modalCount = document.getElementById('modal-total-count');-->
-<!--        if (modalCount) {-->
-<!--            modalCount.innerText = post.commentCount || 0;-->
-<!--        }-->
-
-<!--        document.getElementById('postModal').style.display = 'flex';-->
-<!--        document.body.style.overflow = 'hidden';-->
-<!--    }-->
-
-
-<!--    function sendModalComment() {-->
-<!--        const input = document.getElementById('modal-comment-input');-->
-<!--        const content = input.value.trim();-->
-<!--        const commentList = document.getElementById('modal-comment-list');-->
-
-<!--        if (!content || !activePostId) return;-->
-
-<!--        const payload = { requestId: String(activePostId), content: content };-->
-
-<!--        fetch('/api/comments/add', {-->
-<!--            method: 'POST',-->
-<!--            headers: { 'Content-Type': 'application/json' },-->
-<!--            body: JSON.stringify(payload)-->
-<!--        })-->
-<!--            .then(res => {-->
-<!--                if (!res.ok) throw new Error("Lỗi Server");-->
-<!--                return res.json();-->
-<!--            })-->
-<!--            .then(newCmt => {-->
-<!--                // 1. Cập nhật số lượng trong Modal (Thẻ h4)-->
-<!--                const countHeader = document.querySelector('.modal-comments-area h4');-->
-<!--                if (countHeader) {-->
-<!--                    let match = countHeader.innerText.match(/\d+/);-->
-<!--                    let count = match ? parseInt(match[0]) : 0;-->
-<!--                    countHeader.innerText = `Tất cả bình luận (${count + 1})`;-->
-<!--                }-->
-
-<!--                // 2. Cập nhật số lượng ngoài danh sách (Gọi hàm bổ trợ của má)-->
-<!--                updateCommentCountUI(activePostId);-->
-
-<!--                // 3. Hiển thị bình luận mới-->
-<!--                if (commentList.innerHTML.includes("Chưa có bình luận")) commentList.innerHTML = '';-->
-<!--                commentList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
-<!--                input.value = '';-->
-
-<!--                const scrollBody = document.querySelector('.modal-scrollable-body');-->
-<!--                scrollBody.scrollTop = scrollBody.scrollHeight;-->
-<!--            })-->
-<!--            .catch(err => alert("Không gửi được: " + err.message));-->
-<!--    }-->
-
-<!--    // Hàm phụ để render HTML bình luận cho đỡ viết lại nhiều lần-->
-<!--    function renderCommentHTML(cmt) {-->
-<!--        return `-->
-<!--    <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">-->
-<!--        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">-->
-<!--        <div style="max-width: 85%; flex: 1;">-->
-<!--            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px; position: relative; group">-->
-<!--                <b style="font-size:13px; display:block; color:#050505;">${cmt.userName}</b>-->
-<!--                <span style="font-size:14px; color:#050505;">${cmt.content}</span>-->
-
-<!--                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">-->
-<!--                    <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">-->
-<!--                        <i class="fas fa-trash-alt"></i> Xóa-->
-<!--                    </span>-->
-<!--                    <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#65676b; font-size:11px; font-weight:600;">-->
-<!--                        <i class="fas fa-flag"></i> Báo cáo-->
-<!--                    </span>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">-->
-<!--                <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>-->
-<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>-->
-<!--                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>`;-->
-<!--    }-->
-
-<!--    // Đừng quên hàm Enter trong HTML của bạn-->
-
-<!--    function closePostModal() {-->
-<!--        const closedId = activePostId;-->
-<!--        const modalList = document.getElementById('modal-comment-list');-->
-<!--        const targetToggleList = document.getElementById('comment-list-' + closedId);-->
-
-<!--        // Nếu cả 2 cùng tồn tại, bê nguyên HTML từ Modal ra ngoài-->
-<!--        if (modalList && targetToggleList) {-->
-<!--            targetToggleList.innerHTML = modalList.innerHTML;-->
-<!--        }-->
-
-<!--        document.getElementById('postModal').style.display = 'none';-->
-<!--        document.body.style.overflow = 'auto';-->
-<!--        activePostId = null;-->
-<!--    }-->
-
-<!--    function closeModalOutside(event) {-->
-<!--        if (event.target.id === 'postModal') closePostModal();-->
-<!--    }-->
-
-<!--    // function executeSendComment(requestId, content, listElement, inputElement) {-->
-<!--    //     const payload = { requestId: String(requestId), content: content };-->
-<!--    //-->
-<!--    //     fetch('/api/comments/add', {-->
-<!--    //         method: 'POST',-->
-<!--    //         headers: { 'Content-Type': 'application/json' },-->
-<!--    //         body: JSON.stringify(payload)-->
-<!--    //     })-->
-<!--    //         .then(res => {-->
-<!--    //             if (!res.ok) throw new Error("Lỗi Server");-->
-<!--    //             return res.json();-->
-<!--    //         })-->
-<!--    //         .then(newCmt => {-->
-<!--    //             // Thêm đoạn này vào chỗ .then(newCmt => { ... })-->
-<!--    //             const modalCountHeader = document.querySelector('.modal-comments-area h4');-->
-<!--    //             if (modalCountHeader) {-->
-<!--    //                 let count = parseInt(modalCountHeader.innerText.match(/\d+/)) || 0;-->
-<!--    //                 modalCountHeader.innerText = `Tất cả bình luận (${count + 1})`;-->
-<!--    //             }-->
-<!--    //             // -&#45;&#45; LOGIC CẬP NHẬT SỐ LƯỢNG BÌNH LUẬN -&#45;&#45;-->
-<!--    //             updateCommentCountUI(requestId);-->
-<!--    //             // -&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;&#45;-->
-<!--    //-->
-<!--    //             if (listElement.innerHTML.includes("Chưa có bình luận")) listElement.innerHTML = '';-->
-<!--    //             listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));-->
-<!--    //             inputElement.value = '';-->
-<!--    //-->
-<!--    //             if (listElement.id === 'modal-comment-list') {-->
-<!--    //                 const scrollBody = document.querySelector('.modal-scrollable-body');-->
-<!--    //                 scrollBody.scrollTop = scrollBody.scrollHeight;-->
-<!--    //             }-->
-<!--    //         })-->
-<!--    //         .catch(err => alert("Không gửi được bình luận: " + err.message));-->
-<!--    // }-->
-
-<!--    function updateCommentCountUI(requestId) {-->
-<!--        const btn = document.querySelector(`button[data-id="${requestId}"]`);-->
-<!--        if (btn) {-->
-<!--            const span = btn.querySelector('span');-->
-<!--            if (span) {-->
-<!--                // Trích xuất số từ chuỗi (ví dụ: "5 Bình luận" -> 5)-->
-<!--                const match = span.innerText.match(/\d+/);-->
-<!--                let currentCount = match ? parseInt(match[0]) : 0; // Nếu match null thì lấy 0-->
-
-<!--                span.innerText = (currentCount + 1) + " Bình luận";-->
-<!--            }-->
-<!--        }-->
-<!--    }-->
-
-<!--    // Hàm Xóa bình luận-->
-<!--    function deleteComment(commentId) {-->
-<!--        if (confirm("Má có chắc mún xóa bình luận này hông?")) {-->
-<!--            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })-->
-<!--                .then(res => {-->
-<!--                    if (res.ok) {-->
-<!--                        // Xóa phần tử trên giao diện ngay lập tức-->
-<!--                        const cmtElements = document.querySelectorAll(`#cmt-${commentId}`);-->
-<!--                        cmtElements.forEach(el => el.remove());-->
-<!--                        alert("Đã xóa thành công!");-->
-<!--                        // Lưu ý: Má nên viết thêm hàm giảm số lượng (Count - 1) ở đây nữa nhé!-->
-<!--                    } else {-->
-<!--                        alert("Hông xóa được rồi má ơi!");-->
-<!--                    }-->
-<!--                })-->
-<!--                .catch(err => console.error("Lỗi xóa:", err));-->
-<!--        }-->
-<!--    }-->
-
-<!--    // Hàm Báo cáo bình luận-->
-<!--    function reportComment(commentId) {-->
-<!--        const reason = prompt("Má mún báo cáo vì lý do gì nè?");-->
-<!--        if (reason) {-->
-<!--            alert("Đã gửi báo cáo bình luận " + commentId + " với lý do: " + reason);-->
-<!--            // Chỗ này má gọi API báo cáo tương tự fetch bên trên nhé-->
-<!--        }-->
-<!--    }-->
-
-<!--</script>-->
 <script th:inline="javascript">
     let activePostId = null;
 
-    // --- HÀM QUAN TRỌNG NHẤT: ĐÚC HTML BÌNH LUẬN ---
     function renderCommentHTML(cmt) {
-        return `
-        <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
-            <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
-            <div style="max-width: 85%; flex: 1;">
-                <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px; position: relative;">
-                    <b style="font-size:13px; display:block; color:#050505;">${cmt.userName}</b>
-                    <span style="font-size:14px; color:#050505;">${cmt.content}</span>
 
-                    <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
+        const reactionData = {
+            'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
+            'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
+            'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
+            'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
+            'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
+            'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+        };
+
+        // 🔥 TEXT CỦA USER
+        const reactConfig = reactionData[cmt.reactionType] || {
+            text: "Thích",
+            color: "#65676b",
+            icon: ""
+        };
+
+        // 🔥 BUILD ICON + COUNT
+        let iconsHTML = "";
+        let totalCount = 0;
+
+        if (cmt.reactions) {
+            Object.entries(cmt.reactions).forEach(([key, value]) => {
+                if (value > 0) {
+                    iconsHTML += reactionData[key].icon + " ";
+                    totalCount += value;
+                }
+            });
+        }
+
+        return `
+    <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
+        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+        <div style="max-width: 85%; flex: 1;">
+            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
+                <b style="font-size:13px;">${cmt.userName}</b>
+                <span style="font-size:14px;">${cmt.content}</span>
+
+                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
+                    ${cmt.canDelete ? `
                         <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
                             <i class="fas fa-trash-alt"></i> Xóa
                         </span>
+                    ` : ''}
+
+                    ${!cmt.canDelete ? `
                         <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
                             <i class="fas fa-flag"></i> Báo cáo
                         </span>
-                    </div>
-                </div>
-
-                <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px;">
-                    <small style="color:#65676b; font-size:11px;">${formatDirectDate(cmt.date)}</small>
-                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Thích</small>
-                    <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">Phản hồi</small>
+                    ` : ''}
                 </div>
             </div>
-        </div>`;
-    }
 
+            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
+                <small style="color:#65676b; font-size:11px;">
+                    ${formatDirectDate(cmt.date)}
+                </small>
+
+                <!-- REACTION -->
+                <div class="reaction-container">
+                    <div class="reaction-box">
+                        <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
+                        <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
+                        <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
+                        <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
+                        <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
+                        <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
+                    </div>
+
+                    <small id="react-text-${cmt.id}"
+                        style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
+                        onclick="sendReaction('${cmt.id}', 'LIKE')">
+                        ${reactConfig.text}
+                    </small>
+                </div>
+
+                <!-- COUNT -->
+                <div id="reaction-count-container-${cmt.id}"
+     onclick="showReactionDetail('${cmt.id}')"
+     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+
+                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
+                        ${iconsHTML}
+                    </span>
+
+                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
+                        ${totalCount}
+                    </small>
+                </div>
+
+                <small style="color:#65676b; font-weight:600; font-size:11px; cursor:pointer;">
+                    Phản hồi
+                </small>
+            </div>
+        </div>
+    </div>`;
+    }
     // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
     function toggleComments(requestId) {
         const commentBox = document.getElementById('comment-box-' + requestId);
@@ -673,6 +378,11 @@
                 listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
                 inputElement.value = '';
                 updateCommentCountUI(requestId);
+                // 2. Tăng số ở trong Modal (MỚI THÊM NÈ MÁ)
+                // Nếu bài viết đang mở trong Modal trùng với bài vừa comment
+                if (activePostId == requestId) {
+                    updateModalCommentCountUI();
+                }
 
                 // Nếu gửi ở ngoài mà Modal cũng đang mở đúng bài đó thì cập nhật Modal luôn
                 if (activePostId == requestId && listElement.id !== 'modal-comment-list') {
@@ -688,6 +398,25 @@
                     scrollBody.scrollTop = scrollBody.scrollHeight;
                 }
             });
+    }
+    function updateModalCommentCountUI() {
+        // Tìm cái span có id là modal-total-count mà mình đã đặt trong HTML
+        const modalCountSpan = document.getElementById('modal-total-count');
+        const modalHeaderH4 = document.querySelector('.modal-comments-area h4');
+
+        if (modalCountSpan) {
+            let currentCount = parseInt(modalCountSpan.innerText) || 0;
+            modalCountSpan.innerText = currentCount + 1;
+        }
+
+        // Cập nhật luôn cái chữ ở tiêu đề cho chắc cú
+        if (modalHeaderH4 && !modalCountSpan) {
+            let countMatch = modalHeaderH4.innerText.match(/\d+/);
+            if (countMatch) {
+                let newCount = parseInt(countMatch[0]) + 1;
+                modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
+            }
+        }
     }
 
     function sendComment(requestId) {
@@ -716,13 +445,69 @@
 
     function deleteComment(commentId) {
         if (confirm("Xóa thiệt nha má?")) {
+            // 1. Tìm cái requestId chứa comment này trước khi xóa
+            // Mình tìm xem cái comment này đang nằm trong comment-list nào
+            const commentElement = document.getElementById(`cmt-${commentId}`);
+            const parentList = commentElement ? commentElement.closest('.comment-list') : null;
+            let requestId = activePostId; // Mặc định lấy từ Modal nếu đang mở
+
+            if (!requestId && parentList) {
+                // Nếu hông có trong Modal, lấy ID từ cái ID của comment-list (ví dụ: comment-list-123)
+                requestId = parentList.id.replace('comment-list-', '');
+            }
+
             fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })
                 .then(res => {
                     if (res.ok) {
+                        // 2. Xóa tất cả các chỗ hiện cmt này (cả ngoài list và trong modal)
                         document.querySelectorAll(`#cmt-${commentId}`).forEach(el => el.remove());
-                        alert("Đã xóa!");
-                    } else alert("Lỗi xóa!");
-                });
+
+                        // 3. Gọi hàm giảm số lượng cho đúng bài viết
+                        if (requestId) {
+                            decreaseCommentCountUI(requestId);
+                        }
+                        alert("Đã xóa xong rồi má!");
+                    } else {
+                        res.text().then(text => alert("Lỗi nè má: " + res.status + " - " + text));
+                    }
+                })
+                .catch(err => alert("Lỗi kết nối server: " + err));
+        }
+    }
+
+    function decreaseCommentCountUI(requestId) {
+        if(!requestId) return;
+
+        // 1. Giảm số ở cái nút "💬 X Bình luận" ngoài danh sách
+        const btn = document.querySelector(`button[data-id="${requestId}"]`);
+        if (btn) {
+            const span = btn.querySelector('span');
+            if (span) {
+                let countMatch = span.innerText.match(/\d+/);
+                if (countMatch) {
+                    let count = parseInt(countMatch[0]);
+                    if (count > 0) span.innerText = (count - 1) + " Bình luận";
+                }
+            }
+        }
+
+        // 2. Giảm số ở trong MODAL (Thêm đoạn này nè má!)
+        // Kiểm tra xem bài viết đang mở trong Modal có đúng là bài vừa bị xóa cmt hông
+        if (activePostId == requestId) {
+            const modalTotalSpan = document.getElementById('modal-total-count');
+            const modalHeaderH4 = document.querySelector('.modal-comments-area h4');
+
+            // Giảm ở cái thẻ span có ID modal-total-count
+            if (modalTotalSpan) {
+                let count = parseInt(modalTotalSpan.innerText) || 0;
+                if (count > 0) modalTotalSpan.innerText = count - 1;
+            }
+
+            // Cập nhật lại cái chữ ở dòng "Tất cả bình luận (X)" cho đồng bộ
+            if (modalHeaderH4) {
+                let currentCount = parseInt(modalTotalSpan ? modalTotalSpan.innerText : 0);
+                modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${currentCount}</span>)`;
+            }
         }
     }
 
@@ -750,8 +535,122 @@
         activePostId = null;
     }
 
+
     function closeModalOutside(event) { if (event.target.id === 'postModal') closePostModal(); }
+
+    const reactionData = {
+        'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
+        'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
+        'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
+        'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
+        'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
+        'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+    };
+
+    async function sendReaction(commentId, type) {
+        try {
+            const res = await fetch(`/api/vote-comment/${commentId}?type=${type}`);
+            const data = await res.json();
+
+            console.log("REACTION:", data); // debug
+
+            const updateAll = (selector, cb) => {
+                document.querySelectorAll(selector).forEach(cb);
+            };
+
+            // 🔥 1. UPDATE TEXT (FIX CHÍNH Ở ĐÂY)
+            if (data.voted && data.type && reactionData[data.type]) {
+                const config = reactionData[data.type];
+
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = config.text;
+                    el.style.color = config.color;
+                });
+
+            } else {
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = "Thích";
+                    el.style.color = "#65676b";
+                });
+            }
+
+            // 🔥 2. UPDATE ICON (trên count)
+            updateAll(`#reaction-icons-${commentId}`, el => {
+                if (data.voted && data.type && reactionData[data.type]) {
+                    el.innerText = reactionData[data.type].icon;
+                } else {
+                    el.innerText = "";
+                }
+            });
+
+            // 🔥 3. UPDATE COUNT
+            updateAll(`#reaction-count-${commentId}`, el => {
+                el.innerText = data.voteCount || 0;
+            });
+
+            // 🔥 4. SHOW / HIDE COUNT BOX
+            updateAll(`#reaction-count-container-${commentId}`, el => {
+                el.style.display = data.voteCount > 0 ? "flex" : "none";
+            });
+
+        } catch (err) {
+            console.error("Lỗi reaction:", err);
+        }
+    }
+
+    async function showReactionDetail(commentId) {
+        try {
+            const res = await fetch(`/api/vote-comment/detail/${commentId}`);
+            const data = await res.json();
+
+            renderReactionModal(data);
+
+        } catch (err) {
+            console.error("Lỗi load reaction detail:", err);
+        }
+    }
+
+    function renderReactionModal(list) {
+
+        const reactionData = {
+            LIKE: '👍',
+            LOVE: '❤️',
+            HAHA: '😆',
+            WOW: '😮',
+            SAD: '😢',
+            ANGRY: '😡'
+        };
+
+        let html = `
+    <div class="reaction-modal-overlay" onclick="closeReactionModal(event)">
+        <div class="reaction-modal">
+<h3 class="reaction-title">Người bày tỏ cảm xúc</h3>
+            <div class="reaction-list">
+    `;
+
+        list.forEach(u => {
+            html += `
+        <div class="reaction-user">
+            <span>${reactionData[u.type]}</span>
+            <b>${u.userName}</b>
+            <small style="color:gray;">(${u.userId})</small>
+        </div>
+        `;
+        });
+
+        html += `
+            </div>
+        </div>
+    </div>
+    `;
+
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+    function closeReactionModal(e) {
+        if (e.target.classList.contains("reaction-modal-overlay")) {
+            e.target.remove();
+        }
+    }
 </script>
 </body>
 </html>
-

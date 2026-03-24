@@ -1,0 +1,238 @@
+/* ===== ROOT ===== */
+:root {
+    --primary-blue: #00558b;
+    --sidebar-dark: #003d66;
+    --bg-gray: #eceff4;
+    --text-main: #1f2937;
+    --text-muted: #6b7280;
+    --white: #ffffff;
+    --border: #e5e7eb;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background-color: var(--bg-gray);
+    color: var(--text-main);
+}
+
+/* ===== LAYOUT (MATCH STUDENT) ===== */
+.staff-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr; /* 🔥 chuẩn student */
+    min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+/* HEADER */
+.sidebar-header {
+    padding: 22px 16px 18px; /* 🔥 giống student */
+    text-align: center;
+    border-bottom: 1px solid #9aa0af;
+}
+
+.logo {
+    width: 118px;
+    height: 150px;
+    object-fit: cover; /* 🔥 quan trọng */
+    margin-bottom: 14px;
+}
+
+/* USER BLOCK */
+.user-profile {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.1);
+    margin: 12px;
+    border-radius: 10px;
+}
+
+.avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.user-role {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.user-dept {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+
+
+/* ===== MENU ===== */
+.sidebar-nav {
+    flex: 1;
+    padding: 10px 12px;
+    border-top: 1px solid #9aa0af;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px; /* 🔥 giống student */
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    transition: 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: var(--sidebar-dark);
+    color: white;
+}
+
+.badge-count {
+    background: #ef4444;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    margin-left: auto;
+}
+
+/* LOGOUT */
+.logout-btn {
+    padding: 18px 20px;
+    color: white;
+    text-decoration: none;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-weight: bold;
+}
+
+/* ===== MAIN ===== */
+.main-content {
+    padding: 25px;
+}
+
+/* CARD */
+.table-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+/* ===== TOOLBAR ===== */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 45%;
+}
+
+.search-wrapper i {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: var(--text-muted);
+}
+
+.search-wrapper input {
+    width: 100%;
+    padding: 10px 12px 10px 35px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* FILTER BUTTON */
+.filter-btn {
+    padding: 8px 15px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ===== TABLE ===== */
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.staff-table th {
+    padding: 14px 12px;
+    background: #f8fafc;
+    font-size: 0.8rem;
+    color: #475569;
+    border-bottom: 2px solid var(--border);
+}
+
+.staff-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.title-cell {
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+/* STATUS */
+.status-tag {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.success { background: #dcfce7; color: #166534; }
+.processing { background: #dbeafe; color: #1e40af; }
+.forwarded { background: #f3e8ff; color: #6b21a8; }
+
+/* ===== PAGINATION ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 12px;
+}
+
+.p-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.p-btn:hover {
+    background: var(--primary-blue);
+    color: white;
+}

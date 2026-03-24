@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cán bộ - Quản lý góp ý</title>
+
+    <!-- CSS riêng -->
+    <link rel="stylesheet" href="/css/staff/staff-style.css">
+
+    <!-- Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+<div class="staff-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="/images/logo_no_bg.png" class="logo">
+        </div>
+
+        <div class="user-profile">
+            <img src="/images/staff.png" class="avatar">
+            <div class="user-info">
+                <span class="user-role">Cán bộ Thanh tra</span>
+                <span class="user-dept">Nhân viên phòng ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a href="#" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a href="#" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count">2</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a href="#" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+        </nav>
+
+        <a href="#" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+        <div class="table-card">
+
+            <div class="toolbar">
+                <div class="search-wrapper">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Tìm kiếm theo tiêu đề...">
+                </div>
+
+                <div>
+                    <button class="filter-btn">Trạng thái</button>
+                    <button class="filter-btn">Danh mục</button>
+                </div>
+            </div>
+
+            <table class="staff-table">
+                <thead>
+                <tr>
+                    <th>TIÊU ĐỀ</th>
+                    <th>DANH MỤC</th>
+                    <th>TRẠNG THÁI</th>
+                    <th>NGƯỜI GỬI</th>
+                    <th>NGÀY GỬI</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="title-cell">Lorem Ipsum</td>
+                    <td>An Ninh</td>
+                    <td><span class="status-tag success">Đã xử lý</span></td>
+                    <td>Nguyễn A</td>
+                    <td>24/01/2026</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <button class="p-btn"><i class="fas fa-chevron-left"></i></button>
+                <span>Trang 1 / 25</span>
+                <button class="p-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+
+        </div>
+    </main>
+
+</div>
+</body>
+</html>
