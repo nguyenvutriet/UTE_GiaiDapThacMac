@@ -31,6 +31,9 @@ public class Comment {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
     private List<CommentReport> commentReports = new ArrayList<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
+    private List<VoteComment> voteComments = new ArrayList<>();
+
     public Comment() {
     }
 
@@ -47,6 +50,7 @@ public class Comment {
         this.request = request;
         this.user = user;
         this.commentReports = commentReports;
+        this.voteComments = voteComments;
     }
 
     public String getId() {
@@ -95,5 +99,13 @@ public class Comment {
 
     public void setCommentReports(List<CommentReport> commentReports) {
         this.commentReports = commentReports;
+    }
+    // Thêm Getter và Setter cho voteComments
+    public List<VoteComment> getVoteComments() {
+        return voteComments;
+    }
+
+    public void setVoteComments(List<VoteComment> voteComments) {
+        this.voteComments = voteComments;
     }
 }

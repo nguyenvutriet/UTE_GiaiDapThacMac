@@ -64,6 +64,9 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/reset-password",
                                 "/verify-otp",
+                                "/api/forum/**",
+                                "/api/comments/**",
+                                "/api/vote-comment/**",
                                 "/api/forum/view",
                                 "/staff/list-feedbacks"
                         ).permitAll()

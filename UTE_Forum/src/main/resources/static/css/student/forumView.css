@@ -821,3 +821,112 @@ html {
 .comment-item:hover .comment-options {
     opacity: 1;
 }
+/*React*/
+/* Phải có cái này thì hover vào chữ Thích nó mới hiện icon ra */
+/* Container chứa nút Thích và hộp Icon */
+.reaction-container { position: relative; display: inline-block; }
+/* Hộp chứa các icon (ẩn mặc định, hiện khi hover) */
+.reaction-box {
+    display: none;
+    position: absolute;
+    bottom: 25px;
+    left: 0;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 25px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+    gap: 10px;
+    z-index: 1000;
+    animation: zoomIn 0.2s ease;
+}
+
+/* Khi hover vào vùng chứa thì hiện menu */
+.reaction-container:hover .reaction-box {
+    display: flex;
+    animation: slideUp 0.2s ease-out;
+}
+
+.reaction-box span {
+    font-size: 22px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#reaction-icons span {
+    margin-left: -4px;
+}
+
+.reaction-box span:hover {
+    transform: scale(1.45) translateY(-5px); /* Phóng to và bay lên nhẹ */
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.reaction-box::after {
+    content: "";
+    position: absolute;
+    bottom: -20px; /* Nối dài xuống phía dưới */
+    left: 0;
+    width: 100%;
+    height: 25px; /* Độ cao bằng khoảng hở giữa nút và menu */
+    background: transparent; /* Tàng hình */
+}
+/* Container chứa cả icon và số */
+[id^="reaction-count-container-"] {
+    background: #f0f2f5; /* Màu nền xám nhạt chuẩn FB */
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Chỉnh cho icon nhỏ lại một xíu cho cân đối */
+[id^="reaction-icons-"] {
+    font-size: 11px;
+    line-height: 1;
+}
+
+/* Chỉnh con số cho sát vào icon */
+[id^="reaction-count-"] {
+    font-size: 12px;
+    font-weight: 500;
+    color: #65676b;
+}
+
+.reaction-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.reaction-modal {
+    background: white;
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.reaction-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+.reaction-title {
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}

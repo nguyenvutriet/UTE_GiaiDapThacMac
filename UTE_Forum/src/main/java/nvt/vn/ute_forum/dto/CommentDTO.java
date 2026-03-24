@@ -1,26 +1,30 @@
 package nvt.vn.ute_forum.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 public class CommentDTO {
     private String userName;
     private String content;
     private LocalDateTime date;
     private String id;
+    private boolean canDelete;
 
-    // 1. Bạn phải có Constructor KHÔNG tham số (để tránh lỗi Jackson)
-    public CommentDTO() {
-    }
+    // 🔥 THÊM 2 CÁI NÀY
+    private String reactionType;
+    private Map<String, Long> reactions;
 
-    // 2. Sửa Constructor này ĐÚNG THỨ TỰ bạn gọi ở Controller
-    public CommentDTO(String userName, String content, LocalDateTime date, String id) {
+    public CommentDTO() {}
+
+    public CommentDTO(String userName, String content, LocalDateTime date, String id, boolean canDelete) {
         this.userName = userName;
         this.content = content;
         this.date = date;
         this.id = id;
+        this.canDelete = canDelete;
     }
 
-    // Getter và Setter (Bắt buộc phải có để hiển thị lên giao diện)
+    // Getter Setter
     public String getUserName() { return userName; }
     public void setUserName(String userName) { this.userName = userName; }
 
@@ -33,4 +37,13 @@ public class CommentDTO {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
+    public boolean isCanDelete() { return canDelete; }
+    public void setCanDelete(boolean canDelete) { this.canDelete = canDelete; }
+
+    // 🔥 Getter Setter mới
+    public String getReactionType() { return reactionType; }
+    public void setReactionType(String reactionType) { this.reactionType = reactionType; }
+
+    public Map<String, Long> getReactions() { return reactions; }
+    public void setReactions(Map<String, Long> reactions) { this.reactions = reactions; }
 }
