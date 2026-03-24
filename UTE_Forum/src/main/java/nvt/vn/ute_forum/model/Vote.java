@@ -12,6 +12,10 @@ public class Vote {
     @EmbeddedId
     private VoteId id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reaction_type", nullable = false)
+    private ReactionType type;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id", nullable = false)
@@ -27,10 +31,11 @@ public class Vote {
     public Vote() {
     }
 
-    public Vote(VoteId id, Users user, Request request, LocalDateTime voteAt) {
+    public Vote(VoteId id, Users user, Request request,ReactionType type, LocalDateTime voteAt) {
         this.id = id;
         this.user = user;
         this.request = request;
+        this.type = type;
         this.voteAt = voteAt;
     }
 
@@ -69,6 +74,8 @@ public class Vote {
     public void setRequest(Request request) {
         this.request = request;
     }
+    public ReactionType getType() { return type; }
+    public void setType(ReactionType type) { this.type = type; }
 
 
 }

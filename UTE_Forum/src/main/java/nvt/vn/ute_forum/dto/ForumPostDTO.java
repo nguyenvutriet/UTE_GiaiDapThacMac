@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class ForumPostDTO {
 
@@ -15,6 +16,13 @@ public class ForumPostDTO {
     private String userName;
     private List<String> categories;
     private long commentCount;
+    // 🔥 THÊM 2 CÁI NÀY
+    private String reactionType;
+    private String reactionTypeLower;  // "like", "love" để dùng trong class CSS
+
+    private Map<String, Long> reactions;
+    private long totalReactions;
+
 
 
     // Getter and Setter for id
@@ -95,4 +103,18 @@ public class ForumPostDTO {
     public void setCommentCount(long commentCount) {
         this.commentCount = commentCount;
     }
+    // 🔥 Getter Setter mới
+    public String getReactionType() { return reactionType; }
+    public void setReactionType(String reactionType) { this.reactionType = reactionType; }
+    public String getReactionTypeLower() { return reactionTypeLower; }
+    public void setReactionTypeLower(String reactionTypeLower) { this.reactionTypeLower = reactionTypeLower; }
+
+    public Map<String, Long> getReactions() { return reactions; }
+    public void setReactions(Map<String, Long> reactions) { this.reactions = reactions; }
+    public long getTotalReactions() {
+        if(reactions == null) return 0;
+        return reactions.values().stream().mapToLong(Long::longValue).sum();
+    }
+    public void setTotalReactions(long totalReactions) { this.totalReactions = totalReactions; }
+
 }

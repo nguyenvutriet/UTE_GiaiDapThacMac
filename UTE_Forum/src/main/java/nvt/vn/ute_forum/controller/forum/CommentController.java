@@ -79,30 +79,7 @@ public List<CommentDTO> getComments(@PathVariable String requestId, Principal pr
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-//    @DeleteMapping("/delete/{id}")
-//    @ResponseBody
-//    public ResponseEntity<?> deleteComment(@PathVariable String id, Principal principal) {
-//        // 1. Lấy thông tin người dùng từ Principal (Spring Security)
-//        if (principal == null) {
-//            return ResponseEntity.status(401).body("Lỗi chưa đăng nập");
-//        }
-//
-//        // 2. Lấy đối tượng Users từ Email/Username
-//        Users user = usersService.getByEmail(principal.getName());
-//
-//        if (user == null) {
-//            return ResponseEntity.status(401).body("Không tìm thấy user!");
-//        }
-//
-//        // 3. Tiến hành xóa
-//        boolean isDeleted = commentService.deleteCommentIfOwner(id, String.valueOf(user.getId()));
-//
-//        if (isDeleted) {
-//            return ResponseEntity.ok().build();
-//        } else {
-//            return ResponseEntity.status(403).body("Không được phép xoá!");
-//        }
-//    }
+
 @DeleteMapping("/delete/{id}")
 public ResponseEntity<?> deleteComment(@PathVariable String id, Principal principal) {
     // 1. Lấy thông tin User đầy đủ từ Database dựa vào Email (getName)

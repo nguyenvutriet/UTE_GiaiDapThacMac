@@ -88,7 +88,37 @@
                     </div>
 
                     <div class="post-actions">
-                        <button class="action-btn">👍 <span>12 Thích</span></button>
+                        <div class="post-reaction-bar">
+                            <button class="post-main-reaction-btn"
+                                    th:data-id="${post.id}"
+                                    th:data-current-reaction="${post.reactionType}"
+                                    th:data-total-reactions="${post.totalReactions}">
+
+        <span class="reaction-content">
+            <span th:switch="${post.reactionType}">
+                <th:block th:case="'LIKE'">👍 Thích</th:block>
+                <th:block th:case="'LOVE'">❤️ Yêu thích</th:block>
+                <th:block th:case="'HAHA'">😆 Haha</th:block>
+                <th:block th:case="'WOW'">😮 Wow</th:block>
+                <th:block th:case="'SAD'">😢 Buồn</th:block>
+                <th:block th:case="'ANGRY'">😡 Phẫn nộ</th:block>
+                <th:block th:case="*">👍 Thích</th:block>
+            </span>
+        </span>
+                                <span class="reaction-count" th:text="${post.totalReactions}">0</span>
+                            </button>
+
+                            <div class="post-reaction-box">
+                                <button class="post-reaction-btn like" data-type="LIKE">👍</button>
+                                <button class="post-reaction-btn love" data-type="LOVE">❤️</button>
+                                <button class="post-reaction-btn haha" data-type="HAHA">😆</button>
+                                <button class="post-reaction-btn wow" data-type="WOW">😮</button>
+                                <button class="post-reaction-btn sad" data-type="SAD">😢</button>
+                                <button class="post-reaction-btn angry" data-type="ANGRY">😡</button>
+                            </div>
+                        </div>
+
+
                         <button class="action-btn"
                                 th:data-id="${post.id}"
                                 onclick="toggleComments(this.getAttribute('data-id'))">
@@ -201,12 +231,12 @@
     function renderCommentHTML(cmt) {
 
         const reactionData = {
-            'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
-            'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
-            'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
-            'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
-            'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
-            'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+            'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
+            'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
+            'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
+            'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
+            'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
+            'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
         };
 
         // 🔥 TEXT CỦA USER
@@ -296,6 +326,7 @@
         </div>
     </div>`;
     }
+
     // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
     function toggleComments(requestId) {
         const commentBox = document.getElementById('comment-box-' + requestId);
@@ -366,10 +397,10 @@
 
     // 3. HÀM GỬI BÌNH LUẬN DÙNG CHUNG
     function executeSendComment(requestId, content, listElement, inputElement) {
-        const payload = { requestId: String(requestId), content: content };
+        const payload = {requestId: String(requestId), content: content};
         fetch('/api/comments/add', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         })
             .then(res => res.json())
@@ -399,6 +430,7 @@
                 }
             });
     }
+
     function updateModalCommentCountUI() {
         // Tìm cái span có id là modal-total-count mà mình đã đặt trong HTML
         const modalCountSpan = document.getElementById('modal-total-count');
@@ -456,7 +488,7 @@
                 requestId = parentList.id.replace('comment-list-', '');
             }
 
-            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })
+            fetch('/api/comments/delete/' + commentId, {method: 'DELETE'})
                 .then(res => {
                     if (res.ok) {
                         // 2. Xóa tất cả các chỗ hiện cmt này (cả ngoài list và trong modal)
@@ -476,7 +508,7 @@
     }
 
     function decreaseCommentCountUI(requestId) {
-        if(!requestId) return;
+        if (!requestId) return;
 
         // 1. Giảm số ở cái nút "💬 X Bình luận" ngoài danh sách
         const btn = document.querySelector(`button[data-id="${requestId}"]`);
@@ -536,15 +568,17 @@
     }
 
 
-    function closeModalOutside(event) { if (event.target.id === 'postModal') closePostModal(); }
+    function closeModalOutside(event) {
+        if (event.target.id === 'postModal') closePostModal();
+    }
 
     const reactionData = {
-        'LIKE': { text: 'Thích', color: '#0866ff', icon: '👍' },
-        'LOVE': { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
-        'HAHA': { text: 'Haha', color: '#f7b125', icon: '😆' },
-        'WOW': { text: 'Wow', color: '#f7b125', icon: '😮' },
-        'SAD': { text: 'Buồn', color: '#f7b125', icon: '😢' },
-        'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+        'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
+        'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
+        'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
+        'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
+        'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
+        'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
     };
 
     async function sendReaction(commentId, type) {
@@ -646,11 +680,213 @@
 
         document.body.insertAdjacentHTML("beforeend", html);
     }
+
     function closeReactionModal(e) {
         if (e.target.classList.contains("reaction-modal-overlay")) {
             e.target.remove();
         }
     }
+
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     document.querySelectorAll('.post-reaction-bar').forEach(bar => {
+    //         const mainBtn = bar.querySelector('.post-main-reaction-btn');
+    //         const box = bar.querySelector('.post-reaction-box');
+    //
+    //         let timeoutId;
+    //
+    //         // Khi hover vào nút chính → show box
+    //         mainBtn.addEventListener('mouseenter', () => {
+    //             clearTimeout(timeoutId);
+    //             box.style.visibility = 'visible';
+    //             box.style.opacity = '1';
+    //         });
+    //
+    //         // Khi rê chuột ra khỏi nút chính → delay hide box
+    //         mainBtn.addEventListener('mouseleave', () => {
+    //             timeoutId = setTimeout(() => {
+    //                 box.style.visibility = 'hidden';
+    //                 box.style.opacity = '0';
+    //             }, 300); // 300ms delay để k bị tắt nhanh
+    //         });
+    //
+    //         // Khi hover vào box → giữ mở
+    //         box.addEventListener('mouseenter', () => {
+    //             clearTimeout(timeoutId);
+    //             box.style.visibility = 'visible';
+    //             box.style.opacity = '1';
+    //         });
+    //
+    //         // Khi rê ra khỏi box → ẩn box
+    //         box.addEventListener('mouseleave', () => {
+    //             timeoutId = setTimeout(() => {
+    //                 box.style.visibility = 'hidden';
+    //                 box.style.opacity = '0';
+    //             }, 300);
+    //         });
+    //
+    //         // Click chọn reaction
+    //         box.querySelectorAll('.post-reaction-btn').forEach(btn => {
+    //             btn.addEventListener('click', e => {
+    //                 e.stopPropagation();
+    //                 const type = btn.getAttribute('data-type');
+    //                 mainBtn.querySelector('span:first-child').textContent = type;
+    //
+    //                 // TODO: gọi API backend để lưu reaction
+    //                 // fetch(`/api/forum/react?postId=${mainBtn.dataset.id}&type=${type}`)
+    //
+    //                 // Ẩn box sau khi chọn
+    //                 box.style.visibility = 'hidden';
+    //                 box.style.opacity = '0';
+    //             });
+    //         });
+    //     });
+    // });
+    // document.querySelectorAll('.post-reaction-bar').forEach(bar => {
+    //     const mainBtn = bar.querySelector('.post-main-reaction-btn');
+    //     const box = bar.querySelector('.post-reaction-box');
+    //
+    //     let timeoutId;
+    //
+    //     mainBtn.addEventListener('mouseenter', () => {
+    //         clearTimeout(timeoutId);
+    //         box.style.visibility = 'visible';
+    //         box.style.opacity = '1';
+    //     });
+    //
+    //     mainBtn.addEventListener('mouseleave', () => {
+    //         timeoutId = setTimeout(() => { box.style.visibility = 'hidden'; box.style.opacity = '0'; }, 300);
+    //     });
+    //
+    //     box.addEventListener('mouseenter', () => { clearTimeout(timeoutId); box.style.visibility = 'visible'; box.style.opacity = '1'; });
+    //     box.addEventListener('mouseleave', () => {
+    //         timeoutId = setTimeout(() => { box.style.visibility = 'hidden'; box.style.opacity = '0'; }, 300);
+    //     });
+    //
+    //     // Click icon reaction
+    //     box.querySelectorAll('.post-reaction-btn').forEach(btn => {
+    //         btn.addEventListener('click', async e => {
+    //             e.stopPropagation();
+    //             const type = btn.getAttribute('data-type');
+    //             const postId = mainBtn.dataset.id;
+    //
+    //             // Update button text
+    //             mainBtn.querySelector('span:first-child').textContent = type;
+    //
+    //             try {
+    //                 const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, { method: 'POST' });
+    //                 const data = await res.json();
+    //                 const total = Object.values(data).reduce((a,b)=>a+b,0);
+    //                 mainBtn.querySelector('span:last-child').textContent = total;
+    //
+    //                 // Hide box
+    //                 box.style.visibility = 'hidden';
+    //                 box.style.opacity = '0';
+    //             } catch(err) { console.error(err); }
+    //         });
+    //     });
+    // });
+
+    const reactions = {
+        'LIKE':  { text: 'Thích', color: '#0866ff', icon: '👍' },
+        'LOVE':  { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
+        'HAHA':  { text: 'Haha', color: '#f7b125', icon: '😆' },
+        'WOW':   { text: 'Wow', color: '#f7b125', icon: '😮' },
+        'SAD':   { text: 'Buồn', color: '#f7b125', icon: '😢' },
+        'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+    };
+
+    // Hàm cập nhật UI (Dùng cả khi load trang và khi click)
+    function updateReactionUI(postId, activeType, totalCount) {
+        const btn = document.querySelector(`.post-main-reaction-btn[data-id='${postId}']`);
+        if (!btn) return;
+
+        // Kiểm tra xem có đang vote loại nào không
+        const isVoted = activeType && activeType !== "" && activeType !== "null";
+        const config = isVoted ? reactions[activeType] : { text: 'Thích', color: '', icon: '👍' };
+
+        // Cập nhật nội dung nút
+        // Lưu ý: Chỉ cập nhật nội dung Text/Icon, giữ nguyên data-id
+        const reactionContent = btn.querySelector('.reaction-content');
+        if (reactionContent) {
+            reactionContent.innerHTML = `${config.text}`;
+        }
+
+        // Cập nhật màu sắc
+        btn.style.color = config.color;
+
+        // Cập nhật số lượng (nếu có truyền vào)
+        const countSpan = btn.querySelector('.reaction-count');
+        if (countSpan && totalCount !== undefined) {
+            countSpan.textContent = totalCount;
+        }
+
+        // Lưu lại trạng thái vào attribute để các hàm khác đọc
+        btn.setAttribute('data-current-reaction', isVoted ? activeType : "");
+    }
+
+    async function sendPostReaction(postId, type) {
+        try {
+            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, { method: 'POST' });
+            if (!res.ok) throw new Error('API Error');
+
+            const apiData = await res.json();
+
+            // Tính tổng từ Map backend trả về
+            const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+
+            // Sau khi gọi API, backend trả về map counts, ta cần biết type hiện tại
+            // Logic: Nếu số lượng của type vừa bấm > 0, coi như đang active type đó
+            const currentActive = apiData[type] > 0 ? type : "";
+
+            updateReactionUI(postId, currentActive, total);
+
+        } catch (err) {
+            console.error('Lỗi khi vote:', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.post-reaction-bar').forEach(bar => {
+            const mainBtn = bar.querySelector('.post-main-reaction-btn');
+            const box = bar.querySelector('.post-reaction-box');
+            let timeoutId;
+
+            // --- BƯỚC QUAN TRỌNG: KHỞI TẠO MÀU SẮC KHI LOAD TRANG ---
+            const postId = mainBtn.getAttribute('data-id');
+            const currentType = mainBtn.getAttribute('data-current-reaction');
+            // Gọi hàm update ngay lập tức để áp dụng màu từ Thymeleaf
+            updateReactionUI(postId, currentType);
+            // ------------------------------------------------------
+
+            // Hiện/Ẩn Box
+            const show = () => { clearTimeout(timeoutId); box.classList.add('show'); };
+            const hide = () => { timeoutId = setTimeout(() => box.classList.remove('show'), 300); };
+            mainBtn.addEventListener('mouseenter', show);
+            mainBtn.addEventListener('mouseleave', hide);
+            box.addEventListener('mouseenter', () => clearTimeout(timeoutId));
+            box.addEventListener('mouseleave', hide);
+
+            // Click icon trong box
+            box.querySelectorAll('.post-reaction-btn').forEach(iconBtn => {
+                iconBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const newType = iconBtn.getAttribute('data-type');
+                    sendPostReaction(postId, newType);
+                    box.classList.remove('show');
+                });
+            });
+
+            // Click nút chính
+            mainBtn.addEventListener('click', (e) => {
+                if (box.classList.contains('show')) return;
+                const cType = mainBtn.getAttribute('data-current-reaction');
+                const typeToSend = (cType && cType !== "") ? cType : 'LIKE';
+                sendPostReaction(postId, typeToSend);
+            });
+        });
+    });
+
+
 </script>
 </body>
 </html>

@@ -930,3 +930,65 @@ html {
     padding-bottom: 8px;
     border-bottom: 1px solid #eee;
 }
+
+.post-reaction-bar {
+    position: relative;
+    display: inline-block;
+}
+
+.post-main-reaction-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, color 0.2s;
+    font-weight: 500;
+
+}
+
+.post-reaction-box {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    display: flex;
+    gap: 6px;
+    background: white;
+    border-radius: 30px;
+    padding: 6px 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 10;
+}
+
+.post-reaction-box.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    display: flex; /* Hiện lên khi có class .show */
+}
+
+.post-reaction-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.post-reaction-btn:hover {
+    transform: scale(1.4);
+}
+.post-reaction-box {
+    display: none; /* Hoặc opacity: 0; pointer-events: none; */
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    /* ... các style khác của bạn ... */
+}
+

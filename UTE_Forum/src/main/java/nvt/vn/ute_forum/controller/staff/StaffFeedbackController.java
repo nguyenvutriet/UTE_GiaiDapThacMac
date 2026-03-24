@@ -35,16 +35,23 @@ public class StaffFeedbackController {
 
         // Phân trang 12 dòng mỗi trang cho giao diện Staff
         Pageable pageable = PageRequest.of(page, 12, Sort.by("timeCreate").descending());
-        Page<ForumPostDTO> feedbackPage = requestService.getPublicPosts(pageable);
+
+        // Lấy ID user hiện tại để pass vào service
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users staff = usersRepo.findByEmail(userDetails.getUsername());
+            if (staff != null) {
+                currentUserId = staff.getId();
+                model.addAttribute("staff", staff);
+            }
+        }
+
+        // Gọi service mới, có truyền currentUserId
+        Page<ForumPostDTO> feedbackPage = requestService.getPublicPosts(pageable, currentUserId);
 
         model.addAttribute("feedbacks", feedbackPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", feedbackPage.getTotalPages());
-
-        if (userDetails != null) {
-            Users staff = usersRepo.findByEmail(userDetails.getUsername());
-            model.addAttribute("staff", staff);
-        }
 
         // Trả về file nằm trong: templates/staff/feedback_list.html
         return "staff/staff-list";

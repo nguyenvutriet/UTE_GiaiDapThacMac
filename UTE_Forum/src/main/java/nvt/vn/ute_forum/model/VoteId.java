@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.model;
 import jakarta.persistence.Embeddable;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Embeddable
 public class VoteId implements Serializable {
@@ -35,6 +36,18 @@ public class VoteId implements Serializable {
         this.requestId = requestId;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VoteId that = (VoteId) o;
+        return Objects.equals(userId, that.userId) && Objects.equals(requestId, that.requestId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userId, requestId);
+    }
 
 
 }
