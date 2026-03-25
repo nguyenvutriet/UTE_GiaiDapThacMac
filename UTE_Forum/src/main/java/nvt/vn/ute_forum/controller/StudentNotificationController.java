@@ -10,15 +10,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class StudentNotificationController {
+    private static final Pattern REQUEST_ID_PATTERN = Pattern.compile("(REQ_[A-Za-z0-9_]+)");
 
     private final UsersService usersService;
     private final NotificationService notificationService;
@@ -62,6 +66,39 @@ public class StudentNotificationController {
         return "student/notification";
     }
 
+    @GetMapping("/api/notifications/{id}")
+    public String showNotificationDetail(@PathVariable("id") String notificationId,
+                                         Authentication authentication,
+                                         Model model) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        Notification notification = notificationService.getByIdForUser(notificationId, user.getId())
+                .orElse(null);
+        if (notification == null) {
+            return "redirect:/api/notifications";
+        }
+
+        notificationService.markAsRead(notification);
+        if ("forum".equals(tabByType(notification.getNotificationType()))) {
+            String postId = resolveForumPostId(notification);
+            if (postId != null && !postId.isBlank()) {
+                return "redirect:/api/forum/view?openPostId=" + postId;
+            }
+            return "redirect:/api/forum/view";
+        }
+
+        NotificationItem detailItem = toItem(notification);
+
+        model.addAttribute("user", user);
+        model.addAttribute("roleLabel", "Sinh vien");
+        model.addAttribute("item", detailItem);
+        model.addAttribute("notificationId", notificationId);
+        return "student/notification-detail";
+    }
+
     private NotificationItem toItem(Notification notification) {
         String tabKey = tabByType(notification.getNotificationType());
         String icon = iconByType(notification.getNotificationType());
@@ -72,7 +109,7 @@ public class StudentNotificationController {
         String content = notification.getContent() == null ? "" : notification.getContent();
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        return new NotificationItem(title, content, timeLabel, icon, iconClass, tabKey, isRead);
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
     }
 
     private String tabByType(String type) {
@@ -155,6 +192,26 @@ public class StudentNotificationController {
         return !item.read();
     }
 
+    private String resolveForumPostId(Notification notification) {
+        if (notification == null) {
+            return null;
+        }
+
+        String ref = notification.getReferenceId();
+        if (ref != null && !ref.isBlank()) {
+            return ref.trim();
+        }
+
+        String source = (notification.getContent() == null ? "" : notification.getContent())
+                + " "
+                + (notification.getTitle() == null ? "" : notification.getTitle());
+        Matcher matcher = REQUEST_ID_PATTERN.matcher(source);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
     private String normalizeTab(String tab) {
         if (tab == null) {
             return "all";
@@ -201,7 +258,8 @@ public class StudentNotificationController {
         return usersService.getByEmail(email.trim());
     }
 
-    private record NotificationItem(String title,
+    private record NotificationItem(String id,
+                                    String title,
                                     String content,
                                     String timeLabel,
                                     String icon,

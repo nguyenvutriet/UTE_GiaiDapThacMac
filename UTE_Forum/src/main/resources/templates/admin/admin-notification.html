@@ -61,16 +61,18 @@
         </div>
 
         <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
-            <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'" th:each="item : ${notifications}">
-                <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
-                <div class="item-content">
-                    <div class="item-head">
-                        <h3 th:text="${item.title}">Thong bao</h3>
-                        <span th:text="${item.timeLabel}">hom nay</span>
+            <a class="notification-link" th:href="@{/admin/notifications/{id}(id=${item.id})}" th:each="item : ${notifications}">
+                <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'">
+                    <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
+                    <div class="item-content">
+                        <div class="item-head">
+                            <h3 th:text="${item.title}">Thong bao</h3>
+                            <span th:text="${item.timeLabel}">hom nay</span>
+                        </div>
+                        <p th:text="${item.content}">Noi dung thong bao</p>
                     </div>
-                    <p th:text="${item.content}">Noi dung thong bao</p>
-                </div>
-            </article>
+                </article>
+            </a>
         </section>
 
         <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">

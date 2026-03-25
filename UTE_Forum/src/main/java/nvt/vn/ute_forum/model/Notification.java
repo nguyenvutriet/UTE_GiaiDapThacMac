@@ -25,6 +25,9 @@ public class Notification {
     @Column(name = "title")
     private String title;
 
+    @Column(name = "referenceid")
+    private String referenceId;
+
     @Column(name = "isread", nullable = false)
     private Boolean isRead;
 
@@ -88,6 +91,14 @@ public class Notification {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 
     public Boolean getRead() {

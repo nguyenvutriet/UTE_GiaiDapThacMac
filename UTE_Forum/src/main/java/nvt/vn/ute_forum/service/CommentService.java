@@ -21,6 +21,9 @@ public class CommentService {
     @Autowired
     private VoteCommentRepo voteCommentRepo;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
         return commentRepo.findByRequestId(requestId).stream()
                 .map(c -> {
@@ -82,7 +85,12 @@ public class CommentService {
         comment.setDate(LocalDateTime.now());
 
         // 3. Lưu xuống database
-        return commentRepo.save(comment);
+        Comment savedComment = commentRepo.save(comment);
+
+        // 4. Tạo notification cho chủ bài viết (nếu khác người bình luận)
+        notificationService.notifyForumComment(user, postRequest, content);
+
+        return savedComment;
     }
 
 //    @Transactional

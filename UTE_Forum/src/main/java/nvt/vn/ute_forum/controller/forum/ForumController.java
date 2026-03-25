@@ -3,7 +3,6 @@ package nvt.vn.ute_forum.controller.forum;
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.model.ReactionType;
-import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.UsersRepo; // Import Repo của bạn
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 @Controller
@@ -82,6 +82,22 @@ public class ForumController {
         if (user == null) throw new RuntimeException("User not found");
 
         return requestService.votePost(postId, user.getId(), type);
+    }
+
+    @GetMapping("/post/{postId}")
+    @ResponseBody
+    public ResponseEntity<ForumPostDTO> getPostById(@PathVariable String postId,
+                                                    @AuthenticationPrincipal UserDetails userDetails) {
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+            if (currentUser != null) {
+                currentUserId = currentUser.getId();
+            }
+        }
+
+        Optional<ForumPostDTO> post = requestService.getPublicPostById(postId, currentUserId);
+        return post.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/filter")

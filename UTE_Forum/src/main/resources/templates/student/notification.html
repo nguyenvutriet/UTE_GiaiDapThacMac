@@ -75,18 +75,21 @@
             </div>
 
             <div class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
-                <article class="notification-item"
-                         th:classappend="${item.read} ? ' read' : ' unread'"
-                         th:each="item : ${notifications}">
-                    <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
-                    <div class="item-content">
-                        <div class="item-title-row">
-                            <h3 th:text="${item.title}">Tiêu đề thông báo</h3>
-                            <span class="item-time" th:text="${item.timeLabel}">2 giờ</span>
+                <a class="notification-link"
+                   th:href="@{/api/notifications/{id}(id=${item.id})}"
+                   th:each="item : ${notifications}">
+                    <article class="notification-item"
+                             th:classappend="${item.read} ? ' read' : ' unread'">
+                        <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
+                        <div class="item-content">
+                            <div class="item-title-row">
+                                <h3 th:text="${item.title}">Tiêu đề thông báo</h3>
+                                <span class="item-time" th:text="${item.timeLabel}">2 giờ</span>
+                            </div>
+                            <p th:text="${item.content}">Nội dung thông báo</p>
                         </div>
-                        <p th:text="${item.content}">Nội dung thông báo</p>
-                    </div>
-                </article>
+                    </article>
+                </a>
             </div>
 
             <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">

@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Optional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -37,6 +35,8 @@ public class RequestService {
     private VoteRepo voteRepo;
     @Autowired
     private UsersRepo usersRepo;
+    @Autowired
+    private NotificationService notificationService;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -103,6 +103,7 @@ public class RequestService {
 
         // Tìm vote cũ
         Vote vote = voteRepo.findById_UserIdAndId_RequestId(userId, requestId).orElse(null);
+        boolean shouldNotify = false;
 
         if (vote != null) {
             if (vote.getType() == type) {
@@ -113,11 +114,17 @@ public class RequestService {
                 vote.setType(type);
                 vote.setVoteAt(LocalDateTime.now());
                 voteRepo.save(vote);
+                shouldNotify = true;
             }
         } else {
             // Nếu chưa vote → tạo vote mới
             vote = new Vote(new VoteId(userId, requestId), user, request, type, LocalDateTime.now());
             voteRepo.save(vote);
+            shouldNotify = true;
+        }
+
+        if (shouldNotify) {
+            notificationService.notifyForumVote(user, request, type);
         }
 
         // Tính tổng reactions
@@ -143,6 +150,15 @@ public class RequestService {
         return entities.stream()
                 .map(r -> convertToFullDTO(r, currentUserId))
                 .collect(Collectors.toList());
+    }
+
+    public Optional<ForumPostDTO> getPublicPostById(String postId, String currentUserId) {
+        if (postId == null || postId.isBlank()) {
+            return Optional.empty();
+        }
+
+        return requestRepo.findByIdAndPostStatus(postId, "PUBLIC")
+                .map(request -> convertToFullDTO(request, currentUserId));
     }
 
     // --- HÀM TÁI SỬ DỤNG ĐỂ CONVERT DỮ LIỆU ĐẦY ĐỦ ---

@@ -53,7 +53,7 @@
                 </div>
 
                 <article class="post-card" th:each="post : ${requests}">
-                    <div th:onclick="openPostModal([[${post}]])" style="cursor: pointer;">
+                    <div th:onclick="openPostModal([[${post}]], this)" style="cursor: pointer;">
                         <div class="post-header">
                             <div class="user-meta">
                                 <img th:src="@{/images/student.png}" class="post-avatar">
@@ -558,7 +558,7 @@
     }
 
     // 2. TÍNH NĂNG MỞ MODAL
-    function openPostModal(post) {
+    function openPostModal(post, sourceElement) {
         // 🔥 SỬA LỖI 1: Gán ID để các hàm sau nhận diện được bài viết đang mở
         activePostId = post.id;
 
@@ -566,8 +566,12 @@
         document.getElementById('detail-user-name').innerText = post.userName;
 
         // Lấy ngày tháng an toàn
-        const postCard = event.currentTarget;
-        const dateText = postCard ? postCard.querySelector('.display-date-text').innerText : "";
+        const postCard = sourceElement
+            || (typeof event !== 'undefined' && event ? event.currentTarget : null);
+        let dateText = postCard ? postCard.querySelector('.display-date-text').innerText : "";
+        if (!dateText && post.date) {
+            dateText = formatDirectDate(post.date);
+        }
         document.getElementById('detail-post-date').innerText = dateText;
         document.getElementById('detail-subject').innerText = post.subject;
         document.getElementById('detail-description').innerText = post.description;
@@ -1217,6 +1221,31 @@
         });
     }
 
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        const openPostId = params.get('openPostId');
+        if (!openPostId) {
+            return;
+        }
+
+        fetch(`/api/forum/post/${encodeURIComponent(openPostId)}`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Post not found');
+                }
+                return res.json();
+            })
+            .then(post => openPostModal(post))
+            .catch(() => {
+                // Keep silent if notification points to a post that is no longer public/available.
+            })
+            .finally(() => {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('openPostId');
+                window.history.replaceState({}, '', currentUrl.toString());
+            });
+    });
 
 </script>
 </body>

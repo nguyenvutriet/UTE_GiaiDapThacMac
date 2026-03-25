@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết thông báo</title>
+    <link rel="stylesheet" th:href="@{/css/student/notification.css}">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyen Van An</p>
+                    <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lich su gop y</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gui gop y</span></a>
+            <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Dien dan</span></a>
+            <a class="nav-item active" th:href="@{/api/notifications}">
+                <span class="nav-icon">&#128276;</span>
+                <span>Thong bao</span>
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a class="nav-item" th:href="@{/change-password}"><span class="nav-icon">&#128273;</span><span>Doi mat khau</span></a>
+        </nav>
+
+        <a class="logout-btn" th:href="@{/logout}">Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top">
+                <p class="school-title">TRUONG DAI HOC CONG NGHE KY THUAT TP.HCM</p>
+            </div>
+        </header>
+
+        <section class="detail-panel">
+            <a class="back-link" th:href="@{/api/notifications}">&larr; Quay lai danh sach thong bao</a>
+            <h2 th:text="${item.title}">Thong bao</h2>
+            <p class="detail-meta">
+                <span th:text="${item.timeLabel}">Hom nay</span>
+                <span> - </span>
+                <span th:text="${item.read ? 'Da doc' : 'Chua doc'}">Da doc</span>
+            </p>
+            <p class="detail-content" th:text="${item.content}">Noi dung thong bao.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+
