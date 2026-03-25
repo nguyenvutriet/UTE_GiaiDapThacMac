@@ -6,22 +6,6 @@
     <title>Diễn đàn</title>
     <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-
-
-        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .modal-post-info .post-avatar { width: 45px; height: 45px; border-radius: 50%; }
-        .modal-post-text h3 { margin: 15px 0 10px 0; font-size: 1.4rem; }
-        .modal-post-text p { line-height: 1.5; color: #1c1e21; font-size: 1.05rem; }
-
-        /* CSS CHO BÌNH LUẬN TẠI CHỖ */
-        .comment-container {
-            border-top: 1px solid #eee;
-            background: #f8fafc;
-            padding: 15px;
-        }
-    </style>
 </head>
 <body>
 <div class="page-layout">
@@ -82,9 +66,57 @@
                         </div>
 
                         <div class="post-attachments" th:if="${not #lists.isEmpty(post.attachments)}">
-                            <p><b>Tệp đính kèm:</b></p>
-                            <ul>
-                                <li th:each="file : ${post.attachments}">
+
+                            <div class="post-image-grid">
+                                <a class="post-image-link"
+                                   th:each="file : ${post.attachments}"
+                                   th:if="${(file.fileType != null and #strings.startsWith(file.fileType, 'image/'))
+                                            or (file.fileName != null and (
+                                                #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpeg')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.png')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.webp')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.gif')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.bmp')
+                                            ))
+                                            or (file.fileUrl != null and (
+                                                #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpg')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpeg')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.png')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.webp')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.gif')
+                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.bmp')
+                                            ))}"
+                                   th:href="${file.fileUrl}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   onclick="event.stopPropagation()">
+                                    <img class="post-image-item"
+                                         th:src="${file.fileUrl}"
+                                         th:alt="${file.fileName}"
+                                         onclick="event.stopPropagation()" />
+                                </a>
+                            </div>
+
+                            <ul class="post-file-list">
+                                <li th:each="file : ${post.attachments}"
+                                    th:if="${not ((file.fileType != null and #strings.startsWith(file.fileType, 'image/'))
+                                                or (file.fileName != null and (
+                                                    #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpeg')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.png')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.webp')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.gif')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.bmp')
+                                                ))
+                                                or (file.fileUrl != null and (
+                                                    #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpg')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpeg')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.png')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.webp')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.gif')
+                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.bmp')
+                                                )))}">
                                     <a th:href="${file.fileUrl}"
                                        th:text="${file.fileName}"
                                        target="_blank"
@@ -230,6 +262,7 @@
                     <div class="modal-post-text">
                         <h3 id="detail-subject"></h3>
                         <p id="detail-description"></p>
+                        <div id="detail-attachments"></div>
                     </div>
                 </div>
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
@@ -462,6 +495,64 @@
     //             }
     //         });
     // }
+    function isImageAttachment(file) {
+        if (!file) return false;
+
+        const type = (file.fileType || '').toLowerCase();
+        if (type.startsWith('image/')) return true;
+
+        const fileName = (file.fileName || '').toLowerCase();
+        const fileUrl = (file.fileUrl || '').toLowerCase();
+        const imageExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+
+        return imageExt.some(ext => fileName.endsWith(ext) || fileUrl.endsWith(ext));
+    }
+
+    function renderModalAttachments(attachments) {
+        if (!attachments || attachments.length === 0) {
+            return '';
+        }
+
+        const imageLinks = [];
+        const fileLinks = [];
+
+        attachments.forEach(file => {
+            if (!file || !file.fileUrl) return;
+
+            const safeUrl = String(file.fileUrl).replace(/"/g, '%22').replace(/'/g, '%27');
+            const safeName = String(file.fileName || 'attachment')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            const safeType = String(file.fileType || 'application/octet-stream')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            if (isImageAttachment(file)) {
+                imageLinks.push(
+                    `<a class="post-image-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">` +
+                    `<img class="post-image-item" src="${safeUrl}" alt="${safeName}" />` +
+                    `</a>`
+                );
+            } else {
+                fileLinks.push(
+                    `<li><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` +
+                    `<span> (${safeType})</span></li>`
+                );
+            }
+        });
+
+        if (imageLinks.length === 0 && fileLinks.length === 0) {
+            return '';
+        }
+
+        return `<div class="post-attachments modal-attachments">` +
+            (imageLinks.length ? `<div class="post-image-grid modal-image-grid">${imageLinks.join('')}</div>` : '') +
+            (fileLinks.length ? `<ul class="post-file-list modal-file-list">${fileLinks.join('')}</ul>` : '') +
+            `</div>`;
+    }
+
     // 2. TÍNH NĂNG MỞ MODAL
     function openPostModal(post) {
         // 🔥 SỬA LỖI 1: Gán ID để các hàm sau nhận diện được bài viết đang mở
@@ -476,6 +567,11 @@
         document.getElementById('detail-post-date').innerText = dateText;
         document.getElementById('detail-subject').innerText = post.subject;
         document.getElementById('detail-description').innerText = post.description;
+
+        const attachmentBox = document.getElementById('detail-attachments');
+        if (attachmentBox) {
+            attachmentBox.innerHTML = renderModalAttachments(post.attachments || []);
+        }
 
         const commentList = document.getElementById('modal-comment-list');
         commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải...</p>';
