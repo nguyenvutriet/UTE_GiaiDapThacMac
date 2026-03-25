@@ -1,0 +1,374 @@
+/* ===== ROOT ===== */
+
+
+:root {
+    --sidebar-bg: #04163f;
+    --sidebar-muted: #9fb5de;
+    --sidebar-active: #1f2f50;
+    --surface: #f4f7fb;
+    --card: #ffffff;
+    --line: #dbe2ec;
+    --line-strong: #c9d2e1;
+    --text: #0f172a;
+    --muted: #6b7280;
+    --primary: #1e40af;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: visible;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    color: var(--text);
+    background: #eceff4;
+}
+
+.page-layout {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+}
+
+.sidebar {
+    background: #00558b;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #0b2558;
+    position: sticky;
+    top: 0;              /* 🔥 bắt buộc */
+    height: 100vh;       /* để full chiều cao */
+    align-self: start;   /* fix bug grid */
+    z-index: 9999;       /* Số này giúp sidebar nằm trên mọi thứ khác */
+}
+
+.brand-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 16px 18px;
+    border-bottom: 1px solid #9aa0af;
+}
+
+.brand-logo {
+    width: 118px;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 14px;
+}
+
+
+.student-info {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 12px;
+    position: relative;
+}
+
+.student-info::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -16px;
+    right: -16px;
+    border-top: 1px solid #9aa0af;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.student-info p {
+    margin: 2px 0;
+    font-size: 15px;
+    color: var(--sidebar-muted);
+}
+
+.student-name {
+    color: #f5f8ff !important;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.student-id {
+    color: #d7e4ff !important;
+}
+
+.sidebar-nav {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 12px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #d7e4ff;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    letter-spacing: 0.3px;    font-weight: 600;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-icon {
+    filter: grayscale(100%) brightness(1.5);
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: var(--sidebar-active);
+    border-color: rgba(159, 181, 222, 0.35);
+}
+
+.logout-btn {
+    margin-top: auto;
+    display: block;
+    color: #dce9ff;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-top: 1px solid #163364;
+}
+
+.main-content {
+    padding: 0 10px 10px;
+}
+
+.main-header {
+    margin-bottom: 10px;
+
+    border-top: 0;
+    /*background: #ffffff;*/
+}
+
+.school-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ababab;
+    letter-spacing: 0.3px;
+}
+
+.main-header-top {
+    background: #00558b;
+    border-top: 3px solid #0c79b4;
+    padding: 5px 32px;
+}
+
+.main-header-bottom {
+    min-height: 58px;
+    border-top: 1px solid #b8bec8;
+    border-bottom: 2px solid #ccc;
+    padding: 22px 0 0 5px;
+}
+
+
+.page-tab {
+    margin: 0;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background: #00558b;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 5px 22px;
+    letter-spacing: 0.3px;
+}
+
+.page-tab::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -20px;
+
+    width: 0;
+    height: 0;
+
+    border-bottom: 28px solid #7d7d7d; /* 👈 đổi ở đây */
+    border-right: 20px solid transparent;
+}
+
+
+/* ===== GLOBAL SCALE ===== */
+html {
+    font-size: 14px; /* 🔥 tăng toàn bộ */
+}
+
+/* ================= TABS ================= */
+.forum-tabs {
+    display: flex;
+    gap: 18px;
+    padding: 14px 24px;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
+
+.tab-item {
+    padding: 12px 30px;
+    border-radius: 30px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.tab-item.active {
+    background: #1c1e21;
+    color: #fff;
+}
+/* ===== RIGHT SIDEBAR (THU GỌN) ===== */
+.forum-sidebar {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+    justify-self: end;
+
+    width: 280px; /* 🤏 Cố định độ rộng nhỏ lại một chút */
+    /* Thêm 2 dòng này */
+    z-index: 999;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Tạo bóng nhẹ để trông Sidebar nổi lên trên */
+}
+
+.sidebar-widget {
+    background: #fff;
+    border-radius: 12px; /* Bo góc nhỏ lại cho tinh tế */
+    padding: 16px;       /* Giảm padding bên trong */
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px; /* Giảm khoảng cách giữa các widget */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.sidebar-widget h3 {
+    font-size: 0.75rem;  /* Chữ tiêu đề nhỏ hơn */
+    text-transform: uppercase;
+    color: #94a3b8;      /* Màu chữ nhạt hơn một chút */
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+/* Danh sách xu hướng gọn hơn */
+.trending-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.trending-list li {
+    padding: 6px 0;      /* Thu hẹp khoảng cách dòng */
+    font-size: 0.85rem;  /* Chữ nhỏ lại */
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.trending-list li:hover {
+    color: #00558b;
+}
+
+/* Các ô Input và Select nhỏ gọn */
+.search-input-alt,
+.filter-stack select {
+    width: 100%;
+    padding: 8px 12px;   /* Giảm độ dày của ô */
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;  /* Bo góc nhỏ lại */
+    font-size: 0.85rem;  /* Chữ trong ô nhỏ hơn */
+    background-color: #f8fafc; /* Thêm nền nhẹ cho chuyên nghiệp */
+}
+
+/* Nút áp dụng nhỏ gọn */
+.btn-apply {
+    width: 100%;
+    padding: 10px;       /* Giảm chiều cao nút */
+    background: #00558b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-apply:hover {
+    background: #004470;
+}
+
+/* Container bao quanh 2 tabs - Ép nó nằm ngang */
+.announcement-nav {
+    display: flex !important; /* Đảm bảo luôn nằm ngang */
+    flex-direction: row;      /* Ép hàng ngang */
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+    background-color: transparent; /* Để nền trắng cho sạch */
+    width: 100%;
+}
+
+/* Định dạng từng Tab */
+.nav-tabb {
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-block; /* Quan trọng để không bị mất kích thước */
+}
+
+/* Tab đang được chọn (Active) */
+.nav-tabb.active {
+    color: #00558b; /* Màu xanh đồng bộ với header của bạn */
+}
+
+/* Đường gạch dưới màu đỏ/hồng sát mép dưới */
+.nav-tabb.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; /* Đè lên đường border-bottom của cha */
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #e91e63;
+}

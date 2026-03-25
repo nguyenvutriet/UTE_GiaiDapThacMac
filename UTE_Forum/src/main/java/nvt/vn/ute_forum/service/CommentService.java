@@ -85,17 +85,7 @@ public class CommentService {
         return commentRepo.save(comment);
     }
 
-//    @Transactional
-//    public boolean deleteCommentIfOwner(String commentId, String currentUserId) {
-//        return commentRepo.findById(commentId).map(comment -> {
-//            // Kiểm tra xem ID người xóa có khớp với ID người tạo cmt không
-//            if (String.valueOf(comment.getUser().getId()).equals(currentUserId)) {
-//                commentRepo.delete(comment);
-//                return true;
-//            }
-//            return false;
-//        }).orElse(false);
-//    }
+
 @Transactional
 public boolean deleteCommentIfOwner(String commentId, String currentUserId) {
     return commentRepo.findById(commentId).map(comment -> {

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn</title>
+    <link rel="stylesheet" href="../../css/student/announcementView_iden.css" th:href="@{/css/student/announcementView_iden.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item" onclick="window.location.href='/api/forum/view'">
+                    Diễn đàn
+                </button>
+                <button class="tab-item active"> Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
+        </header>
+
+        <section class="annoucement-container">
+            <div class="announcement">
+                <div class="announcement-nav">
+                    <div class="nav-tabb" onclick="window.location.href='/announcement'">
+                        THÔNG BÁO CHUNG
+                    </div>
+                    <div class="nav-tabb active">THÔNG BÁO CÁ NHÂN</div>
+                </div>
+                <div class="announcement-content">
+
+                </div>
+
+
+            </div>
+
+            <aside class="forum-sidebar">
+                <div class="sidebar-widget">
+                    <h3>🔍 Tìm kiếm</h3>
+                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3>⏳ Bộ lọc</h3>
+                    <div class="filter-stack">
+                        <select id="filterCategory">
+                            <option value="">Tất cả danh mục</option>
+                            <option value="general">Chung</option>
+                            <option value="course">Học phần</option>
+                            <option value="facility">Cơ sở vật chất</option>
+                            <option value="other">Khác</option>
+                        </select>
+
+                        <select id="filterDepartment">
+                            <option value="">Tất cả khoa</option>
+                            <option value="it">Công nghệ thông tin</option>
+                            <option value="ee">Điện - Điện tử</option>
+                            <option value="me">Cơ khí</option>
+                            <option value="other">Khác</option>
+                        </select>
+
+                        <select id="filterSort">
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                        </select>
+                    </div>
+                    <button class="btn-apply" >Áp dụng lọc</button>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3>📈 Xu hướng</h3>
+                    <ul class="trending-list">
+                        <li>#DangKyHocPhan</li>
+                        <li>#TuyenSinh2026</li>
+                        <li>#GopYGiangDuong</li>
+                    </ul>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
