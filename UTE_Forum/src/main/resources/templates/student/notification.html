@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo</title>
+    <link rel="stylesheet" th:href="@{/css/student/notification.css}">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item active" th:href="@{/api/notifications}">
+                <span class="nav-icon">&#128276;</span>
+                <span>Thông báo</span>
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a class="nav-item" th:href="@{/change-password}"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+
+        <a class="logout-btn" th:href="@{/logout}">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top">
+                <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+            </div>
+            <div class="tab-row">
+                <a class="top-tab"
+                   th:classappend="${activeTab == 'all'} ? ' active'"
+                   th:href="@{/api/notifications(tab='all',filter=${activeFilter})}">
+                    Tất cả <span class="count" th:text="${countAll}">0</span>
+                </a>
+                <a class="top-tab"
+                   th:classappend="${activeTab == 'feedback'} ? ' active'"
+                   th:href="@{/api/notifications(tab='feedback',filter=${activeFilter})}">
+                    Góp ý <span class="count" th:text="${countFeedback}">0</span>
+                </a>
+                <a class="top-tab"
+                   th:classappend="${activeTab == 'forum'} ? ' active'"
+                   th:href="@{/api/notifications(tab='forum',filter=${activeFilter})}">
+                    Diễn đàn <span class="count" th:text="${countForum}">0</span>
+                </a>
+            </div>
+        </header>
+
+        <section class="notification-panel">
+            <div class="panel-header">
+                <h1>Thông báo</h1>
+                <form method="get" th:action="@{/api/notifications}" class="filter-form">
+                    <input type="hidden" name="tab" th:value="${activeTab}">
+                    <label class="sr-only" for="statusFilter">Lọc theo trạng thái đọc</label>
+                    <select id="statusFilter" name="filter" onchange="this.form.submit()">
+                        <option value="all" th:selected="${activeFilter == 'all'}">Tất cả</option>
+                        <option value="read" th:selected="${activeFilter == 'read'}">Đã đọc</option>
+                        <option value="unread" th:selected="${activeFilter == 'unread'}">Chưa đọc</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
+                <article class="notification-item"
+                         th:classappend="${item.read} ? ' read' : ' unread'"
+                         th:each="item : ${notifications}">
+                    <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
+                    <div class="item-content">
+                        <div class="item-title-row">
+                            <h3 th:text="${item.title}">Tiêu đề thông báo</h3>
+                            <span class="item-time" th:text="${item.timeLabel}">2 giờ</span>
+                        </div>
+                        <p th:text="${item.content}">Nội dung thông báo</p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
+                <h3>Không có thông báo phù hợp</h3>
+                <p>Hãy thử chuyển tab hoặc đổi bộ lọc trạng thái.</p>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff - Thong bao</title>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="staff-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
+        </div>
+
+        <div class="user-profile">
+            <img th:src="@{/images/staff.png}" class="avatar" alt="avatar">
+            <div class="user-info">
+                <span class="user-role" th:text="${staff != null ? staff.fullName : 'Can bo'}">Can bo</span>
+                <span class="user-dept">Nhan vien phong ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
+            <a href="#" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
+            <a th:href="@{/staff/notifications}" class="nav-item active">
+                <i class="fas fa-bell"></i> Thong bao
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-head">
+            <h1>Thong bao phong ban</h1>
+            <form method="get" th:action="@{/staff/notifications}" class="filter-form">
+                <input type="hidden" name="tab" th:value="${activeTab}">
+                <label class="sr-only" for="staff-filter">Loc theo trang thai doc</label>
+                <select id="staff-filter" name="filter" onchange="this.form.submit()">
+                    <option value="all" th:selected="${activeFilter == 'all'}">Tat ca</option>
+                    <option value="read" th:selected="${activeFilter == 'read'}">Da doc</option>
+                    <option value="unread" th:selected="${activeFilter == 'unread'}">Chua doc</option>
+                </select>
+            </form>
+        </header>
+
+        <div class="tab-row">
+            <a class="tab-item" th:classappend="${activeTab == 'all'} ? ' active'"
+               th:href="@{/staff/notifications(tab='all',filter=${activeFilter})}">Tat ca <span th:text="${countAll}">0</span></a>
+            <a class="tab-item" th:classappend="${activeTab == 'feedback'} ? ' active'"
+               th:href="@{/staff/notifications(tab='feedback',filter=${activeFilter})}">Gop y <span th:text="${countFeedback}">0</span></a>
+            <a class="tab-item" th:classappend="${activeTab == 'forum'} ? ' active'"
+               th:href="@{/staff/notifications(tab='forum',filter=${activeFilter})}">Dien dan <span th:text="${countForum}">0</span></a>
+        </div>
+
+        <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
+            <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'" th:each="item : ${notifications}">
+                <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
+                <div class="item-content">
+                    <div class="item-head">
+                        <h3 th:text="${item.title}">Thong bao</h3>
+                        <span th:text="${item.timeLabel}">hom nay</span>
+                    </div>
+                    <p th:text="${item.content}">Noi dung thong bao</p>
+                </div>
+            </article>
+        </section>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
+            Khong co thong bao phu hop.
+        </div>
+    </main>
+</div>
+</body>
+</html>
+
+
