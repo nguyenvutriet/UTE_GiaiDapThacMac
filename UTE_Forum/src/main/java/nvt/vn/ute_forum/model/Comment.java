@@ -2,6 +2,7 @@ package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,9 @@ public class Comment {
     @Column(name = "content", nullable = false)
     private String content;
 
+    @Column(name = "date")
+    private LocalDateTime date;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id")
     private Request request;
@@ -27,20 +31,26 @@ public class Comment {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
     private List<CommentReport> commentReports = new ArrayList<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
+    private List<VoteComment> voteComments = new ArrayList<>();
+
     public Comment() {
     }
 
-    public Comment(String id, String content) {
+    public Comment(String id, String content, LocalDateTime date) {
         this.id = id;
         this.content = content;
+        this.date = date;
     }
 
-    public Comment(String id, String content, Request request, Users user, List<CommentReport> commentReports) {
+    public Comment(String id, String content, LocalDateTime date, Request request, Users user, List<CommentReport> commentReports) {
         this.id = id;
         this.content = content;
+        this.date = date;
         this.request = request;
         this.user = user;
         this.commentReports = commentReports;
+        this.voteComments = voteComments;
     }
 
     public String getId() {
@@ -57,6 +67,14 @@ public class Comment {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public LocalDateTime getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDateTime date) {
+        this.date = date;
     }
 
     public Request getRequest() {
@@ -81,5 +99,13 @@ public class Comment {
 
     public void setCommentReports(List<CommentReport> commentReports) {
         this.commentReports = commentReports;
+    }
+    // Thêm Getter và Setter cho voteComments
+    public List<VoteComment> getVoteComments() {
+        return voteComments;
+    }
+
+    public void setVoteComments(List<VoteComment> voteComments) {
+        this.voteComments = voteComments;
     }
 }

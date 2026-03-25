@@ -61,7 +61,14 @@ public class SecurityConfig {
                                 "/images/**",
                                 "/forgot-password",
                                 "/send-otp",
-                                "/verify-otp"
+                                "/verify-otp",
+                                "/reset-password",
+                                "/verify-otp",
+                                "/api/forum/**",
+                                "/api/comments/**",
+                                "/api/vote-comment/**",
+                                "/api/forum/view",
+                                "/staff/list-feedbacks"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(
@@ -117,9 +124,9 @@ public class SecurityConfig {
             if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                 response.sendRedirect("/admin/dashboard");
             }else if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
-                response.sendRedirect("/department/dashboard");
+                response.sendRedirect("/staff/list-feedbacks");
             }else{
-                response.sendRedirect("/home");
+                response.sendRedirect("/api/forum/view");
             }
         };
     }
@@ -148,9 +155,9 @@ public class SecurityConfig {
             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                 response.sendRedirect("/admin/dashboard");
             }else if(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
-                response.sendRedirect("/department/dashboard");
+                response.sendRedirect("/staff/list-feedbacks");
             } else {
-                response.sendRedirect("/api/history");
+                response.sendRedirect("/api/forum/view");
             }
         };
     }

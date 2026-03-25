@@ -56,6 +56,9 @@ public class Users {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private List<ForwardingLog> forwardingLogs = new ArrayList<>();
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    private List<Vote> votes = new ArrayList<>();
+
 
     public Users() {
     }
@@ -106,6 +109,24 @@ public class Users {
         SubmitedcommentReports = submitedcommentReports;
         ApprovedcommentReports = approvedcommentReports;
         this.forwardingLogs = forwardingLogs;
+    }
+
+    public Users(String id, String fullName, String email, String password, String role, List<Announcement> announcements, List<Notification> notifications, Department department, List<Request> requests, List<Message> messages, List<Comment> comments, List<CommentReport> submitedcommentReports, List<CommentReport> approvedcommentReports, List<ForwardingLog> forwardingLogs, List<Vote> votes) {
+        this.id = id;
+        this.fullName = fullName;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.announcements = announcements;
+        this.notifications = notifications;
+        this.department = department;
+        this.requests = requests;
+        this.messages = messages;
+        this.comments = comments;
+        SubmitedcommentReports = submitedcommentReports;
+        ApprovedcommentReports = approvedcommentReports;
+        this.forwardingLogs = forwardingLogs;
+        this.votes = votes;
     }
 
     public String getId() {
@@ -219,5 +240,16 @@ public class Users {
     public void setForwardingLogs(List<ForwardingLog> forwardingLogs) {
         this.forwardingLogs = forwardingLogs;
     }
+
+
+    public List<Vote> getVotes() {
+        return votes;
+    }
+
+    public void setVotes(List<Vote> votes) {
+        this.votes = votes;
+    }
+
+
 
 }
