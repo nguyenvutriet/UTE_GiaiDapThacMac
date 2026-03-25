@@ -28,6 +28,13 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "parentComment")
+    private List<Comment> replies = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private Comment parentComment;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "comment")
     private List<CommentReport> commentReports = new ArrayList<>();
 
@@ -49,6 +56,18 @@ public class Comment {
         this.date = date;
         this.request = request;
         this.user = user;
+        this.commentReports = commentReports;
+        this.voteComments = voteComments;
+    }
+
+    public Comment(String id, String content, LocalDateTime date, Request request, Users user, List<Comment> replies, Comment parentComment, List<CommentReport> commentReports, List<VoteComment> voteComments) {
+        this.id = id;
+        this.content = content;
+        this.date = date;
+        this.request = request;
+        this.user = user;
+        this.replies = replies;
+        this.parentComment = parentComment;
         this.commentReports = commentReports;
         this.voteComments = voteComments;
     }
@@ -107,5 +126,21 @@ public class Comment {
 
     public void setVoteComments(List<VoteComment> voteComments) {
         this.voteComments = voteComments;
+    }
+
+    public List<Comment> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(List<Comment> replies) {
+        this.replies = replies;
+    }
+
+    public Comment getParentComment() {
+        return parentComment;
+    }
+
+    public void setParentComment(Comment parentComment) {
+        this.parentComment = parentComment;
     }
 }
