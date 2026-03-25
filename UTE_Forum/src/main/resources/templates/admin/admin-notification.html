@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Thong bao</title>
+    <link rel="stylesheet" th:href="@{/css/admin/admin-notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
+            <p class="brand-name">UTE Forum Admin</p>
+        </div>
+
+        <div class="user-profile">
+            <img th:src="@{/images/staff-avatar.png}" class="avatar" alt="avatar">
+            <div>
+                <p class="user-name" th:text="${admin != null ? admin.fullName : 'Admin'}">Admin</p>
+                <p class="user-role">He thong</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fas fa-users-cog"></i> Quan ly nguoi dung</a>
+            <a href="#" class="nav-item"><i class="fas fa-flag"></i> Quan ly bao cao</a>
+            <a th:href="@{/admin/notifications}" class="nav-item active">
+                <i class="fas fa-bell"></i> Thong bao
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-head">
+            <h1>Thong bao quan tri</h1>
+            <form method="get" th:action="@{/admin/notifications}" class="filter-form">
+                <input type="hidden" name="tab" th:value="${activeTab}">
+                <label class="sr-only" for="admin-filter">Loc theo trang thai doc</label>
+                <select id="admin-filter" name="filter" onchange="this.form.submit()">
+                    <option value="all" th:selected="${activeFilter == 'all'}">Tat ca</option>
+                    <option value="read" th:selected="${activeFilter == 'read'}">Da doc</option>
+                    <option value="unread" th:selected="${activeFilter == 'unread'}">Chua doc</option>
+                </select>
+            </form>
+        </header>
+
+        <div class="tab-row">
+            <a class="tab-item" th:classappend="${activeTab == 'all'} ? ' active'"
+               th:href="@{/admin/notifications(tab='all',filter=${activeFilter})}">Tat ca <span th:text="${countAll}">0</span></a>
+            <a class="tab-item" th:classappend="${activeTab == 'feedback'} ? ' active'"
+               th:href="@{/admin/notifications(tab='feedback',filter=${activeFilter})}">Gop y <span th:text="${countFeedback}">0</span></a>
+            <a class="tab-item" th:classappend="${activeTab == 'forum'} ? ' active'"
+               th:href="@{/admin/notifications(tab='forum',filter=${activeFilter})}">Dien dan <span th:text="${countForum}">0</span></a>
+        </div>
+
+        <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
+            <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'" th:each="item : ${notifications}">
+                <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
+                <div class="item-content">
+                    <div class="item-head">
+                        <h3 th:text="${item.title}">Thong bao</h3>
+                        <span th:text="${item.timeLabel}">hom nay</span>
+                    </div>
+                    <p th:text="${item.content}">Noi dung thong bao</p>
+                </div>
+            </article>
+        </section>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
+            Khong co thong bao phu hop.
+        </div>
+    </main>
+</div>
+</body>
+</html>
+
+
