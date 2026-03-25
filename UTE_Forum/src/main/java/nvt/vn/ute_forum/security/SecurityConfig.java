@@ -150,7 +150,7 @@ public class SecurityConfig {
             }else if(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
                 response.sendRedirect("/department/dashboard");
             } else {
-                response.sendRedirect("/home");
+                response.sendRedirect("/api/history");
             }
         };
     }

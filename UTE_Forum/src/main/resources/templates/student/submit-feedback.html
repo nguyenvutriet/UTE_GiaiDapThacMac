@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gửi góp ý</title>
+  <link rel="stylesheet" th:href="@{/css/student/submit_feedback.css}">
+</head>
+<body>
+<div class="page-layout">
+  <aside class="sidebar">
+    <div class="brand-block">
+      <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+      <div class="student-info">
+        <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+        <div>
+          <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+          <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
+          <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+      <a class="nav-item active" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+    </nav>
+
+    <a class="logout-btn" href="#">Đăng xuất</a>
+  </aside>
+
+  <main class="main-content">
+    <section class="send-wrapper">
+        <header class="main-header">
+            <div class="main-header-top">
+                <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+            </div>
+            <div class="main-header-bottom">
+                <h1 class="page-tab">GỬI GÓP Ý</h1>
+            </div>
+        </header>
+
+
+      <div class="form-alert" th:if="${error}" th:text="${error}">Có lỗi xảy ra</div>
+
+      <form class="send-grid" th:action="@{/feedback/send}" method="post" enctype="multipart/form-data">
+        <article class="panel panel-large">
+          <h2><span class="panel-icon">&#128196;</span>Chi tiết góp ý</h2>
+
+          <label for="subject">Tiêu đề góp ý <span class="required">*</span></label>
+          <input id="subject" name="subject" type="text" placeholder="Mô tả ngắn gọn tiêu đề bạn muốn góp ý" required>
+
+          <label for="description">Mô tả chi tiết <span class="required">*</span></label>
+          <textarea id="description" name="description" rows="12" placeholder="Nội dung góp ý chi tiết..." required></textarea>
+
+          <label for="attachments">Tệp đính kèm</label>
+          <div class="upload-box" id="attachment-box">
+            <p>Chọn tệp hoặc kéo thả vào đây để tải lên</p>
+            <small>Tối đa 20MB mỗi tệp, tổng 40MB</small>
+            <button type="button" id="pick-files-btn">Chọn tệp</button>
+            <input id="attachments" name="attachments" type="file" multiple hidden>
+            <ul id="selected-file-list" class="selected-file-list"></ul>
+          </div>
+        </article>
+
+        <div class="right-column">
+          <article class="panel">
+            <h2><span class="panel-icon">&#9638;</span>Thông tin liên quan</h2>
+
+            <label for="category">Danh mục <span class="required">*</span></label>
+            <select id="category" name="category">
+              <option value="">Chọn danh mục</option>
+              <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.subject}">Danh mục</option>
+            </select>
+
+            <label for="department">Phòng ban <span class="required">*</span></label>
+            <select id="department" name="department">
+              <option value="">Chọn phòng ban</option>
+              <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}">Phòng ban</option>
+            </select>
+
+            <label for="location">Địa điểm (nếu có)</label>
+            <input id="location" name="location" type="text" placeholder="VD: Tầng 2, Phòng A101">
+          </article>
+
+          <article class="panel">
+            <h2><span class="panel-icon">&#9776;</span>Quyền riêng tư</h2>
+
+            <div class="switch-row">
+              <div>
+                <p class="switch-title">Gửi ẩn danh</p>
+                <small>Ẩn thông tin cá nhân của bạn</small>
+              </div>
+              <input type="checkbox" name="anonymous" value="true">
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <p class="switch-title">Công khai</p>
+                <small>Đăng lên diễn đàn</small>
+              </div>
+              <input type="checkbox" name="public_post" value="true">
+            </div>
+          </article>
+        </div>
+
+        <div class="action-row">
+          <button type="reset" class="btn-secondary">Làm mới</button>
+          <button type="submit" class="btn-primary">Gửi góp ý</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+<script>
+  (function () {
+    var fileInput = document.getElementById('attachments');
+    var pickButton = document.getElementById('pick-files-btn');
+    var fileList = document.getElementById('selected-file-list');
+    var attachmentBox = document.getElementById('attachment-box');
+
+    if (!fileInput || !pickButton || !fileList || !attachmentBox) {
+      return;
+    }
+
+    function renderSelectedFiles(files) {
+      fileList.innerHTML = '';
+      if (!files || files.length === 0) {
+        return;
+      }
+      for (var i = 0; i < files.length; i++) {
+        var item = document.createElement('li');
+        var sizeKb = Math.max(1, Math.round(files[i].size / 1024));
+        item.textContent = files[i].name + ' (' + sizeKb + ' KB)';
+        fileList.appendChild(item);
+      }
+    }
+
+    pickButton.addEventListener('click', function () {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function () {
+      renderSelectedFiles(fileInput.files);
+    });
+
+    attachmentBox.addEventListener('dragover', function (event) {
+      event.preventDefault();
+      attachmentBox.classList.add('is-dragover');
+    });
+
+    attachmentBox.addEventListener('dragleave', function () {
+      attachmentBox.classList.remove('is-dragover');
+    });
+
+    attachmentBox.addEventListener('drop', function (event) {
+      event.preventDefault();
+      attachmentBox.classList.remove('is-dragover');
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        fileInput.files = event.dataTransfer.files;
+        renderSelectedFiles(fileInput.files);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
+

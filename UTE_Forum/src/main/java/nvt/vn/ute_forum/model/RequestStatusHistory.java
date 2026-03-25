@@ -54,4 +54,8 @@ public class RequestStatusHistory {
     public void setCreateAt(LocalDateTime createAt) {
         this.createAt = createAt;
     }
+
+    public Request getRequest() { return request;}
+
+    public void setRequest(Request request) { this.request = request;}
 }

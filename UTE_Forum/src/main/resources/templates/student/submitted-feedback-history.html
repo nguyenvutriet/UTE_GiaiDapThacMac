@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch sử góp ý</title>
+  <link rel="stylesheet" th:href="@{/css/student/submitted_feedback_history.css}">
+</head>
+<body>
+<div class="page-layout">
+  <aside class="sidebar">
+    <div class="brand-block">
+      <img class="brand-logo" src="/images/ute_logo.png" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+      <div class="student-info">
+        <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+
+        <div>
+          <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+          <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
+          <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+      <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+    </nav>
+
+    <a class="logout-btn" href="#">Đăng xuất</a>
+  </aside>
+
+  <main class="main-content">
+    <header class="main-header">
+      <div class="main-header-top">
+        <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+      </div>
+      <div class="main-header-bottom">
+        <h1 class="page-tab">LỊCH SỬ GÓP Ý</h1>
+      </div>
+    </header>
+
+    <section class="history-panel">
+      <form class="toolbar" th:if="${selectedRequest == null}" th:action="@{/api/history}" method="get">
+        <label class="sr-only" for="feedback-search">Tìm kiếm góp ý</label>
+        <input id="feedback-search" name="keyword" class="search-input" type="search" placeholder="Tìm kiếm theo tiêu đề..." th:value="${keyword}">
+        <div class="filter-group">
+          <label class="sr-only" for="department-filter">Lọc theo phòng ban</label>
+          <select id="department-filter" name="departmentId">
+            <option value="">Phòng ban</option>
+            <option th:each="dept : ${departmentOptions}" th:value="${dept.value}" th:text="${dept.label}" th:selected="${departmentId == dept.value}">Phòng ban</option>
+          </select>
+          <label class="sr-only" for="status-filter">Lọc theo trạng thái</label>
+          <select id="status-filter" name="status">
+            <option value="">Trạng thái</option>
+            <option th:each="statusOpt : ${statusOptions}" th:value="${statusOpt.value}" th:text="${statusOpt.label}" th:selected="${status == statusOpt.value}">Trạng thái</option>
+          </select>
+          <label class="sr-only" for="category-filter">Lọc theo danh mục</label>
+          <select id="category-filter" name="categoryId">
+            <option value="">Danh mục</option>
+            <option th:each="cat : ${categoryOptions}" th:value="${cat.value}" th:text="${cat.label}" th:selected="${categoryId == cat.value}">Danh mục</option>
+          </select>
+          <button type="submit" class="filter-btn apply">Lọc</button>
+          <a class="filter-btn reset" th:href="@{/api/history}">Xóa lọc</a>
+        </div>
+      </form>
+
+      <div class="feedback-grid" th:if="${selectedRequest == null}">
+        <article class="feedback-card" th:each="req : ${requests}">
+          <div class="card-head">
+            <span class="status-pill"
+                  th:classappend="${req.currentStatus == 'Đã xử lý' or req.currentStatus == 'RESOLVED' ? ' done' : (req.currentStatus == 'Đang xử lý' or req.currentStatus == 'PROCESSING' ? ' processing' : ' waiting')}"
+                  th:text="${req.currentStatus}">Đang xử lý</span>
+          </div>
+          <h3 class="request-subject" th:text="${req.subject}">Tiêu đề góp ý</h3>
+          <div class="request-meta-group">
+            <p class="request-meta request-chip">
+              <span class="meta-icon">🏦</span>
+              <span th:text="${req.department != null ? req.department.name : 'Chưa xác định phòng ban'}">
+            Phòng Thanh tra giáo dục
+        </span>
+            </p>
+
+            <p class="request-meta request-chip">
+              <span class="meta-icon">📁</span>
+
+              <span th:if="${#lists.isEmpty(req.categories)}">
+            Chưa phân loại
+        </span>
+
+              <span th:each="cat, iter : ${req.categories}">
+            <span th:text="${cat != null ? cat.subject : ''}"></span>
+            <span th:if="${not iter.last}">, </span>
+        </span>
+            </p>
+          </div>
+          <div class="card-footer">
+            <time class="request-date" th:text="${req.timeCreate}">2026-03-21</time>
+            <a class="detail-btn" th:href="@{/api/history(requestId=${req.id}, keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">Xem chi tiết</a>
+          </div>
+        </article>
+
+        <div class="empty-state" th:if="${#lists.isEmpty(requests)}">
+          <h3>Không có góp ý phù hợp</h3>
+          <p>Hãy thử đổi từ khóa hoặc nới điều kiện lọc.</p>
+        </div>
+      </div>
+
+      <section class="request-detail" th:if="${selectedRequest != null}">
+        <div class="detail-header">
+          <a class="back-link" th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">&larr; Quay lại danh sách</a>
+        </div>
+
+        <article class="detail-top-card">
+          <h2 th:text="${selectedRequest.subject}">Tiêu đề góp ý</h2>
+          <div class="detail-meta">
+            <span class="status-pill"
+                  th:classappend="${selectedRequest.currentStatus == 'Đã xử lý' or selectedRequest.currentStatus == 'RESOLVED' ? ' done' : (selectedRequest.currentStatus == 'Đang xử lý' or selectedRequest.currentStatus == 'PROCESSING' ? ' processing' : ' waiting')}"
+                  th:text="${selectedRequest.currentStatus}">Đang xử lý</span>
+            <span class="meta-chip" th:text="${selectedRequest.timeCreate}">2026-03-21</span>
+            <span class="meta-chip" th:text="${'Phòng ban tiếp nhận: ' + (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+          </div>
+          <h3>Nội dung:</h3>
+          <p class="detail-description" th:text="${selectedRequest.description}">Mô tả góp ý...</p>
+
+          <h3>Tệp đính kèm:</h3>
+          <div th:if="${#lists.isEmpty(selectedRequest.fileAttachments)}">Chưa có tệp đính kèm.</div>
+          <ul th:if="${not #lists.isEmpty(selectedRequest.fileAttachments)}">
+            <li th:each="file : ${selectedRequest.fileAttachments}">
+              <a th:href="${file.fileUrl}" th:text="${file.fileName}" target="_blank">attachment</a>
+              <span th:text="${' (' + file.fileType + ')'}">(application/pdf)</span>
+            </li>
+          </ul>
+        </article>
+
+        <div class="detail-bottom-grid">
+          <div class="detail-panel">
+            <h3>Lịch sử trạng thái</h3>
+            <div class="timeline">
+              <article class="timeline-item" th:each="item : ${selectedTimeline}">
+                <div class="timeline-dot"></div>
+                <div class="timeline-card">
+                  <div class="timeline-head">
+                    <div class="timeline-head-left">
+                      <span class="status-pill" th:classappend="${' ' + item.cssClass}" th:text="${item.status}">Đang xử lý</span>
+                    </div>
+                    <time th:text="${item.time}">2026-03-21</time>
+                  </div>
+                  <p th:text="${item.message}">Nội dung trạng thái...</p>
+                </div>
+              </article>
+              <div class="timeline-empty" th:if="${#lists.isEmpty(selectedTimeline)}">
+                Chưa có lịch sử trạng thái trong RequestStatusHistory hoặc ForwardingLog.
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel">
+            <h3>Trao đổi</h3>
+            <div class="chat-empty">
+              <p>Chưa có cuộc trao đổi nào.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="pagination" th:if="${selectedRequest == null}">
+        <button type="button" class="page-btn" disabled>&lt;</button>
+        <span>Trang 1 / 1</span>
+        <button type="button" class="page-btn" disabled>&gt;</button>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
