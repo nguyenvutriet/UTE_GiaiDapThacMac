@@ -607,7 +607,38 @@ html {
     gap: 10px;
     margin-top: 15px;
 }
+/* 1. Giới hạn chiều cao và tạo thanh cuộn cho danh sách bình luận */
+.comment-list {
+    max-height: 300px; /* Độ cao tối đa trước khi xuất hiện thanh cuộn */
+    overflow-y: auto;  /* Hiện thanh cuộn dọc khi quá dài */
+    padding-right: 5px;
+    margin-bottom: 10px;
+}
 
+/* Tùy chỉnh thanh cuộn cho đẹp (kiểu Facebook/Modern) */
+.comment-list::-webkit-scrollbar {
+    width: 6px;
+}
+.comment-list::-webkit-scrollbar-thumb {
+    background-color: #ccd0d5;
+    border-radius: 10px;
+}
+
+/* 2. Ghim khung nhập bình luận ở dưới đáy của comment-container */
+.comment-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 400px; /* Tổng chiều cao của cả khu vực bình luận */
+}
+
+.comment-input-area {
+    position: sticky;  /* Ghim phần tử */
+    bottom: 0;         /* Dính vào đáy */
+    background: #f8fafc; /* Phải trùng màu nền để không bị lộ nội dung bên dưới khi cuộn */
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    z-index: 10;
+}
 .mini-avatar {
     width: 32px;
     height: 32px;
