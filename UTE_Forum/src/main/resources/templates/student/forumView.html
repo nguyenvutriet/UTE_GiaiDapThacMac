@@ -105,7 +105,6 @@
                 <th:block th:case="*">👍 Thích</th:block>
             </span>
         </span>
-                                <span class="reaction-count" th:text="${post.totalReactions}">0</span>
                             </button>
 
                             <div class="post-reaction-box">
@@ -118,11 +117,22 @@
                             </div>
                         </div>
 
+                        <button type="button" class="post-main-reaction-btnn btn-show-reactions" th:data-post-id="${post.id}">
+                            <div class="reaction-icons-stack">
+                                <span th:each="icon : ${post.topReactionIcons}" class="mini-icon" th:text="${icon}"></span>
+                            </div>
 
-                        <button class="action-btn"
-                                th:data-id="${post.id}"
-                                onclick="toggleComments(this.getAttribute('data-id'))">
-                            💬 <span th:text="${post.commentCount} + ' Bình luận'">0 Bình luận</span>
+                            <span class="reaction-count js-reaction-count"
+                                  th:text="${post.totalReactions > 0 ? post.totalReactions : ''}"></span>
+                        </button>
+<!--                        <button class="action-btn"-->
+<!--                                th:data-id="${post.id}"-->
+<!--                                onclick="toggleComments(this.getAttribute('data-id'))">-->
+<!--                            💬 <span th:text="${post.commentCount} + ' Bình luận'">0 Bình luận</span>-->
+<!--                        </button>-->
+                        <button class="action-btn" th:data-id="${post.id}" onclick="toggleComments(this.getAttribute('data-id'))">
+                            💬 <span class="js-comment-count" th:id="'cmt-count-' + ${post.id}"
+                                    th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
                         </button>
                         <button class="action-btn">🔗 <span>Chia sẻ</span></button>
                     </div>
@@ -432,22 +442,23 @@
     }
 
     function updateModalCommentCountUI() {
-        // Tìm cái span có id là modal-total-count mà mình đã đặt trong HTML
-        const modalCountSpan = document.getElementById('modal-total-count');
+        // 1. Tìm cái span chứa số (nơi hiển thị con số thuần túy)
+        let modalCountSpan = document.getElementById('modal-total-count');
         const modalHeaderH4 = document.querySelector('.modal-comments-area h4');
 
         if (modalCountSpan) {
-            let currentCount = parseInt(modalCountSpan.innerText) || 0;
+            // Lấy con số hiện tại, ép kiểu về số nguyên
+            let currentCount = parseInt(modalCountSpan.innerText.match(/\d+/)) || 0;
+            // Ghi đè con số mới (Cộng dồn chuẩn)
             modalCountSpan.innerText = currentCount + 1;
         }
-
-        // Cập nhật luôn cái chữ ở tiêu đề cho chắc cú
-        if (modalHeaderH4 && !modalCountSpan) {
+        // 2. Trường hợp chưa có span (có thể là lần đầu hoặc HTML bị render lại)
+        else if (modalHeaderH4) {
             let countMatch = modalHeaderH4.innerText.match(/\d+/);
-            if (countMatch) {
-                let newCount = parseInt(countMatch[0]) + 1;
-                modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
-            }
+            let newCount = countMatch ? (parseInt(countMatch[0]) + 1) : 1;
+
+            // Vẽ lại tiêu đề và đặt ID cho lần sau tìm dễ hơn
+            modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
         }
     }
 
@@ -464,14 +475,30 @@
     }
 
     // 4. CÁC HÀM PHỤ TRỢ
+    // function updateCommentCountUI(requestId) {
+    //     const btn = document.querySelector(`button[data-id="${requestId}"]`);
+    //     if (btn) {
+    //         const span = btn.querySelector('span');
+    //         if (span) {
+    //             let count = parseInt(span.innerText.match(/\d+/)) || 0;
+    //             span.innerText = (count + 1) + " Bình luận";
+    //         }
+    //     }
+    // }
     function updateCommentCountUI(requestId) {
-        const btn = document.querySelector(`button[data-id="${requestId}"]`);
-        if (btn) {
-            const span = btn.querySelector('span');
-            if (span) {
-                let count = parseInt(span.innerText.match(/\d+/)) || 0;
-                span.innerText = (count + 1) + " Bình luận";
-            }
+        // 1. Tìm đúng cái thẻ span chứa số bình luận ở ngoài trang chủ
+        // Lưu ý: ID này phải khớp với th:id="'cmt-count-' + ${post.id}" trong HTML
+        const countSpan = document.getElementById(`cmt-count-${requestId}`);
+
+        if (countSpan) {
+            // Tách lấy con số từ chuỗi (Ví dụ "1 Bình luận" -> lấy số 1)
+            let currentText = countSpan.innerText;
+            let currentCount = parseInt(currentText.match(/\d+/)) || 0;
+
+            currentCount++; // Cộng dồn thêm 1
+
+            // Ghi đè toàn bộ bằng dấu "=" (Tuyệt đối không dùng +=)
+            countSpan.innerText = currentCount + " Bình luận";
         }
     }
 
@@ -687,104 +714,6 @@
         }
     }
 
-    // document.addEventListener('DOMContentLoaded', function () {
-    //     document.querySelectorAll('.post-reaction-bar').forEach(bar => {
-    //         const mainBtn = bar.querySelector('.post-main-reaction-btn');
-    //         const box = bar.querySelector('.post-reaction-box');
-    //
-    //         let timeoutId;
-    //
-    //         // Khi hover vào nút chính → show box
-    //         mainBtn.addEventListener('mouseenter', () => {
-    //             clearTimeout(timeoutId);
-    //             box.style.visibility = 'visible';
-    //             box.style.opacity = '1';
-    //         });
-    //
-    //         // Khi rê chuột ra khỏi nút chính → delay hide box
-    //         mainBtn.addEventListener('mouseleave', () => {
-    //             timeoutId = setTimeout(() => {
-    //                 box.style.visibility = 'hidden';
-    //                 box.style.opacity = '0';
-    //             }, 300); // 300ms delay để k bị tắt nhanh
-    //         });
-    //
-    //         // Khi hover vào box → giữ mở
-    //         box.addEventListener('mouseenter', () => {
-    //             clearTimeout(timeoutId);
-    //             box.style.visibility = 'visible';
-    //             box.style.opacity = '1';
-    //         });
-    //
-    //         // Khi rê ra khỏi box → ẩn box
-    //         box.addEventListener('mouseleave', () => {
-    //             timeoutId = setTimeout(() => {
-    //                 box.style.visibility = 'hidden';
-    //                 box.style.opacity = '0';
-    //             }, 300);
-    //         });
-    //
-    //         // Click chọn reaction
-    //         box.querySelectorAll('.post-reaction-btn').forEach(btn => {
-    //             btn.addEventListener('click', e => {
-    //                 e.stopPropagation();
-    //                 const type = btn.getAttribute('data-type');
-    //                 mainBtn.querySelector('span:first-child').textContent = type;
-    //
-    //                 // TODO: gọi API backend để lưu reaction
-    //                 // fetch(`/api/forum/react?postId=${mainBtn.dataset.id}&type=${type}`)
-    //
-    //                 // Ẩn box sau khi chọn
-    //                 box.style.visibility = 'hidden';
-    //                 box.style.opacity = '0';
-    //             });
-    //         });
-    //     });
-    // });
-    // document.querySelectorAll('.post-reaction-bar').forEach(bar => {
-    //     const mainBtn = bar.querySelector('.post-main-reaction-btn');
-    //     const box = bar.querySelector('.post-reaction-box');
-    //
-    //     let timeoutId;
-    //
-    //     mainBtn.addEventListener('mouseenter', () => {
-    //         clearTimeout(timeoutId);
-    //         box.style.visibility = 'visible';
-    //         box.style.opacity = '1';
-    //     });
-    //
-    //     mainBtn.addEventListener('mouseleave', () => {
-    //         timeoutId = setTimeout(() => { box.style.visibility = 'hidden'; box.style.opacity = '0'; }, 300);
-    //     });
-    //
-    //     box.addEventListener('mouseenter', () => { clearTimeout(timeoutId); box.style.visibility = 'visible'; box.style.opacity = '1'; });
-    //     box.addEventListener('mouseleave', () => {
-    //         timeoutId = setTimeout(() => { box.style.visibility = 'hidden'; box.style.opacity = '0'; }, 300);
-    //     });
-    //
-    //     // Click icon reaction
-    //     box.querySelectorAll('.post-reaction-btn').forEach(btn => {
-    //         btn.addEventListener('click', async e => {
-    //             e.stopPropagation();
-    //             const type = btn.getAttribute('data-type');
-    //             const postId = mainBtn.dataset.id;
-    //
-    //             // Update button text
-    //             mainBtn.querySelector('span:first-child').textContent = type;
-    //
-    //             try {
-    //                 const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, { method: 'POST' });
-    //                 const data = await res.json();
-    //                 const total = Object.values(data).reduce((a,b)=>a+b,0);
-    //                 mainBtn.querySelector('span:last-child').textContent = total;
-    //
-    //                 // Hide box
-    //                 box.style.visibility = 'hidden';
-    //                 box.style.opacity = '0';
-    //             } catch(err) { console.error(err); }
-    //         });
-    //     });
-    // });
 
     const reactions = {
         'LIKE':  { text: 'Thích', color: '#0866ff', icon: '👍' },
@@ -823,22 +752,91 @@
         // Lưu lại trạng thái vào attribute để các hàm khác đọc
         btn.setAttribute('data-current-reaction', isVoted ? activeType : "");
     }
+    function updateReactionUII(postId, apiData) {
+        const emojiMap = { LIKE: '👍', LOVE: '❤️', HAHA: '😆', WOW: '😮', SAD: '😢', ANGRY: '😡' };
 
+        // 1. Tìm Top 3 icons
+        const topIcons = Object.entries(apiData)
+            .filter(([type, count]) => count > 0)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([type, count]) => emojiMap[type.toUpperCase()]);
+
+        // 2. Tính tổng
+        const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+
+        // 3. Tìm nút (Lưu ý dùng đúng [data-post-id])
+        const btn = document.querySelector(`.btn-show-reactions[data-post-id="${postId}"]`);
+
+        if (btn) {
+            // Cập nhật Icons
+            const stackDiv = btn.querySelector('.reaction-icons-stack');
+            if (stackDiv) {
+                stackDiv.innerHTML = topIcons.map(icon => `<span class="mini-icon">${icon}</span>`).join('');
+            }
+
+            // Cập nhật Số lượng (Tìm đúng class js-reaction-count)
+            const countSpan = btn.querySelector('.js-reaction-count');
+            if (countSpan) {
+                countSpan.textContent = total > 0 ? total : '';
+            }
+        }
+    }
+
+    // async function sendPostReaction(postId, type) {
+    //     try {
+    //         const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, { method: 'POST' });
+    //         if (!res.ok) throw new Error('API Error');
+    //
+    //         const apiData = await res.json();
+    //
+    //         // Tính tổng từ Map backend trả về
+    //         const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+    //
+    //         // Sau khi gọi API, backend trả về map counts, ta cần biết type hiện tại
+    //         // Logic: Nếu số lượng của type vừa bấm > 0, coi như đang active type đó
+    //         const currentActive = apiData[type] > 0 ? type : "";
+    //
+    //         updateReactionUI(postId, currentActive, total);
+    //         updateReactionUII(postId, newReactions);
+    //
+    //     } catch (err) {
+    //         console.error('Lỗi khi vote:', err);
+    //     }
+    // }
     async function sendPostReaction(postId, type) {
         try {
-            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, { method: 'POST' });
+            // Sử dụng URLSearchParams hoặc FormData tùy theo Backend của bạn
+            // Ở đây mình dùng URLSearchParams vì thấy bạn nối chuỗi vào fetch
+            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, {
+                method: 'POST'
+            });
+
             if (!res.ok) throw new Error('API Error');
 
-            const apiData = await res.json();
+            const apiData = await res.json(); // Map<String, Long> mới nhất từ server
 
-            // Tính tổng từ Map backend trả về
+            // 1. Tính tổng số lượng từ Map trả về
             const total = Object.values(apiData).reduce((a, b) => a + b, 0);
 
-            // Sau khi gọi API, backend trả về map counts, ta cần biết type hiện tại
-            // Logic: Nếu số lượng của type vừa bấm > 0, coi như đang active type đó
-            const currentActive = apiData[type] > 0 ? type : "";
+            // 2. Xác định xem người dùng ĐANG thả loại nào hay là vừa UNVOTE
+            // Lưu ý: Để biết chính xác isVoted, Backend nên trả về thêm một field currentType.
+            // Tạm thời logic xử lý UI nút chính:
+            const btn = document.querySelector(`.post-main-reaction-btn[data-id='${postId}']`);
+            let currentActive = "";
 
+            // Kiểm tra xem nút có đang mang màu của type này không (để biết là Unvote hay Vote mới)
+            if (btn && btn.getAttribute('data-current-reaction') === type) {
+                currentActive = ""; // Vừa Unvote
+            } else {
+                currentActive = type; // Vừa Vote mới
+            }
+
+            // 3. Cập nhật giao diện nút bấm chính (Màu sắc, chữ "Thích/Haha")
             updateReactionUI(postId, currentActive, total);
+
+            // 4. CẬP NHẬT CỤM ICON CHỒNG NHAU (Dùng apiData thay vì newReactions)
+            updateReactionUII(postId, apiData);
 
         } catch (err) {
             console.error('Lỗi khi vote:', err);
@@ -885,6 +883,90 @@
             });
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Lắng nghe sự kiện click trên toàn bộ document (Event Delegation)
+        // Cách này giúp code chạy được cả với các bài post load thêm bằng AJAX
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-show-reactions');
+            if (btn) {
+                const postId = btn.getAttribute('data-post-id');
+                if (postId) {
+                    showPostReactionDetail(postId);
+                }
+            }
+        });
+    });
+
+    async function showPostReactionDetail(postId) {
+        // Giữ nguyên logic fetch API của bạn ở đây...
+        try {
+            const res = await fetch(`/api/forum/reactors/details?postId=${postId}`);
+            if (!res.ok) throw new Error("Lỗi fetch");
+            const data = await res.json();
+
+            const formattedData = data.map(u => ({
+                type: u.type,
+                userName: u.fullName,
+                userId: u.userId
+            }));
+
+            renderReactionModall(formattedData);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function renderReactionModall(list) {
+        const reactionData = {
+            LIKE: '👍',
+            LOVE: '❤️',
+            HAHA: '😆',
+            WOW: '😮',
+            SAD: '😢',
+            ANGRY: '😡'
+        };
+
+        // Đã cập nhật class: reaction-modal -> post-reaction-modal để khớp CSS tránh ghi đè
+        let html = `
+    <div class="reaction-modal-overlay" onclick="closeReactionModal(event)">
+        <div class="post-reaction-modal">
+            <h3 class="reaction-title">Người bày tỏ cảm xúc</h3>
+            <div class="reaction-list">
+    `;
+
+        if (list.length === 0) {
+            html += `<div style="padding: 30px; text-align: center; color: #65676b;">Chưa có cảm xúc nào.</div>`;
+        }
+
+        list.forEach(u => {
+            html += `
+        <div class="reaction-user">
+            <span class="reaction-icon">${reactionData[u.type] || '👍'}</span>
+            <div class="user-info">
+                <b class="user-name">${u.userName}</b>
+                <small class="user-id">@${u.userId}</small>
+            </div>
+        </div>
+        `;
+        });
+
+        html += `
+            </div>
+        </div>
+    </div>
+    `;
+
+        // Chèn modal vào cuối body
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+
+    function closeReactionModal(e) {
+        // Chỉ đóng khi click vào lớp nền overlay (bên ngoài khung trắng)
+        if (e.target.classList.contains("reaction-modal-overlay")) {
+            e.target.remove();
+        }
+    }
 
 
 </script>

@@ -936,17 +936,71 @@ html {
     display: inline-block;
 }
 
+/* Container chính của nút */
 .post-main-reaction-btn {
-    padding: 6px 12px;
-    border: none;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     border-radius: 18px;
+    border: none;
     cursor: pointer;
+    transition: background 0.2s;
+    background: transparent;
+}
+
+.post-main-reaction-btnn {
+    display: inline-flex;
+    align-items: center;
+    background: #f0f2f5; /* Màu nền xám nhạt cho nút (tùy chọn) */
+    padding: 4px 10px;
+    border-radius: 18px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.post-main-reaction-btn:hover {
+    background: #e4e6eb;
+}
+
+/* Cụm icon tiêu biểu */
+.reaction-icons-stack {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    margin-right: 2px; /* Khoảng cách nhỏ với con số */
+}
+
+.mini-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 14px;
+    background: white;
+    border-radius: 50%;
+    border: 2px solid #fff; /* Viền trắng để tách các icon khi chồng nhau */
+    margin-left: -5px; /* Ép các icon chồng lên nhau 5px */
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: background 0.2s, color 0.2s;
-    font-weight: 500;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
 
+/* Icon đầu tiên không cần margin-left âm */
+.mini-icon:first-child {
+    margin-left: 0;
+    z-index: 3;
+}
+.mini-icon:nth-child(2) { z-index: 2; }
+.mini-icon:nth-child(3) { z-index: 1; }
+
+/* Con số lượt tương tác */
+.reaction-count {
+    font-size: 13px;
+    color: #65676b;
+    font-weight: 500;
+    margin-left: 4px; /* Khoảng cách vừa phải với cụm icon */
+    line-height: 1;
 }
 
 .post-reaction-box {
@@ -991,4 +1045,99 @@ html {
     left: 0;
     /* ... các style khác của bạn ... */
 }
+
+/* Container lớp phủ toàn màn hình */
+.reaction-modal-overlay {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.45); /* Màu nền tối nhẹ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999 !important; /* Ưu tiên hiển thị trên cùng */
+    backdrop-filter: blur(2px); /* Hiệu ứng làm mờ nền phía sau */
+}
+
+/* Khung nội dung Modal */
+.post-reaction-modal {
+    background: #ffffff !important;
+    width: 90%;
+    max-width: 420px;
+    max-height: 80vh;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+/* Tiêu đề Modal */
+.post-reaction-modal .reaction-title {
+    padding: 16px;
+    margin: 0;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    border-bottom: 1px solid #e5e5e5;
+    color: #1c1e21;
+}
+
+/* Danh sách người dùng */
+.post-reaction-modal .reaction-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+/* Từng dòng người dùng */
+.post-reaction-modal .reaction-user {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    transition: background 0.2s;
+    cursor: default;
+}
+
+.post-reaction-modal .reaction-user:hover {
+    background-color: #f2f2f2;
+}
+
+/* Icon cảm xúc */
+.post-reaction-modal .reaction-icon {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+}
+
+/* Thông tin Text */
+.post-reaction-modal .user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-reaction-modal .user-name {
+    font-size: 15px;
+    color: #050505;
+    font-weight: 600;
+}
+
+.post-reaction-modal .user-id {
+    font-size: 13px;
+    color: #65676b;
+}
+
+/* Hiệu ứng xuất hiện mượt mà */
+@keyframes modalFadeIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
 

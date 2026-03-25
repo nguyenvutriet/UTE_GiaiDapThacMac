@@ -1,12 +1,10 @@
 package nvt.vn.ute_forum.dto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ForumPostDTO {
-
     private String id;
     private String subject;
     private String description;
@@ -16,99 +14,59 @@ public class ForumPostDTO {
     private String userName;
     private List<String> categories;
     private long commentCount;
-    // 🔥 THÊM 2 CÁI NÀY
     private String reactionType;
-    private String reactionTypeLower;  // "like", "love" để dùng trong class CSS
-
+    private String reactionTypeLower;
     private Map<String, Long> reactions;
     private long totalReactions;
 
+    // 🔥 HÀM QUAN TRỌNG NHẤT ĐỂ HẾT LỖI 500
+    // Thymeleaf sẽ gọi hàm này thông qua cú pháp: post.topReactionIcons
+    public List<String> getTopReactionIcons() {
+        if (this.reactions == null || this.reactions.isEmpty()) {
+            return Collections.emptyList();
+        }
 
+        // Bản đồ chuyển đổi tên Reaction sang Emoji
+        Map<String, String> emojiMap = Map.of(
+                "LIKE", "👍",
+                "LOVE", "❤️",
+                "HAHA", "😆",
+                "WOW", "😮",
+                "SAD", "😢",
+                "ANGRY", "😡"
+        );
 
-    // Getter and Setter for id
-    public String getId() {
-        return id;
+        return this.reactions.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0) // Chỉ lấy những loại có người thả
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed()) // Nhiều nhất lên đầu
+                .limit(3) // Lấy top 3 cái nhiều nhất
+                .map(entry -> emojiMap.getOrDefault(entry.getKey().toUpperCase(), "👍"))
+                .collect(Collectors.toList());
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    // Getter and Setter for subject
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    // Getter and Setter for description
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    // Getter and Setter for status
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    // Getter and Setter for date
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDateTime date) {
-        this.date = date;
-    }
-
-    // Getter and Setter for departmentName
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
-    }
-
-    // Getter and Setter for userName
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    // Getter and Setter for categories
-    public List<String> getCategories() {
-        return categories;
-    }
-
-    public void setCategories(List<String> categories) {
-        this.categories = categories;
-    }
-    public long getCommentCount() {
-        return commentCount;
-    }
-
-    public void setCommentCount(long commentCount) {
-        this.commentCount = commentCount;
-    }
-    // 🔥 Getter Setter mới
+    // --- Giữ nguyên các Getter/Setter cũ của bạn bên dưới ---
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getSubject() { return subject; }
+    public void setSubject(String subject) { this.subject = subject; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public LocalDateTime getDate() { return date; }
+    public void setDate(LocalDateTime date) { this.date = date; }
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
+    public List<String> getCategories() { return categories; }
+    public void setCategories(List<String> categories) { this.categories = categories; }
+    public long getCommentCount() { return commentCount; }
+    public void setCommentCount(long commentCount) { this.commentCount = commentCount; }
     public String getReactionType() { return reactionType; }
     public void setReactionType(String reactionType) { this.reactionType = reactionType; }
     public String getReactionTypeLower() { return reactionTypeLower; }
     public void setReactionTypeLower(String reactionTypeLower) { this.reactionTypeLower = reactionTypeLower; }
-
     public Map<String, Long> getReactions() { return reactions; }
     public void setReactions(Map<String, Long> reactions) { this.reactions = reactions; }
     public long getTotalReactions() {
@@ -116,5 +74,4 @@ public class ForumPostDTO {
         return reactions.values().stream().mapToLong(Long::longValue).sum();
     }
     public void setTotalReactions(long totalReactions) { this.totalReactions = totalReactions; }
-
 }

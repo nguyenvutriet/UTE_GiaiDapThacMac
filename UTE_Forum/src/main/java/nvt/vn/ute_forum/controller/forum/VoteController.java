@@ -25,4 +25,5 @@ public class VoteController {
         List<ReactionDetailDTO> details = voteService.getReactionDetails(postId);
         return ResponseEntity.ok(details);
     }
+
 }
