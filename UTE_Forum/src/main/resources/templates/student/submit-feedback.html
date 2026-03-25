@@ -22,9 +22,9 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+      <a class="nav-item " th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
       <a class="nav-item active" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
-      <a class="nav-item" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+      <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
       <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
       <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
     </nav>
@@ -46,7 +46,7 @@
 
       <div class="form-alert" th:if="${error}" th:text="${error}">Có lỗi xảy ra</div>
 
-      <form class="send-grid" th:action="@{/feedback/send}" method="post" enctype="multipart/form-data">
+      <form class="send-grid" th:action="@{/api/submit}" method="post" enctype="multipart/form-data">
         <article class="panel panel-large">
           <h2><span class="panel-icon">&#128196;</span>Chi tiết góp ý</h2>
 

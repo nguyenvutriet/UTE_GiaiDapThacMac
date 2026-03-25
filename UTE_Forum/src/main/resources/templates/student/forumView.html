@@ -38,9 +38,9 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" href="#"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
-            <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
-            <a class="nav-item active" href="#"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
             <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
@@ -79,6 +79,20 @@
                         <div class="post-content">
                             <h3 class="post-title" th:text="${post.subject}">Tiêu đề</h3>
                             <p class="post-text" th:text="${post.description}">Nội dung...</p>
+                        </div>
+
+                        <div class="post-attachments" th:if="${not #lists.isEmpty(post.attachments)}">
+                            <p><b>Tệp đính kèm:</b></p>
+                            <ul>
+                                <li th:each="file : ${post.attachments}">
+                                    <a th:href="${file.fileUrl}"
+                                       th:text="${file.fileName}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       onclick="event.stopPropagation()">attachment</a>
+                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>
+                                </li>
+                            </ul>
                         </div>
                     </div>
 

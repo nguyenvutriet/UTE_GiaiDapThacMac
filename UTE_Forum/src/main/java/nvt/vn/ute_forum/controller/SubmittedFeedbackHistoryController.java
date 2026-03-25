@@ -244,7 +244,7 @@ public class SubmittedFeedbackHistoryController {
             String rawStatus = normalizeStatus(history.getStatus());
             String resolvedStatus = translateStatus(history.getStatus());
             String message = buildTimelineMessage(rawStatus, resolvedStatus, occurredAt, selectedRequest, sortedForwardingLogs, categoryContext);
-            
+
             timeline.add(new TimelineItem(
                     resolvedStatus,
                     message,
@@ -266,7 +266,6 @@ public class SubmittedFeedbackHistoryController {
                                         List<ForwardingLog> sortedForwardingLogs,
                                         String categoryContext) {
         ForwardingLog matchedLog = findLatestForwardingAtOrBefore(occurredAt, sortedForwardingLogs);
-        String initialDepartment = safeDepartmentName(request.getDepartment() == null ? null : request.getDepartment().getName());
         String handlingDepartmentAtTime = resolveDepartmentAt(occurredAt, request, sortedForwardingLogs);
 
         if ("PENDING".equals(rawStatus)) {

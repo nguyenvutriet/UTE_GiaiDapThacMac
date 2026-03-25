@@ -21,7 +21,7 @@ public class FileAttachmentService {
     @Autowired
     private FileAttachmentRepo fileAttachmentRepo;
 
-    @Value("${app.upload.dir:uploads}")
+    @Value("${app.upload.dir:uploads/}")
     private String uploadDir;
 
     public void saveRequestAttachments(Request request, MultipartFile[] attachments) throws IOException {

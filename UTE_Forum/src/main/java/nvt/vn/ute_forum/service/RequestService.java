@@ -55,6 +55,7 @@ public class RequestService {
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
                     dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
                     dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
+                    dto.setAttachments(mapAttachments(r));
 
                     dto.setCategories(r.getCategories().stream()
                             .map(c -> c.getSubject())
@@ -153,6 +154,7 @@ public class RequestService {
         dto.setDate(r.getTimeCreate()); // Dùng timeCreate cho khớp với getPublicPosts
         dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
         dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
+        dto.setAttachments(mapAttachments(r));
 
         // Categories
         dto.setCategories(r.getCategories().stream()
@@ -193,6 +195,24 @@ public class RequestService {
 
         return dto;
     }
+
+    private List<ForumPostDTO.AttachmentDTO> mapAttachments(Request request) {
+        if (request == null || request.getFileAttachments() == null || request.getFileAttachments().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return request.getFileAttachments().stream()
+                .filter(file -> file != null && file.getFileUrl() != null && !file.getFileUrl().isBlank())
+                .map(file -> {
+                    ForumPostDTO.AttachmentDTO attachmentDTO = new ForumPostDTO.AttachmentDTO();
+                    attachmentDTO.setFileName(file.getFileName() == null || file.getFileName().isBlank() ? "Tep dinh kem" : file.getFileName());
+                    attachmentDTO.setFileUrl(file.getFileUrl());
+                    attachmentDTO.setFileType(file.getFileType() == null ? "unknown" : file.getFileType());
+                    return attachmentDTO;
+                })
+                .collect(Collectors.toList());
+    }
+
     public List<Request> getRequestsByUserId(String userId) {
         if (userId == null || userId.isBlank()) {
             return Collections.emptyList();

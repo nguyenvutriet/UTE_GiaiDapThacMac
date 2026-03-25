@@ -18,6 +18,37 @@ public class ForumPostDTO {
     private String reactionTypeLower;
     private Map<String, Long> reactions;
     private long totalReactions;
+    private List<AttachmentDTO> attachments;
+
+    public static class AttachmentDTO {
+        private String fileName;
+        private String fileUrl;
+        private String fileType;
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
+        public String getFileUrl() {
+            return fileUrl;
+        }
+
+        public void setFileUrl(String fileUrl) {
+            this.fileUrl = fileUrl;
+        }
+
+        public String getFileType() {
+            return fileType;
+        }
+
+        public void setFileType(String fileType) {
+            this.fileType = fileType;
+        }
+    }
 
     // 🔥 HÀM QUAN TRỌNG NHẤT ĐỂ HẾT LỖI 500
     // Thymeleaf sẽ gọi hàm này thông qua cú pháp: post.topReactionIcons
@@ -69,6 +100,8 @@ public class ForumPostDTO {
     public void setReactionTypeLower(String reactionTypeLower) { this.reactionTypeLower = reactionTypeLower; }
     public Map<String, Long> getReactions() { return reactions; }
     public void setReactions(Map<String, Long> reactions) { this.reactions = reactions; }
+    public List<AttachmentDTO> getAttachments() { return attachments; }
+    public void setAttachments(List<AttachmentDTO> attachments) { this.attachments = attachments; }
     public long getTotalReactions() {
         if(reactions == null) return 0;
         return reactions.values().stream().mapToLong(Long::longValue).sum();

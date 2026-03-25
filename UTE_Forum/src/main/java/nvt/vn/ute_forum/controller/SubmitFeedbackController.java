@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Controller
 public class SubmitFeedbackController {
@@ -84,7 +85,7 @@ public class SubmitFeedbackController {
             request.setSubject(subject);
             request.setDescription(description);
             request.setCurrentStatus("PENDING");
-            request.setTimeCreate(LocalDate.now());
+            request.setTimeCreate(LocalDateTime.now());
             request.setPostStatus(publicPost != null ? "PUBLIC" : "PRIVATE");
             request.setDepartment(department);
             request.setUser(user);
