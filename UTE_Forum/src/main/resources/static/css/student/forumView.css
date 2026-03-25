@@ -1171,4 +1171,112 @@ html {
     to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes zoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-post-info .post-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+}
+
+.modal-post-text h3 {
+    margin: 15px 0 10px 0;
+    font-size: 1.4rem;
+}
+
+.modal-post-text p {
+    line-height: 1.5;
+    color: #1c1e21;
+    font-size: 1.05rem;
+}
+
+.comment-container {
+    border-top: 1px solid #eee;
+    background: #f8fafc;
+    padding: 15px;
+}
+
+.post-attachments {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eef1f4;
+}
+
+.post-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+    max-width: 100%;
+}
+
+.post-image-link {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid #e6e9ef;
+    background: #f0f2f5;
+    overflow: hidden;
+    padding: 6px;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.post-image-grid .post-image-link:only-child {
+    grid-column: 1 / -1;
+    aspect-ratio: 16 / 9;
+    max-height: 460px;
+}
+
+.post-image-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.post-image-item {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.post-file-list {
+    margin: 10px 0 0 18px;
+    color: #334155;
+}
+
+@media (max-width: 768px) {
+    .post-image-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .post-image-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-attachments {
+    margin-top: 12px;
+}
+
+.modal-image-grid {
+    max-width: 100%;
+}
+
+.modal-file-list {
+    margin-top: 8px;
+}
+
 
