@@ -71,17 +71,33 @@ public class ForumController {
 
     @PostMapping("/react")
     @ResponseBody
-    public Map<String, Long> reactPost(
-            @RequestParam String postId,
-            @RequestParam ReactionType type,
-            @AuthenticationPrincipal UserDetails userDetails
+    public ResponseEntity<?> reactPost( // Đổi sang ResponseEntity cho chuyên nghiệp má ơi
+                                        @RequestParam String postId,
+                                        @RequestParam String type, // Nhận String rồi ép kiểu trong Service cho an toàn, tránh lỗi 400
+                                        @AuthenticationPrincipal UserDetails userDetails
     ) {
-        if (userDetails == null) throw new RuntimeException("Not authenticated");
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body("Chưa đăng nhập má ơi!");
+        }
 
         Users user = usersRepo.findByEmail(userDetails.getUsername());
-        if (user == null) throw new RuntimeException("User not found");
+        if (user == null) {
+            return ResponseEntity.status(404).body("Không tìm thấy user");
+        }
 
-        return requestService.votePost(postId, user.getId(), type);
+        try {
+            // Ép kiểu String sang Enum ReactionType
+            ReactionType reactionType = ReactionType.valueOf(type.toUpperCase());
+
+            // Gọi Service và nhận về một Object bọc cả (Counts + CurrentType)
+            Map<String, Object> result = requestService.votePost(postId, user.getId(), reactionType);
+
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Loại reaction không hợp lệ!");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi rồi: " + e.getMessage());
+        }
     }
 
     @GetMapping("/filter")

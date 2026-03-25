@@ -422,79 +422,6 @@
         }
     }
 
-    // // 2. TÍNH NĂNG MỞ MODAL
-    // function openPostModal(post) {
-    //     document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;
-    //     document.getElementById('detail-user-name').innerText = post.userName;
-    //
-    //     // Lấy ngày tháng từ thẻ ngoài danh sách cho đồng bộ
-    //     const postCard = event.currentTarget;
-    //     const dateText = postCard.querySelector('.display-date-text').innerText;
-    //     document.getElementById('detail-post-date').innerText = dateText;
-    //     document.getElementById('detail-subject').innerText = post.subject;
-    //     document.getElementById('detail-description').innerText = post.description;
-    //
-    //     const commentList = document.getElementById('modal-comment-list');
-    //     commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải...</p>';
-    //
-    //     fetch('/api/comments/' + post.id)
-    //         .then(res => res.json())
-    //         .then(data => {
-    //             commentList.innerHTML = '';
-    //             const countHeader = document.querySelector('.modal-comments-area h4');
-    //             if (countHeader) countHeader.innerText = `Tất cả bình luận (${data.length})`;
-    //
-    //             if (data.length === 0) {
-    //                 commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
-    //             } else {
-    //                 data.forEach(cmt => {
-    //                     commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
-    //                 });
-    //             }
-    //         });
-    //
-    //     const modalCount = document.getElementById('modal-total-count');
-    //     if (modalCount) modalCount.innerText = post.commentCount || 0;
-    //
-    //     document.getElementById('postModal').style.display = 'flex';
-    //     document.body.style.overflow = 'hidden';
-    // }
-    //
-    // // 3. HÀM GỬI BÌNH LUẬN DÙNG CHUNG
-    // function executeSendComment(requestId, content, listElement, inputElement) {
-    //     const payload = {requestId: String(requestId), content: content};
-    //     fetch('/api/comments/add', {
-    //         method: 'POST',
-    //         headers: {'Content-Type': 'application/json'},
-    //         body: JSON.stringify(payload)
-    //     })
-    //         .then(res => res.json())
-    //         .then(newCmt => {
-    //             if (listElement.innerHTML.includes("Chưa có bình luận")) listElement.innerHTML = '';
-    //             listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
-    //             inputElement.value = '';
-    //             updateCommentCountUI(requestId);
-    //             // 2. Tăng số ở trong Modal (MỚI THÊM NÈ MÁ)
-    //             // Nếu bài viết đang mở trong Modal trùng với bài vừa comment
-    //             if (activePostId == requestId) {
-    //                 updateModalCommentCountUI();
-    //             }
-    //
-    //             // Nếu gửi ở ngoài mà Modal cũng đang mở đúng bài đó thì cập nhật Modal luôn
-    //             if (activePostId == requestId && listElement.id !== 'modal-comment-list') {
-    //                 const modalList = document.getElementById('modal-comment-list');
-    //                 if (modalList) {
-    //                     if (modalList.innerHTML.includes("Chưa có bình luận")) modalList.innerHTML = '';
-    //                     modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
-    //                 }
-    //             }
-    //
-    //             if (listElement.id === 'modal-comment-list') {
-    //                 const scrollBody = document.querySelector('.modal-scrollable-body');
-    //                 scrollBody.scrollTop = scrollBody.scrollHeight;
-    //             }
-    //         });
-    // }
     function isImageAttachment(file) {
         if (!file) return false;
 
@@ -599,41 +526,60 @@
 
     // 3. HÀM GỬI BÌNH LUẬN DÙNG CHUNG (FIXED LOGIC)
     function executeSendComment(requestId, content, listElement, inputElement) {
-        const payload = {requestId: String(requestId), content: content};
+        const payload = { requestId: String(requestId), content: content };
+
         fetch('/api/comments/add', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-            .then(res => res.json())
+            .then(res => {
+                // Nếu Server trả về 401 (Chưa đăng nhập) hoặc 403 (Cấm)
+                if (res.status === 401 || res.status === 403) {
+                    alert("Bạn cần đăng nhập để thực hiện chức năng này!");
+                    window.location.href = "/login";
+                    return;
+                }
+                if (!res.ok) throw new Error("Gửi bình luận thất bại");
+                return res.json();
+            })
             .then(newCmt => {
-                // Xóa chữ "Chưa có bình luận" nếu có
-                if (listElement.innerHTML.includes("Chưa có bình luận")) listElement.innerHTML = '';
+                if (!newCmt) return;
 
-                // Chèn comment mới vào danh sách đang thao tác
+                // Xóa thông báo "Chưa có bình luận" (Dùng class sẽ chuẩn hơn includes text)
+                const emptyMsg = listElement.querySelector('.no-comment-message') ||
+                    (listElement.innerText.includes("Chưa có bình luận") ? listElement : null);
+                if (emptyMsg && emptyMsg === listElement) listElement.innerHTML = '';
+                else if (emptyMsg) emptyMsg.remove();
+
+                // Chèn comment mới vào danh sách hiện tại
                 listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
                 inputElement.value = '';
 
-                // Cập nhật số lượng ngoài danh sách chính
+                // Cập nhật số lượng hiển thị ở bài viết ngoài danh sách chính
                 updateCommentCountUI(requestId);
 
-                // 🔥 SỬA LỖI 2: Cập nhật đồng bộ giữa Modal và ngoài danh sách
-                if (activePostId == requestId) {
+                // 🔥 Cập nhật đồng bộ giữa Modal và ngoài danh sách
+                if (typeof activePostId !== 'undefined' && activePostId == requestId) {
                     updateModalCommentCountUI(); // Tăng số lượng trong Modal
 
-                    // Nếu đang gửi ở ngoài mà Modal đang mở, thì chèn cmt vào Modal luôn
+                    // Nếu đang gửi ở danh sách ngoài mà Modal đang mở, chèn cmt vào Modal luôn
                     const modalList = document.getElementById('modal-comment-list');
                     if (modalList && listElement.id !== 'modal-comment-list') {
-                        if (modalList.innerHTML.includes("Chưa có bình luận")) modalList.innerHTML = '';
+                        if (modalList.innerText.includes("Chưa có bình luận")) modalList.innerHTML = '';
                         modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
                     }
                 }
 
-                // Tự động cuộn xuống cuối nếu gửi trong Modal
+                // Tự động cuộn xuống cuối nếu đang ở trong Modal
                 if (listElement.id === 'modal-comment-list') {
                     const scrollBody = document.querySelector('.modal-scrollable-body');
                     if (scrollBody) scrollBody.scrollTop = scrollBody.scrollHeight;
                 }
+            })
+            .catch(err => {
+                console.error("Lỗi gửi bình luận:", err);
+                alert("Có lỗi xảy ra, vui lòng thử lại sau.");
             });
     }
 
@@ -670,17 +616,7 @@
         if (input.value.trim() && activePostId) executeSendComment(activePostId, input.value.trim(), list, input);
     }
 
-    // 4. CÁC HÀM PHỤ TRỢ
-    // function updateCommentCountUI(requestId) {
-    //     const btn = document.querySelector(`button[data-id="${requestId}"]`);
-    //     if (btn) {
-    //         const span = btn.querySelector('span');
-    //         if (span) {
-    //             let count = parseInt(span.innerText.match(/\d+/)) || 0;
-    //             span.innerText = (count + 1) + " Bình luận";
-    //         }
-    //     }
-    // }
+
     function updateCommentCountUI(requestId) {
         // 1. Tìm đúng cái thẻ span chứa số bình luận ở ngoài trang chủ
         // Lưu ý: ID này phải khớp với th:id="'cmt-count-' + ${post.id}" trong HTML
@@ -699,34 +635,59 @@
     }
 
     function deleteComment(commentId) {
-        if (confirm("Xóa thiệt nha má?")) {
-            // 1. Tìm cái requestId chứa comment này trước khi xóa
-            // Mình tìm xem cái comment này đang nằm trong comment-list nào
+        if (confirm("Bạn muốn xoá bình luận này?")) {
+            // 1. Tìm thông tin bài viết (requestId) trước khi xóa
             const commentElement = document.getElementById(`cmt-${commentId}`);
             const parentList = commentElement ? commentElement.closest('.comment-list') : null;
-            let requestId = activePostId; // Mặc định lấy từ Modal nếu đang mở
 
+            // Ưu tiên lấy requestId từ Modal nếu đang mở, nếu không thì lấy từ ID của list ngoài
+            let requestId = (typeof activePostId !== 'undefined' && activePostId) ? activePostId : null;
             if (!requestId && parentList) {
-                // Nếu hông có trong Modal, lấy ID từ cái ID của comment-list (ví dụ: comment-list-123)
                 requestId = parentList.id.replace('comment-list-', '');
             }
 
-            fetch('/api/comments/delete/' + commentId, {method: 'DELETE'})
+            // 2. Gửi lệnh xóa lên Server
+            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })
                 .then(res => {
-                    if (res.ok) {
-                        // 2. Xóa tất cả các chỗ hiện cmt này (cả ngoài list và trong modal)
-                        document.querySelectorAll(`#cmt-${commentId}`).forEach(el => el.remove());
+                    if (res.status === 401) { alert("Chưa đăng nhập nha má!"); window.location.href = "/login"; return; }
+                    if (res.status === 403) { alert("Hông phải cmt của má, đừng xóa bậy!"); return; }
+                    if (!res.ok) throw new Error("Lỗi server");
+                    return res.text();
+                })
+                .then(msg => {
+                    if (!msg) return;
 
-                        // 3. Gọi hàm giảm số lượng cho đúng bài viết
-                        if (requestId) {
+                    // 🔥 BƯỚC 3: XÓA PHẦN TỬ TRÊN GIAO DIỆN (CẢ NGOÀI LẪN TRONG MODAL)
+                    // Tìm tất cả các thẻ có ID này (vì cmt có thể xuất hiện ở 2 nơi cùng lúc)
+                    const targets = document.querySelectorAll(`#cmt-${commentId}`);
+                    targets.forEach(el => {
+                        el.style.transition = 'all 0.3s ease';
+                        el.style.transform = 'translateX(20px)'; // Hiệu ứng trượt nhẹ khi biến mất
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 300);
+                    });
+
+                    // 🔥 BƯỚC 4: GỌI HÀM GIẢM SỐ LƯỢNG (CỦA MÁ ĐÃ CÓ)
+                    if (requestId) {
+                        // Đợi hiệu ứng xóa mờ dần một chút rồi mới giảm số cho đẹp
+                        setTimeout(() => {
                             decreaseCommentCountUI(requestId);
-                        }
-                        alert("Đã xóa xong rồi má!");
-                    } else {
-                        res.text().then(text => alert("Lỗi nè má: " + res.status + " - " + text));
+
+                            // 🔥 KIỂM TRA TRẠNG THÁI DANH SÁCH TRỐNG (TRONG MODAL)
+                            if (typeof activePostId !== 'undefined' && activePostId == requestId) {
+                                const modalList = document.getElementById('modal-comment-list');
+                                // Nếu sau khi xóa mà không còn con (children) nào, hiện thông báo trống
+                                if (modalList && modalList.children.length === 0) {
+                                    modalList.innerHTML = '<p class="text-center no-comment-message">Chưa có bình luận nào.</p>';
+                                }
+                            }
+                        }, 350);
                     }
                 })
-                .catch(err => alert("Lỗi kết nối server: " + err));
+                .catch(err => {
+                    console.error("Lỗi:", err);
+                    alert("Lỗi kết nối server rồi má ơi!");
+                });
         }
     }
 
@@ -755,7 +716,7 @@
                 modalTotalSpan.innerText = newCount;
 
                 // Cập nhật lại cái tiêu đề H4
-                const modalHeaderH4 = document.querySelector('.modal-comments-area h4');
+                const modalHeaderH4 = document.querySelector('.modal-total-count h4');
                 if (modalHeaderH4) {
                     // PHẢI dùng dấu huyền ` và PHẢI ghi lại thẻ span để lần sau còn tìm thấy nó
                     modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
@@ -806,23 +767,30 @@
     async function sendReaction(commentId, type) {
         try {
             const res = await fetch(`/api/vote-comment/${commentId}?type=${type}`);
-            const data = await res.json();
 
+            // 🔥 BẢO MẬT: Kiểm tra nếu chưa đăng nhập
+            if (res.status === 401) {
+                alert("Đăng nhập đi má ơi, hông login sao mà thả tim được!");
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!res.ok) throw new Error("Lỗi hệ thống");
+
+            const data = await res.json();
             console.log("REACTION:", data); // debug
 
             const updateAll = (selector, cb) => {
                 document.querySelectorAll(selector).forEach(cb);
             };
 
-            // 🔥 1. UPDATE TEXT (FIX CHÍNH Ở ĐÂY)
+            // --- GIỮ NGUYÊN LOGIC UI CỦA MÁ TỪ ĐÂY XUỐNG ---
             if (data.voted && data.type && reactionData[data.type]) {
                 const config = reactionData[data.type];
-
                 updateAll(`#react-text-${commentId}`, el => {
                     el.innerText = config.text;
                     el.style.color = config.color;
                 });
-
             } else {
                 updateAll(`#react-text-${commentId}`, el => {
                     el.innerText = "Thích";
@@ -830,24 +798,20 @@
                 });
             }
 
-            // 🔥 2. UPDATE ICON (trên count)
             updateAll(`#reaction-icons-${commentId}`, el => {
                 if (data.voted && data.type && reactionData[data.type]) {
                     el.innerText = reactionData[data.type].icon;
-                } else {
-                    el.innerText = "";
-                }
+                } else { el.innerText = ""; }
             });
 
-            // 🔥 3. UPDATE COUNT
             updateAll(`#reaction-count-${commentId}`, el => {
                 el.innerText = data.voteCount || 0;
             });
 
-            // 🔥 4. SHOW / HIDE COUNT BOX
             updateAll(`#reaction-count-container-${commentId}`, el => {
                 el.style.display = data.voteCount > 0 ? "flex" : "none";
             });
+            // --- KẾT THÚC LOGIC UI ---
 
         } catch (err) {
             console.error("Lỗi reaction:", err);
@@ -856,15 +820,33 @@
 
     async function showReactionDetail(commentId) {
         try {
+            // Má kiểm tra kỹ cái URL này có đúng với cái @RequestMapping trên Controller ko nha
             const res = await fetch(`/api/vote-comment/detail/${commentId}`);
-            const data = await res.json();
 
-            renderReactionModal(data);
+            if (!res.ok) {
+                // Nếu lỗi 401, 403, 404... nó sẽ hiện ở đây
+                const errorText = await res.text();
+                console.error("Lỗi từ server:", errorText);
+                alert("Lỗi nè má: " + res.status);
+                return;
+            }
+
+            const data = await res.json();
+            console.log("Dữ liệu người thả tim:", data); // Má F12 lên xem nó có ra mảng ko nha
+
+            if (data && data.length > 0) {
+                renderReactionModal(data);
+            } else {
+                alert("Hông có ai thả tim hết má ơi!");
+            }
 
         } catch (err) {
-            console.error("Lỗi load reaction detail:", err);
+            // Cái alert trong hình của má là từ đây nè
+            console.error("Lỗi Fetch:", err);
+            alert("Lỗi kết nối hoặc URL sai rồi má ơi!");
         }
     }
+
 
     function renderReactionModal(list) {
 
@@ -910,67 +892,83 @@
     }
 
 
+
+    // 1. Định nghĩa bảng màu và chữ (Nhớ để ngoài hàm)
     const reactions = {
-        'LIKE':  { text: 'Thích', color: '#0866ff', icon: '👍' },
-        'LOVE':  { text: 'Yêu thích', color: '#f33e58', icon: '❤️' },
-        'HAHA':  { text: 'Haha', color: '#f7b125', icon: '😆' },
-        'WOW':   { text: 'Wow', color: '#f7b125', icon: '😮' },
-        'SAD':   { text: 'Buồn', color: '#f7b125', icon: '😢' },
-        'ANGRY': { text: 'Phẫn nộ', color: '#e9710f', icon: '😡' }
+        LIKE:  { text: 'Thích', color: '#0566ff' },
+        LOVE:  { text: 'Yêu thích', color: '#ed4956' },
+        HAHA:  { text: 'Haha', color: '#f7b125' },
+        WOW:   { text: 'Wow', color: '#f7b125' },
+        SAD:   { text: 'Buồn', color: '#f7b125' },
+        ANGRY: { text: 'Phẫn nộ', color: '#e9710f' }
     };
 
-    // Hàm cập nhật UI (Dùng cả khi load trang và khi click)
+    // 2. Hàm gửi Reaction
+    async function sendPostReaction(postId, type) {
+        try {
+            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, {
+                method: 'POST'
+            });
+
+            if (res.status === 401) { alert("Đăng nhập đi má ơi!"); return; }
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error("Lỗi từ server:", errorData);
+                return;
+            }
+
+            const data = await res.json(); // Nhận { counts: {...}, currentType: "..." }
+            const apiData = data.counts;
+            const currentActive = data.currentType;
+
+            const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+
+            // Cập nhật UI nút chính và cụm icon
+            updateReactionUI(postId, currentActive, total);
+            updateReactionUII(postId, apiData);
+
+        } catch (err) {
+            console.error('Lỗi kết nối:', err);
+        }
+    }
+
+    // 3. Hàm cập nhật chữ và màu nút chính
     function updateReactionUI(postId, activeType, totalCount) {
         const btn = document.querySelector(`.post-main-reaction-btn[data-id='${postId}']`);
         if (!btn) return;
 
-        // Kiểm tra xem có đang vote loại nào không
-        const isVoted = activeType && activeType !== "" && activeType !== "null";
-        const config = isVoted ? reactions[activeType] : { text: 'Thích', color: '', icon: '👍' };
+        const typeKey = (activeType && activeType !== "") ? activeType.toUpperCase() : "";
+        const config = reactions[typeKey] || { text: 'Thích', color: '#65676b' };
 
-        // Cập nhật nội dung nút
-        // Lưu ý: Chỉ cập nhật nội dung Text/Icon, giữ nguyên data-id
+        // Đổi chữ - Dùng innerHTML để dọn sạch th:switch của Thymeleaf
         const reactionContent = btn.querySelector('.reaction-content');
         if (reactionContent) {
-            reactionContent.innerHTML = `${config.text}`;
+            reactionContent.innerHTML = config.text;
         }
 
-        // Cập nhật màu sắc
-        btn.style.color = config.color;
+        // Đổi màu
+        btn.style.setProperty('color', config.color, 'important');
 
-        // Cập nhật số lượng (nếu có truyền vào)
-        const countSpan = btn.querySelector('.reaction-count');
-        if (countSpan && totalCount !== undefined) {
-            countSpan.textContent = totalCount;
-        }
-
-        // Lưu lại trạng thái vào attribute để các hàm khác đọc
-        btn.setAttribute('data-current-reaction', isVoted ? activeType : "");
+        // Lưu lại trạng thái vào attribute
+        btn.setAttribute('data-current-reaction', typeKey);
     }
+
+    // 4. Hàm cập nhật cụm icon chồng nhau
     function updateReactionUII(postId, apiData) {
         const emojiMap = { LIKE: '👍', LOVE: '❤️', HAHA: '😆', WOW: '😮', SAD: '😢', ANGRY: '😡' };
+        const sorted = Object.entries(apiData)
+            .filter(([_, count]) => count > 0)
+            .sort((a, b) => b[1] - a[1]);
 
-        // 1. Tìm Top 3 icons
-        const topIcons = Object.entries(apiData)
-            .filter(([type, count]) => count > 0)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(([type, count]) => emojiMap[type.toUpperCase()]);
-
-        // 2. Tính tổng
+        const topIcons = sorted.slice(0, 3).map(([type]) => emojiMap[type.toUpperCase()]);
         const total = Object.values(apiData).reduce((a, b) => a + b, 0);
 
-        // 3. Tìm nút (Lưu ý dùng đúng [data-post-id])
         const btn = document.querySelector(`.btn-show-reactions[data-post-id="${postId}"]`);
-
         if (btn) {
-            // Cập nhật Icons
             const stackDiv = btn.querySelector('.reaction-icons-stack');
             if (stackDiv) {
                 stackDiv.innerHTML = topIcons.map(icon => `<span class="mini-icon">${icon}</span>`).join('');
             }
-
-            // Cập nhật Số lượng (Tìm đúng class js-reaction-count)
             const countSpan = btn.querySelector('.js-reaction-count');
             if (countSpan) {
                 countSpan.textContent = total > 0 ? total : '';
@@ -978,45 +976,6 @@
         }
     }
 
-
-    async function sendPostReaction(postId, type) {
-        try {
-            // Sử dụng URLSearchParams hoặc FormData tùy theo Backend của bạn
-            // Ở đây mình dùng URLSearchParams vì thấy bạn nối chuỗi vào fetch
-            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, {
-                method: 'POST'
-            });
-
-            if (!res.ok) throw new Error('API Error');
-
-            const apiData = await res.json(); // Map<String, Long> mới nhất từ server
-
-            // 1. Tính tổng số lượng từ Map trả về
-            const total = Object.values(apiData).reduce((a, b) => a + b, 0);
-
-            // 2. Xác định xem người dùng ĐANG thả loại nào hay là vừa UNVOTE
-            // Lưu ý: Để biết chính xác isVoted, Backend nên trả về thêm một field currentType.
-            // Tạm thời logic xử lý UI nút chính:
-            const btn = document.querySelector(`.post-main-reaction-btn[data-id='${postId}']`);
-            let currentActive = "";
-
-            // Kiểm tra xem nút có đang mang màu của type này không (để biết là Unvote hay Vote mới)
-            if (btn && btn.getAttribute('data-current-reaction') === type) {
-                currentActive = ""; // Vừa Unvote
-            } else {
-                currentActive = type; // Vừa Vote mới
-            }
-
-            // 3. Cập nhật giao diện nút bấm chính (Màu sắc, chữ "Thích/Haha")
-            updateReactionUI(postId, currentActive, total);
-
-            // 4. CẬP NHẬT CỤM ICON CHỒNG NHAU (Dùng apiData thay vì newReactions)
-            updateReactionUII(postId, apiData);
-
-        } catch (err) {
-            console.error('Lỗi khi vote:', err);
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.post-reaction-bar').forEach(bar => {
@@ -1074,21 +1033,41 @@
     });
 
     async function showPostReactionDetail(postId) {
-        // Giữ nguyên logic fetch API của bạn ở đây...
+        if (!postId) return; // Chặn sớm nếu hông có ID
+
         try {
             const res = await fetch(`/api/forum/reactors/details?postId=${postId}`);
-            if (!res.ok) throw new Error("Lỗi fetch");
+
+            // 🔥 BẢO MẬT: Nếu server báo chưa login
+            if (res.status === 401) {
+                alert("Má phải đăng nhập mới coi được chi tiết nha!");
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!res.ok) throw new Error("Lỗi fetch dữ liệu");
+
             const data = await res.json();
 
+            // Kiểm tra xem có ai thả tim hông trước khi map dữ liệu
+            if (!data || data.length === 0) {
+                console.log("Bài này hông có ai thả tim hết.");
+                return;
+            }
+
+            // 🔥 GIỮ NGUYÊN LOGIC FORMAT DỮ LIỆU CỦA MÁ
             const formattedData = data.map(u => ({
                 type: u.type,
                 userName: u.fullName,
                 userId: u.userId
             }));
 
+            // Gọi hàm render của má (nhớ check tên hàm renderReactionModall coi có dư chữ 'l' hông nha)
             renderReactionModall(formattedData);
+
         } catch (err) {
-            console.error(err);
+            console.error("Lỗi showPostReactionDetail:", err);
+            alert("Hệ thống đang bận, má thử lại sau nha!");
         }
     }
 
