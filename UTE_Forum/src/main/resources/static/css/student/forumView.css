@@ -1205,78 +1205,143 @@ html {
     border-top: 1px solid #eef1f4;
 }
 
+/*.post-image-grid {*/
+/*    display: grid;*/
+/*    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));*/
+/*    gap: 10px;*/
+/*    margin-top: 4px;*/
+/*    max-width: 100%;*/
+/*}*/
+
+/*.post-image-link {*/
+/*    width: 100%;*/
+/*    aspect-ratio: 16 / 10;*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    justify-content: center;*/
+/*    border-radius: 12px;*/
+/*    border: 1px solid #e6e9ef;*/
+/*    background: #f0f2f5;*/
+/*    overflow: hidden;*/
+/*    padding: 6px;*/
+/*    text-decoration: none;*/
+/*    transition: transform 0.18s ease, box-shadow 0.18s ease;*/
+/*}*/
+
+/*.post-image-grid .post-image-link:only-child {*/
+/*    grid-column: 1 / -1;*/
+/*    aspect-ratio: 16 / 9;*/
+/*    max-height: 460px;*/
+/*}*/
+
+/*.post-image-link:hover {*/
+/*    transform: translateY(-1px);*/
+/*    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);*/
+/*}*/
+
+/*.post-image-item {*/
+/*    max-width: 100%;*/
+/*    max-height: 100%;*/
+/*    width: auto;*/
+/*    height: auto;*/
+/*    object-fit: contain;*/
+/*    border-radius: 8px;*/
+/*    background: #fff;*/
+/*}*/
+
+/*.post-file-list {*/
+/*    margin: 10px 0 0 18px;*/
+/*    color: #334155;*/
+/*}*/
+
+/*@media (max-width: 768px) {*/
+/*    .post-image-grid {*/
+/*        grid-template-columns: repeat(2, minmax(180px, 1fr));*/
+/*        max-width: 100%;*/
+/*    }*/
+/*}*/
+
+/*@media (max-width: 480px) {*/
+/*    .post-image-grid {*/
+/*        grid-template-columns: 1fr;*/
+/*    }*/
+/*}*/
+
+/*.modal-attachments {*/
+/*    margin-top: 12px;*/
+/*}*/
+
+/*.modal-image-grid {*/
+/*    max-width: 100%;*/
+/*}*/
+
+/*.modal-file-list {*/
+/*    margin-top: 8px;*/
+/*}*/
+/* --- Container tổng --- */
+/* --- Container tổng (ẩn khung xám thô) --- */
+/* --- Grid ảnh thu nhỏ --- */
 .post-image-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 10px;
-    margin-top: 4px;
-    max-width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Thu nhỏ cột */
+    gap: 6px;
+    margin-top: 8px;
+    max-width: 500px; /* Khống chế độ rộng tổng của cả cụm ảnh */
 }
 
 .post-image-link {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    border: 1px solid #e6e9ef;
-    background: #f0f2f5;
+    aspect-ratio: 1 / 1; /* Ép về hình vuông cho gọn */
+    border-radius: 8px;
+    background: #f8fafc;
     overflow: hidden;
-    padding: 6px;
-    text-decoration: none;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    border: 1px solid #e2e8f0;
+    display: block;
 }
 
-.post-image-grid .post-image-link:only-child {
-    grid-column: 1 / -1;
+/* Nếu chỉ có 1 ảnh thì cho nó to hơn tí nhưng không quá đà */
+.post-image-grid:has(.post-image-link:only-child) {
+    grid-template-columns: 1fr;
+    max-width: 350px;
+}
+
+.post-image-link:only-child {
     aspect-ratio: 16 / 9;
-    max-height: 460px;
-}
-
-.post-image-link:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
 
 .post-image-item {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 8px;
-    background: #fff;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ảnh tràn khung, không hiện khoảng trắng xám */
+    display: block;
 }
 
+/* Xử lý ảnh lỗi (image_a6e93e.png) - Ẩn cái tên file thô kệch */
+.post-image-item[alt] {
+    font-size: 0; /* Ẩn chữ alt text nếu ảnh vỡ */
+}
+/* --- Danh sách file đính kèm --- */
 .post-file-list {
-    margin: 10px 0 0 18px;
-    color: #334155;
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-@media (max-width: 768px) {
-    .post-image-grid {
-        grid-template-columns: repeat(2, minmax(180px, 1fr));
-        max-width: 100%;
-    }
+.post-file-list li {
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
 }
 
-@media (max-width: 480px) {
-    .post-image-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.modal-attachments {
-    margin-top: 12px;
-}
-
-.modal-image-grid {
-    max-width: 100%;
-}
-
-.modal-file-list {
-    margin-top: 8px;
+.post-file-list li:hover {
+    background: #e2e8f0;
 }
 
 
