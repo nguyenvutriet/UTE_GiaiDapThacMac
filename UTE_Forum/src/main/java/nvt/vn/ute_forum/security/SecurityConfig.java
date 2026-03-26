@@ -69,7 +69,8 @@ public class SecurityConfig {
                                 "/api/vote-comment/**",
                                 "/api/forum/view",
                                 "/staff/list-feedbacks",
-                                "/feedback/send"
+                                "/feedback/send",
+                                "/api/forum/staff"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(

@@ -8,6 +8,7 @@
     <!-- CSS riêng -->
     <link rel="stylesheet" href="/css/staff/staff-style.css">
 
+
     <!-- Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -31,7 +32,9 @@
 
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
-            <a href="#" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a th:href="@{/api/forum/staff}" class="nav-item">
+                <i class="fas fa-comments"></i> Diễn đàn
+            </a>
             <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
             <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
             <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
