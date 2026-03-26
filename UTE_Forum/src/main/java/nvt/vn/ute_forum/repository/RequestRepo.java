@@ -11,8 +11,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.List;
-
 @Repository
 public interface RequestRepo extends JpaRepository<Request, String> {
     List<Request> findByUser_IdOrderByTimeCreateDesc(String userId);
@@ -35,6 +33,9 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             @Param("departmentId") String departmentId,
             @Param("sortBy") String sortBy
     );
+
+    @Query(value = "SELECT COALESCE(MAX(CAST(SUBSTRING(id, 5) AS UNSIGNED)), 0) FROM request WHERE id REGEXP '^REQ_[0-9]+$'", nativeQuery = true)
+    Long findMaxRequestSequence();
 
 
 

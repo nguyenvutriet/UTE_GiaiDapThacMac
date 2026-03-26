@@ -21,6 +21,9 @@ public class FileAttachmentService {
     @Autowired
     private FileAttachmentRepo fileAttachmentRepo;
 
+    @Autowired
+    private IdGeneratorService idGeneratorService;
+
     @Value("${app.upload.dir:uploads/}")
     private String uploadDir;
 
@@ -49,7 +52,7 @@ public class FileAttachmentService {
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
 
             FileAttachment attachment = new FileAttachment();
-            attachment.setId("FA_" + System.nanoTime());
+            attachment.setId(idGeneratorService.nextFileAttachmentId());
             attachment.setFileName(originalName);
             attachment.setFileType(file.getContentType());
             attachment.setFileSize((int) Math.min(file.getSize(), Integer.MAX_VALUE));

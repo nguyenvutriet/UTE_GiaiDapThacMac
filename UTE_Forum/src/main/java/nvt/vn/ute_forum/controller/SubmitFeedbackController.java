@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Controller
@@ -27,19 +26,22 @@ public class SubmitFeedbackController {
     private final RequestStatusHistoryService requestStatusHistoryService;
     private final FileAttachmentService fileAttachmentService;
     private final UsersService usersService;
+    private final IdGeneratorService idGeneratorService;
 
     public SubmitFeedbackController(RequestService requestService,
                                     CategoryService categoryService,
                                     DepartmentService departmentService,
                                     RequestStatusHistoryService requestStatusHistoryService,
                                     FileAttachmentService fileAttachmentService,
-                                    UsersService usersService) {
+                                    UsersService usersService,
+                                    IdGeneratorService idGeneratorService) {
         this.requestService = requestService;
         this.categoryService = categoryService;
         this.departmentService = departmentService;
         this.requestStatusHistoryService = requestStatusHistoryService;
         this.fileAttachmentService = fileAttachmentService;
         this.usersService = usersService;
+        this.idGeneratorService = idGeneratorService;
     }
 
     @GetMapping("/api/submit")
@@ -81,7 +83,7 @@ public class SubmitFeedbackController {
             }
 
             Request request = new Request();
-            request.setId("REQ_" + System.nanoTime());
+            request.setId(idGeneratorService.nextRequestId());
             request.setSubject(subject);
             request.setDescription(description);
             request.setCurrentStatus("PENDING");

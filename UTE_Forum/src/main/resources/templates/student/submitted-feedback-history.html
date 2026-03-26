@@ -98,7 +98,7 @@
             </p>
           </div>
           <div class="card-footer">
-            <time class="request-date" th:text="${req.timeCreate}">2026-03-21</time>
+            <time class="request-date" th:text="${req.timeCreate != null ? #temporals.format(req.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</time>
             <a class="detail-btn" th:href="@{/api/history(requestId=${req.id}, keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">Xem chi tiết</a>
           </div>
         </article>
@@ -120,7 +120,7 @@
             <span class="status-pill"
                   th:classappend="${selectedRequest.currentStatus == 'Đã xử lý' or selectedRequest.currentStatus == 'RESOLVED' ? ' done' : (selectedRequest.currentStatus == 'Đang xử lý' or selectedRequest.currentStatus == 'PROCESSING' ? ' processing' : ' waiting')}"
                   th:text="${selectedRequest.currentStatus}">Đang xử lý</span>
-            <span class="meta-chip" th:text="${selectedRequest.timeCreate}">2026-03-21</span>
+            <span class="meta-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
             <span class="meta-chip" th:text="${'Phòng ban tiếp nhận: ' + (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
           </div>
           <h3>Nội dung:</h3>
