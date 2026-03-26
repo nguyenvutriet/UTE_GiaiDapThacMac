@@ -300,7 +300,54 @@ body {
     padding-top: 14px;
     border-top: 1px solid #e5eaf2;
     display: flex;
+    align-items: center;
+    gap: 12px;
     justify-content: flex-end;
+}
+
+.action-link {
+    border: none;
+    background: transparent;
+    color: #1d4ed8;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0;
+}
+
+.delete-link {
+    color: #dc2626;
+}
+
+.edit-form {
+    margin-top: 12px;
+    border-top: 1px dashed #dbe3ef;
+    padding-top: 12px;
+    display: none;
+}
+
+.edit-form.show {
+    display: block;
+}
+
+.edit-textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    min-height: 110px;
+    resize: vertical;
+    background: #f8fafc;
+}
+
+.edit-actions {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .detail-link {

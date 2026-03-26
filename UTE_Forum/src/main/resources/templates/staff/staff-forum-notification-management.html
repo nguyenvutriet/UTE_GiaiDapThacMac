@@ -62,8 +62,34 @@
                     <p class="announcement-text" th:text="${post.content}">Nội dung thông báo...</p>
 
                     <div class="announcement-actions">
+                        <button type="button" class="action-link" th:attr="data-target=${'edit-form-' + post.id}" onclick="toggleEditForm(this.dataset.target)">Cập nhật</button>
+                        <form th:action="@{/staff/forum/announcements/{id}/delete(id=${post.id})}" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa thông báo này?');">
+                            <input type="hidden" name="q" th:value="${q}">
+                            <input type="hidden" name="departmentId" th:value="${departmentId}">
+                            <input type="hidden" name="sortBy" th:value="${sortBy}">
+                            <input type="hidden" name="page" th:value="${currentPage}">
+                            <button type="submit" class="action-link delete-link">Xóa</button>
+                        </form>
                         <a class="detail-link" th:href="@{/api/forum/view}">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
                     </div>
+
+                    <form class="edit-form" th:id="${'edit-form-' + post.id}" th:action="@{/staff/forum/announcements/{id}/update(id=${post.id})}" method="post">
+                        <label class="widget-label" th:for="${'title-' + post.id}">Tiêu đề</label>
+                        <input class="search-input" th:id="${'title-' + post.id}" type="text" name="title" th:value="${post.title}" maxlength="255">
+
+                        <label class="widget-label" th:for="${'content-' + post.id}">Nội dung</label>
+                        <textarea class="edit-textarea" th:id="${'content-' + post.id}" name="content" required th:text="${post.content}"></textarea>
+
+                        <input type="hidden" name="q" th:value="${q}">
+                        <input type="hidden" name="departmentId" th:value="${departmentId}">
+                        <input type="hidden" name="sortBy" th:value="${sortBy}">
+                        <input type="hidden" name="page" th:value="${currentPage}">
+
+                        <div class="edit-actions">
+                            <button type="submit" class="create-btn">Lưu cập nhật</button>
+                            <button type="button" class="action-link" th:attr="data-target=${'edit-form-' + post.id}" onclick="toggleEditForm(this.dataset.target)">Hủy</button>
+                        </div>
+                    </form>
                 </article>
 
                 <div class="empty-state" th:if="${#lists.isEmpty(announcements)}">Chưa có thông báo nào.</div>
@@ -102,6 +128,15 @@
         </section>
     </main>
 </div>
+<script>
+    function toggleEditForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) {
+            return;
+        }
+        form.classList.toggle('show');
+    }
+</script>
 </body>
 </html>
 

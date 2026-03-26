@@ -18,8 +18,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Controller
 @RequestMapping("/staff")
@@ -143,5 +146,60 @@ public class StaffFeedbackController {
         model.addAttribute("sortBy", sortBy);
 
         return "staff/staff-forum-notification-management";
+    }
+
+    @PostMapping("/forum/announcements/{id}/update")
+    public String updateAnnouncement(@PathVariable("id") String announcementId,
+                                     @RequestParam(required = false) String title,
+                                     @RequestParam(required = false) String content,
+                                     @RequestParam(required = false) String q,
+                                     @RequestParam(required = false) String departmentId,
+                                     @RequestParam(defaultValue = "newest") String sortBy,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @AuthenticationPrincipal UserDetails userDetails) {
+        Users staff = resolveStaff(userDetails);
+        if (staff != null) {
+            annoucementService.updateAnnouncement(announcementId, title, content, staff);
+        }
+        return buildAnnouncementManagementRedirect(q, departmentId, sortBy, page);
+    }
+
+    @PostMapping("/forum/announcements/{id}/delete")
+    public String deleteAnnouncement(@PathVariable("id") String announcementId,
+                                     @RequestParam(required = false) String q,
+                                     @RequestParam(required = false) String departmentId,
+                                     @RequestParam(defaultValue = "newest") String sortBy,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @AuthenticationPrincipal UserDetails userDetails) {
+        Users staff = resolveStaff(userDetails);
+        if (staff != null) {
+            annoucementService.deleteAnnouncement(announcementId, staff);
+        }
+        return buildAnnouncementManagementRedirect(q, departmentId, sortBy, page);
+    }
+
+    private Users resolveStaff(UserDetails userDetails) {
+        if (userDetails == null) {
+            return null;
+        }
+        return usersRepo.findByEmail(userDetails.getUsername());
+    }
+
+    private String buildAnnouncementManagementRedirect(String q, String departmentId, String sortBy, int page) {
+        String safeSort = (sortBy == null || sortBy.isBlank()) ? "newest" : sortBy;
+        return "redirect:" + UriComponentsBuilder.fromPath("/staff/forum/notification-management")
+                .queryParam("page", Math.max(page, 0))
+                .queryParam("sortBy", safeSort)
+                .queryParamIfPresent("q", optionalTrimmed(q))
+                .queryParamIfPresent("departmentId", optionalTrimmed(departmentId))
+                .build()
+                .toUriString();
+    }
+
+    private java.util.Optional<String> optionalTrimmed(String value) {
+        if (value == null || value.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(value.trim());
     }
 }
