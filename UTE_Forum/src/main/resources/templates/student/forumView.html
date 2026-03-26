@@ -47,9 +47,16 @@
 
         <section class="forum-container">
             <div class="post-list">
-                <div class="quick-post-card">
-                    <img th:src="@{/images/student.png}" class="mini-avatar">
-                    <button class="fake-input">Bạn muốn chia sẻ điều gì?</button>
+                <div class="quick-search-container">
+                    <div class="quick-search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input id="globalSearchInput"
+                               type="text"
+                               placeholder="Tìm bài viết..."
+                               autocomplete="off">
+                    </div>
+
+                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>
                 </div>
 
                 <article class="post-card" th:each="post : ${requests}">
@@ -354,7 +361,9 @@
                     ` : ''}
 
                     ${!cmt.canDelete ? `
-                        <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
+                        <span class="report-btn" data-comment-id="${cmt.id}"
+                              onclick="reportComment('${cmt.id}')"
+                              style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
                             <i class="fas fa-flag"></i> Báo cáo
                         </span>
                     ` : ''}
@@ -425,6 +434,7 @@
                         data.forEach(cmt => {
                             commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
                         });
+                        restoreReportedState(); // ← thêm vào đây
                     }
                 })
                 .catch(err => commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải.</p>');
@@ -528,6 +538,7 @@
                     commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
                 } else {
                     commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt)).join('');
+                    restoreReportedState(); // ← thêm vào đây
                 }
             });
 
@@ -565,6 +576,7 @@
 
                 // Chèn comment mới vào danh sách hiện tại
                 listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                restoreReportedState(); // ← thêm vào đây
                 inputElement.value = '';
 
                 // Cập nhật số lượng hiển thị ở bài viết ngoài danh sách chính
@@ -737,9 +749,153 @@
     }
 
 
+    // function reportComment(commentId) {
+    //     const reason = prompt("Lý do báo cáo:");
+    //     if (reason) alert("Đã báo cáo bình luận " + commentId);
+    // }
+
     function reportComment(commentId) {
-        const reason = prompt("Lý do báo cáo:");
-        if (reason) alert("Đã báo cáo bình luận " + commentId);
+        // Xóa modal cũ nếu còn tồn tại
+        const existing = document.getElementById('report-modal-overlay');
+        if (existing) existing.remove();
+
+        const reasons = [
+            'Ngôn ngữ thô tục, xúc phạm',
+            'Thông tin sai lệch, bịa đặt',
+            'Quấy rối hoặc đe dọa',
+            'Spam hoặc quảng cáo',
+            'Khác'
+        ];
+
+        const reasonItems = reasons.map((r, i) => `
+        <label style="display:flex; align-items:center; gap:10px; padding:10px 12px;
+            border-radius:8px; border:0.5px solid #ddd; cursor:pointer; font-size:14px; margin-bottom:8px;">
+            <input type="radio" name="report-reason" value="${r}" style="accent-color:#d32f2f;"> ${r}
+        </label>
+    `).join('');
+
+        const html = `
+    <div id="report-modal-overlay"
+        style="position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999;
+               display:flex; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:12px; width:380px; max-width:95%;
+                    overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+
+            <div style="padding:16px 20px; border-bottom:1px solid #f0f0f0;
+                        display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:16px; font-weight:500;">Báo cáo bình luận</span>
+                <button onclick="document.getElementById('report-modal-overlay').remove()"
+                    style="background:none; border:none; cursor:pointer; font-size:20px;
+                           color:#888; width:28px; height:28px; border-radius:50%;">&times;</button>
+            </div>
+
+            <div style="padding:16px 20px;">
+                <p style="font-size:13px; color:#888; margin:0 0 14px;">Chọn lý do vi phạm:</p>
+                <div id="report-reason-list">${reasonItems}</div>
+                <div id="extra-reason-wrap" style="display:none; margin-top:8px;">
+                    <textarea id="extra-reason-text" placeholder="Mô tả thêm lý do..." rows="3"
+                        style="width:100%; box-sizing:border-box; border:1px solid #ddd;
+                               border-radius:8px; padding:8px 12px; font-size:13px;
+                               resize:none; outline:none;"></textarea>
+                </div>
+            </div>
+
+            <div style="padding:12px 20px 16px; display:flex; gap:10px;
+                        justify-content:flex-end; border-top:1px solid #f0f0f0;">
+                <button onclick="document.getElementById('report-modal-overlay').remove()"
+                    style="padding:8px 18px; border-radius:8px; border:1px solid #ddd;
+                           background:none; cursor:pointer; font-size:13px; color:#666;">Hủy</button>
+                <button onclick="submitReport('${commentId}')"
+                    style="padding:8px 18px; border-radius:8px; border:none;
+                           background:#d32f2f; color:#fff; font-size:13px;
+                           font-weight:500; cursor:pointer;">Gửi báo cáo</button>
+            </div>
+        </div>
+    </div>`;
+
+        document.body.insertAdjacentHTML('beforeend', html);
+
+        // Hiện textarea khi chọn "Khác"
+        document.querySelectorAll('input[name="report-reason"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                document.querySelectorAll('#report-reason-list label').forEach(l => l.style.background = '');
+                this.closest('label').style.background = '#fff0f0';
+                document.getElementById('extra-reason-wrap').style.display =
+                    this.value === 'Khác' ? 'block' : 'none';
+            });
+        });
+
+        // Đóng khi click nền
+        document.getElementById('report-modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) this.remove();
+        });
+    }
+
+    function submitReport(commentId) {
+        const selected = document.querySelector('input[name="report-reason"]:checked');
+        if (!selected) {
+            alert('Vui lòng chọn lý do báo cáo!');
+            return;
+        }
+
+        let reason = selected.value;
+        if (reason === 'Khác') {
+            const extra = document.getElementById('extra-reason-text').value.trim();
+            if (!extra) { alert('Vui lòng mô tả lý do!'); return; }
+            reason = extra;
+        }
+
+        fetch('/api/comments/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commentId: commentId, reason: reason })
+        })
+            .then(async res => {
+                document.getElementById('report-modal-overlay').remove();
+                if (res.ok) {
+                    markAsReported(commentId);
+                    alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
+                } else {
+                    let errorMsg = `Lỗi ${res.status}`;
+                    try {
+                        const body = await res.json();
+                        errorMsg = body.message || body.error || errorMsg;
+                    } catch {
+                        try {
+                            const text = await res.text();
+                            if (text) errorMsg = text;
+                        } catch {}
+                    }
+                    alert('Báo cáo thất bại: ' + errorMsg);
+                }
+            })
+            .catch(err => alert('Lỗi kết nối: ' + err.message));
+    }
+
+    function markAsReported(commentId) {
+        // Lưu vào localStorage để giữ trạng thái qua reload
+        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
+        if (!reported.includes(String(commentId))) {
+            reported.push(String(commentId));
+            localStorage.setItem('reportedComments', JSON.stringify(reported));
+        }
+        applyReportedStyle(commentId);
+    }
+
+    function applyReportedStyle(commentId) {
+        document.querySelectorAll(`.report-btn[data-comment-id="${commentId}"]`).forEach(el => {
+            el.style.color = '#d32f2f';
+            el.style.opacity = '0.7';
+            el.style.cursor = 'default';
+            el.title = 'Đã báo cáo';
+            el.onclick = null;
+        });
+    }
+
+    // Gọi sau mỗi lần render comment để khôi phục trạng thái đã báo cáo
+    function restoreReportedState() {
+        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
+        reported.forEach(commentId => applyReportedStyle(commentId));
     }
 
     function formatDirectDate(dateParam) {
@@ -1219,6 +1375,66 @@
     }
 
 
+</script>
+
+<script>
+    let typingTimer;
+    const input = document.getElementById("globalSearchInput");
+    const suggestionBox = document.getElementById("searchSuggestions");
+
+    input.addEventListener("keyup", function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(function() {
+            let keyword = input.value.trim();
+            if (keyword.length === 0) {
+                suggestionBox.style.display = "none";
+                suggestionBox.innerHTML = "";
+                return;
+            }
+            fetchSuggestions(keyword);
+        }, 200);
+    });
+
+    input.addEventListener("keydown", function() {
+        clearTimeout(typingTimer);
+    });
+
+    // Call API
+    function fetchSuggestions(keyword) {
+        fetch(`/api/forum/search?keyword=${encodeURIComponent(keyword)}`)
+            .then(res => res.json())
+            .then(data => renderSuggestions(data))
+            .catch(err => console.error(err));
+    }
+
+    function renderSuggestions(list) {
+        if (!list || list.length === 0) {
+            suggestionBox.style.display = "none";
+            return;
+        }
+
+        suggestionBox.innerHTML = "";
+
+        list.forEach(post => {
+            let li = document.createElement("li");
+            li.className = "search-suggestion-item";
+            li.innerHTML = `
+            <div class="search-title">${post.subject}</div>
+            <div class="search-desc">${post.userName} • ${post.departmentName}</div>
+        `;
+            li.onclick = () => window.location.href = `/api/forum/view?requestId=${post.id}`;
+            suggestionBox.appendChild(li);
+        });
+
+        suggestionBox.style.display = "block";
+    }
+
+    // Ẩn khi click ra ngoài
+    document.addEventListener("click", function (e) {
+        if (!document.querySelector(".quick-search-container").contains(e.target)) {
+            suggestionBox.style.display = "none";
+        }
+    });
 </script>
 </body>
 </html>

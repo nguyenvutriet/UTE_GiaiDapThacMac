@@ -230,5 +230,12 @@ public class RequestService {
         return requestRepo.save(request);
     }
 
+    public List<ForumPostDTO> searchPosts(String keyword) {
+        List<Request> list = requestRepo.searchByKeyword(keyword.trim());
+
+        return list.stream()
+                .map(r -> convertToFullDTO(r, null))
+                .collect(Collectors.toList());
+    }
 }
 

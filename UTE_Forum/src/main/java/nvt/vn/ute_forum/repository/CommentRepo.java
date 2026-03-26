@@ -2,6 +2,8 @@ package nvt.vn.ute_forum.repository;
 
 import nvt.vn.ute_forum.model.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
@@ -14,4 +16,7 @@ public interface CommentRepo extends JpaRepository<Comment, String> {
 
     // Nếu muốn đếm số lượng comment để hiển thị ngoài giao diện
     long countByRequest_Id(String requestId);
+
+    @Query("SELECT c FROM Comment c WHERE c.request.id = :requestId AND (c.isActive = true OR c.isActive IS NULL)")
+    List<Comment> findActiveByRequestId(@Param("requestId") String requestId);
 }

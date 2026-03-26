@@ -4,6 +4,8 @@ import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -60,4 +62,20 @@ public class UsersService implements UserDetailsService {
         usersRepo.save(user);
     }
 
+    public Users getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+
+        // Nếu dùng UserPrincipal
+        if (auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser();  // lấy entity Users
+        }
+
+        // Nếu dùng mặc định tạo bởi Spring Security (email)
+        String email = auth.getName();
+        return getByEmail(email);
+    }
 }

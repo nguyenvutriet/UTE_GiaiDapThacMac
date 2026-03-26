@@ -3,8 +3,10 @@ package nvt.vn.ute_forum.controller.forum;
 import jakarta.servlet.http.HttpSession;
 import nvt.vn.ute_forum.dto.CommentDTO;
 import nvt.vn.ute_forum.model.Comment;
+import nvt.vn.ute_forum.model.CommentReport;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.CommentRepo;
+import nvt.vn.ute_forum.repository.CommentReportRepo;
 import nvt.vn.ute_forum.repository.VoteCommentRepo;
 import nvt.vn.ute_forum.service.CommentService;
 import nvt.vn.ute_forum.service.UsersService;
@@ -21,6 +23,8 @@ import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +35,9 @@ public class CommentController {
     private CommentService commentService; // Gọi Service thay vì Repo
     @Autowired
     private VoteCommentRepo voteCommentRepo;
+
+    @Autowired
+    private CommentReportRepo reportRepo;
 
     @GetMapping("/{requestId}")
     public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
@@ -117,6 +124,51 @@ public class CommentController {
         } else {
             // Trả về 403 nếu cố tình xóa comment của người khác
             return ResponseEntity.status(403).body("Không được phép xoá!");
+        }
+    }
+
+    @PostMapping("/report")
+    public ResponseEntity<?> reportComment(@RequestBody Map<String, String> payload, Principal principal) {
+        try {
+            // 1. Lấy commentId và lý do báo cáo từ payload
+            String commentId = payload.get("commentId");
+            String reason = payload.get("reason");
+
+            if (commentId == null || reason == null || reason.isEmpty()) {
+                return ResponseEntity.badRequest().body("Thiếu commentId hoặc reason");
+            }
+
+            // 2. Lấy comment từ DB
+            Comment comment = commentService.getCommentById(commentId);
+            if (comment == null) {
+                return ResponseEntity.badRequest().body("Comment không tồn tại");
+            }
+
+            // 3. Lấy user đang đăng nhập
+            Users reporter = usersService.getByEmail(principal.getName());
+
+            Optional<CommentReport> exist = reportRepo.findExisting(commentId, reporter.getId());
+            if (exist.isPresent()) {
+                return ResponseEntity.badRequest().body("Bạn đã báo cáo bình luận này rồi!");
+            }
+            // 4. Tạo CommentReport
+            CommentReport report = new CommentReport();
+            report.setId(UUID.randomUUID().toString());
+            report.setComment(comment);
+            report.setStudent(reporter); // Người báo cáo
+            report.setReason(reason);
+            report.setStatus("pending");
+            report.setCreatedAt(LocalDateTime.now());
+            report.setAdmin(null); // chưa ai xử lý
+
+            // 5. Lưu report
+            commentService.saveCommentReport(report); // Tạo phương thức service để save report
+
+            return ResponseEntity.ok("SUCCESS");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("ERROR: " + e.getMessage());
         }
     }
 }
