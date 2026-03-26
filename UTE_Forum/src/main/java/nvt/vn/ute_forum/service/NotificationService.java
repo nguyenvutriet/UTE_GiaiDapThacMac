@@ -1,6 +1,7 @@
 package nvt.vn.ute_forum.service;
 
 import nvt.vn.ute_forum.model.Notification;
+import nvt.vn.ute_forum.model.Announcement;
 import nvt.vn.ute_forum.model.ReactionType;
 import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.Users;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -83,6 +85,33 @@ public class NotificationService {
         );
     }
 
+    public void notifyNewAnnouncement(Announcement announcement, List<Users> receivers) {
+        if (announcement == null) {
+            return;
+        }
+
+        List<Users> distinctReceivers = distinctUsers(receivers);
+        if (distinctReceivers.isEmpty()) {
+            return;
+        }
+
+        String title = (announcement.getTitle() == null || announcement.getTitle().isBlank())
+                ? "Thong bao moi"
+                : announcement.getTitle().trim();
+
+        String content = "Co thong bao moi" + (announcement.getTitle() == null || announcement.getTitle().isBlank()
+                ? "."
+                : ": \"" + announcement.getTitle().trim() + "\".");
+
+        upsertAnnouncementNotification(
+                "NEW_ANNOUNCEMENT_NOTIFICATION",
+                title,
+                content,
+                announcement.getId(),
+                distinctReceivers
+        );
+    }
+
     private void upsertForumNotification(String notificationType,
                                          String title,
                                          String content,
@@ -119,6 +148,43 @@ public class NotificationService {
         }
 
         notificationRepo.save(notification);
+    }
+
+    private void upsertAnnouncementNotification(String notificationType,
+                                                String title,
+                                                String content,
+                                                String referenceId,
+                                                List<Users> receivers) {
+        Notification notification = notificationRepo.findByNotificationType(notificationType)
+                .orElseGet(Notification::new);
+
+        if (notification.getId() == null || notification.getId().isBlank()) {
+            notification.setId("NTF_" + UUID.randomUUID());
+        }
+
+        notification.setNotificationType(notificationType);
+        notification.setTitle(title);
+        notification.setContent(content);
+        notification.setReferenceId(referenceId);
+        notification.setRead(false);
+        notification.setCreateAt(LocalDate.now());
+        notification.setUsers(new ArrayList<>(receivers));
+
+        notificationRepo.save(notification);
+    }
+
+    private List<Users> distinctUsers(List<Users> users) {
+        if (users == null || users.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashMap<String, Users> deduplicated = new LinkedHashMap<>();
+        for (Users user : users) {
+            if (user != null && user.getId() != null && !user.getId().isBlank()) {
+                deduplicated.putIfAbsent(user.getId(), user);
+            }
+        }
+        return new ArrayList<>(deduplicated.values());
     }
 
 

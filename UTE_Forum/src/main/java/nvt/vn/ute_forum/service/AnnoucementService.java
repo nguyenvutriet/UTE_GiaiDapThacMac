@@ -4,6 +4,7 @@ import nvt.vn.ute_forum.dto.StaffAnnouncementCardDTO;
 import nvt.vn.ute_forum.model.Announcement;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.AnnouncementRepo;
+import nvt.vn.ute_forum.repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,8 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,9 +28,16 @@ public class AnnoucementService {
     private static final Pattern DATE_IN_ID_PATTERN = Pattern.compile("(\\d{8})");
     private static final DateTimeFormatter SOURCE_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final DateTimeFormatter TARGET_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter ID_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Autowired
     private AnnouncementRepo announcementRepo;
+
+    @Autowired
+    private UsersRepo usersRepo;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public Page<StaffAnnouncementCardDTO> getAnnouncementCards(Pageable pageable) {
         return announcementRepo.findAllByOrderByIdDesc(pageable)
@@ -76,6 +89,36 @@ public class AnnoucementService {
         }
 
         announcementRepo.delete(announcement);
+        return true;
+    }
+
+    @Transactional
+    public boolean createAnnouncement(String title, String content, Users staff, List<String> receiverDepartmentIds) {
+        if (staff == null) {
+            return false;
+        }
+
+        String safeContent = content == null ? "" : content.trim();
+        if (safeContent.isBlank()) {
+            return false;
+        }
+
+        String safeTitle = title == null ? "" : title.trim();
+
+        Announcement announcement = new Announcement();
+        announcement.setId(generateAnnouncementId());
+        announcement.setTitle(safeTitle.isBlank() ? null : safeTitle);
+        announcement.setContent(safeContent);
+        announcement.setUser(staff);
+
+        announcementRepo.save(announcement);
+
+        List<String> normalizedDepartmentIds = normalizeDepartmentIds(receiverDepartmentIds);
+        if (!normalizedDepartmentIds.isEmpty()) {
+            List<Users> studentReceivers = usersRepo.findByRoleAndDepartment_IdIn("ROLE_STUDENT", normalizedDepartmentIds);
+            notificationService.notifyNewAnnouncement(announcement, studentReceivers);
+        }
+
         return true;
     }
 
@@ -142,5 +185,28 @@ public class AnnoucementService {
         }
 
         return announcement.getUser().getDepartment().getId().equals(staff.getDepartment().getId());
+    }
+
+    private String generateAnnouncementId() {
+        String prefix = "ANN_" + LocalDateTime.now().format(ID_DATE_FORMAT) + "_";
+        String candidate = prefix + ThreadLocalRandom.current().nextInt(100, 1000);
+        while (announcementRepo.existsById(candidate)) {
+            candidate = prefix + ThreadLocalRandom.current().nextInt(100, 1000);
+        }
+        return candidate;
+    }
+
+    private List<String> normalizeDepartmentIds(List<String> departmentIds) {
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        for (String departmentId : departmentIds) {
+            if (departmentId != null && !departmentId.isBlank()) {
+                normalized.add(departmentId.trim());
+            }
+        }
+        return new ArrayList<>(normalized);
     }
 }

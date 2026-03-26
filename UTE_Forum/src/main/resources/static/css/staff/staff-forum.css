@@ -350,6 +350,35 @@ body {
     gap: 12px;
 }
 
+.receiver-checkbox-list {
+    margin-top: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 8px 10px;
+}
+
+.receiver-select-all {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.receiver-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #334155;
+    padding: 5px 0;
+}
+
 .detail-link {
     color: #2563eb;
     text-decoration: none;

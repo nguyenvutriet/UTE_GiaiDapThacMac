@@ -123,7 +123,34 @@
                     <button class="create-btn" type="submit">Tìm kiếm</button>
                 </form>
 
-                <a class="create-btn" th:href="@{/staff/forum/notification-management}"><i class="fas fa-plus"></i> Tạo thông báo</a>
+                <form class="widget" method="post" th:action="@{/staff/forum/announcements/create}">
+                    <h3><i class="fas fa-plus"></i> Tạo thông báo</h3>
+
+                    <label class="widget-label" for="create-announcement-title">Tiêu đề</label>
+                    <input id="create-announcement-title" class="search-input" type="text" name="title" maxlength="255" placeholder="Nhập tiêu đề...">
+
+                    <label class="widget-label" for="create-announcement-content">Nội dung</label>
+                    <textarea id="create-announcement-content" class="edit-textarea" name="content" required placeholder="Nhập nội dung thông báo..."></textarea>
+
+                    <label class="widget-label">Sinh viên phòng ban nhận thông báo</label>
+                    <label class="receiver-select-all" for="receiver-department-all">
+                        <input id="receiver-department-all" type="checkbox" onchange="toggleAllReceiverDepartments(this.checked)">
+                        <span>Tất cả phòng ban</span>
+                    </label>
+                    <div class="receiver-checkbox-list">
+                        <label class="receiver-checkbox-item" th:each="dept : ${allDepartments}">
+                            <input type="checkbox" name="receiverDepartmentIds" th:value="${dept.id}" onchange="syncReceiverSelectAll()">
+                            <span th:text="${dept.name}">Phòng ban</span>
+                        </label>
+                    </div>
+
+                    <input type="hidden" name="q" th:value="${q}">
+                    <input type="hidden" name="departmentId" th:value="${departmentId}">
+                    <input type="hidden" name="sortBy" th:value="${sortBy}">
+                    <input type="hidden" name="page" th:value="${currentPage}">
+
+                    <button class="create-btn" type="submit"><i class="fas fa-plus"></i> Đăng thông báo</button>
+                </form>
             </aside>
         </section>
     </main>
@@ -135,6 +162,23 @@
             return;
         }
         form.classList.toggle('show');
+    }
+
+    function toggleAllReceiverDepartments(checked) {
+        document.querySelectorAll('input[name="receiverDepartmentIds"]').forEach(function (checkbox) {
+            checkbox.checked = checked;
+        });
+    }
+
+    function syncReceiverSelectAll() {
+        const items = document.querySelectorAll('input[name="receiverDepartmentIds"]');
+        const master = document.getElementById('receiver-department-all');
+        if (!master || items.length === 0) {
+            return;
+        }
+        master.checked = Array.from(items).every(function (checkbox) {
+            return checkbox.checked;
+        });
     }
 </script>
 </body>

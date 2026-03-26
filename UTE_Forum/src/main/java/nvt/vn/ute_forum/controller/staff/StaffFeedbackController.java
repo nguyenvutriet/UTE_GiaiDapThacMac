@@ -164,6 +164,22 @@ public class StaffFeedbackController {
         return buildAnnouncementManagementRedirect(q, departmentId, sortBy, page);
     }
 
+    @PostMapping("/forum/announcements/create")
+    public String createAnnouncement(@RequestParam(required = false) String title,
+                                     @RequestParam(required = false) String content,
+                                     @RequestParam(required = false) java.util.List<String> receiverDepartmentIds,
+                                     @RequestParam(required = false) String q,
+                                     @RequestParam(required = false) String departmentId,
+                                     @RequestParam(defaultValue = "newest") String sortBy,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @AuthenticationPrincipal UserDetails userDetails) {
+        Users staff = resolveStaff(userDetails);
+        if (staff != null) {
+            annoucementService.createAnnouncement(title, content, staff, receiverDepartmentIds);
+        }
+        return buildAnnouncementManagementRedirect(q, departmentId, sortBy, page);
+    }
+
     @PostMapping("/forum/announcements/{id}/delete")
     public String deleteAnnouncement(@PathVariable("id") String announcementId,
                                      @RequestParam(required = false) String q,
