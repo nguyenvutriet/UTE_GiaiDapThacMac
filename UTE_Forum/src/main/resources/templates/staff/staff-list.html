@@ -24,7 +24,7 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar">
             <div class="user-info">
-                <span class="user-role">Cán bộ Thanh tra</span>
+                <span th:text="${staff.department.name}"></span>
                 <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
@@ -54,39 +54,113 @@
                 </div>
 
                 <div>
-                    <button class="filter-btn">Trạng thái</button>
-                    <button class="filter-btn">Danh mục</button>
+                    <button class="filter-btn">
+                        <i class="fas fa-filter"></i> Trạng thái
+                    </button>
+
+                    <button class="filter-btn">
+                        <i class="fas fa-th-large"></i> Danh mục
+                    </button>
                 </div>
             </div>
 
-            <table class="staff-table">
-                <thead>
-                <tr>
-                    <th>TIÊU ĐỀ</th>
-                    <th>DANH MỤC</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>NGƯỜI GỬI</th>
-                    <th>NGÀY GỬI</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td class="title-cell">Lorem Ipsum</td>
-                    <td>An Ninh</td>
-                    <td><span class="status-tag success">Đã xử lý</span></td>
-                    <td>Nguyễn A</td>
-                    <td>24/01/2026</td>
-                </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="staff-table">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-align-left"></i> TIÊU ĐỀ</th>
+                        <th><i class="fas fa-layer-group"></i> DANH MỤC</th>
+                        <th>
+                            <a th:href="@{/staff/list-feedbacks(
+            page=${currentPage},
+            sortField='currentStatus',
+            sortDir=${sortDir == 'ASC' ? 'DESC' : 'ASC'}
+        )}"
+                               class="sort-link">
 
-            <div class="pagination">
-                <button class="p-btn"><i class="fas fa-chevron-left"></i></button>
-                <span>Trang 1 / 25</span>
-                <button class="p-btn"><i class="fas fa-chevron-right"></i></button>
+                                <i class="fas fa-spinner"></i> TRẠNG THÁI
+
+                                <!-- ICON -->
+                                <i th:if="${sortField == 'currentStatus' and sortDir == 'ASC'}"
+                                   class="fas fa-arrow-up"></i>
+
+                                <i th:if="${sortField == 'currentStatus' and sortDir == 'DESC'}"
+                                   class="fas fa-arrow-down"></i>
+
+                            </a>
+                        </th>
+                        <th><i class="fas fa-user"></i> NGƯỜI GỬI</th>
+                        <th><i class="fas fa-clock"></i> NGÀY GỬI</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="fb : ${feedbacks}">
+
+                        <!-- TIÊU ĐỀ -->
+                        <td class="title-cell" th:text="${fb.subject}"></td>
+
+                        <!-- DANH MỤC -->
+                        <td th:text="${#strings.listJoin(fb.categories, ', ')}"></td>
+
+                        <!-- TRẠNG THÁI -->
+                        <td>
+                            <span class="status-tag"
+                                  th:classappend="
+                                    ${fb.status == 'RESOLVED'} ? ' success' :
+                                    (${fb.status == 'PENDING'} ? ' pending' :
+                                    (${fb.status == 'FORWARDING'} ? ' forwarding' :
+                                    (${fb.status == 'REJECTED'} ? 'rejected' : '')))
+                                  ">
+
+                                <!-- ICON -->
+                                <i th:if="${fb.status == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                                <i th:if="${fb.status == 'PENDING'}" class="fas fa-spinner"></i>
+                                <i th:if="${fb.status == 'FORWARDING'}" class="fas fa-arrow-right"></i>
+                                <i th:if="${fb.status == 'REJECTED'}" class="fas fa-ban"></i>
+
+                                <!-- TEXT -->
+                                <span th:text="
+                                    ${fb.status == 'RESOLVED'} ? 'Đã xử lý' :
+                                    (${fb.status == 'PENDING'} ? 'Đang xử lý' :
+                                    (${fb.status == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                                    (${fb.status == 'REJECTED'} ? ' Từ chỗi' : '')))
+                                "></span>
+
+                            </span>
+                        </td>
+
+                        <!-- NGƯỜI GỬI -->
+                        <td th:text="${fb.userName}"></td>
+
+                        <!-- NGÀY GỬI -->
+                        <td th:text="${#temporals.format(fb.date, 'HH:mm:ss dd/MM/yyyy')}"></td>
+
+                    </tr>
+                    </tbody>
+                </table>
             </div>
+            <div class="pagination">
 
-        </div>
+                <!-- PREV -->
+                <a th:href="${currentPage == 0} ? '#' : @{/staff/list-feedbacks(page=${currentPage - 1})}"
+                   th:classappend="${currentPage == 0} ? ' disabled'"
+                   class="p-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+
+                <!-- TEXT -->
+                <span class="page-info">
+                    Trang <span th:text="${currentPage + 1}"></span> /
+                    <span th:text="${totalPages}"></span>
+                </span>
+                <!-- NEXT -->
+                <a th:href="${currentPage + 1 >= totalPages} ? '#' : @{/staff/list-feedbacks(page=${currentPage + 1})}"
+                   th:classappend="${currentPage + 1 >= totalPages} ? ' disabled'"
+                   class="p-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+
+            </div>
     </main>
 
 </div>

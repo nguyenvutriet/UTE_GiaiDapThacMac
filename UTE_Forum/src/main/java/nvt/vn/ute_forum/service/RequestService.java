@@ -52,6 +52,7 @@ public class RequestService {
                     dto.setSubject(r.getSubject());
                     dto.setDescription(r.getDescription());
                     dto.setDate(r.getTimeCreate());
+                    dto.setStatus(r.getCurrentStatus());
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
                     dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
                     dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
