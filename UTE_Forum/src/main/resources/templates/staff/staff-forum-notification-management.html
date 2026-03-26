@@ -49,24 +49,24 @@
 
         <section class="content-grid">
             <div class="post-list">
-                <article class="announcement-card" th:each="post : ${requests}">
+                <article class="announcement-card" th:each="post : ${announcements}">
                     <div class="announcement-head">
                         <div class="dept-wrap">
                             <span class="dept-icon"><i class="far fa-building"></i></span>
                             <span class="dept-name" th:text="${post.departmentName}">Phòng ban</span>
                         </div>
-                        <time class="post-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy')}">20/12/2025</time>
+                        <time class="post-date" th:text="${post.dateLabel}">--/--/----</time>
                     </div>
 
-                    <h3 class="announcement-title" th:text="${post.subject}">Thông báo tổng vệ sinh khuôn viên cuối năm</h3>
-                    <p class="announcement-text" th:text="${post.description}">Nội dung thông báo...</p>
+                    <h3 class="announcement-title" th:text="${post.title}">Thông báo tổng vệ sinh khuôn viên cuối năm</h3>
+                    <p class="announcement-text" th:text="${post.content}">Nội dung thông báo...</p>
 
                     <div class="announcement-actions">
                         <a class="detail-link" th:href="@{/api/forum/view}">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </article>
 
-                <div class="empty-state" th:if="${#lists.isEmpty(requests)}">Chưa có thông báo nào.</div>
+                <div class="empty-state" th:if="${#lists.isEmpty(announcements)}">Chưa có thông báo nào.</div>
 
                 <div class="pagination" th:if="${totalPages > 0}">
                     <a th:href="@{/staff/forum/notification-management(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
@@ -98,5 +98,6 @@
 </div>
 </body>
 </html>
+
 
 

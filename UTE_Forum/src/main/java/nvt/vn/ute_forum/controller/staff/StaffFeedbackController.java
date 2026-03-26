@@ -1,6 +1,8 @@
 package nvt.vn.ute_forum.controller.staff;
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
+import nvt.vn.ute_forum.dto.StaffAnnouncementCardDTO;
+import nvt.vn.ute_forum.service.AnnoucementService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.CategoryRepo;
@@ -34,6 +36,9 @@ public class StaffFeedbackController {
 
     @Autowired
     private DepartmentRepo departmentRepo;
+
+    @Autowired
+    private AnnoucementService annoucementService;
 
     @GetMapping("/list-feedbacks")
     public String viewAllFeedbacks(
@@ -100,20 +105,18 @@ public class StaffFeedbackController {
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, 8, Sort.by("timeCreate").descending());
+        Pageable pageable = PageRequest.of(page, 8);
 
-        String currentUserId = null;
         if (userDetails != null) {
             Users staff = usersRepo.findByEmail(userDetails.getUsername());
             if (staff != null) {
-                currentUserId = staff.getId();
                 model.addAttribute("staff", staff);
             }
         }
 
-        Page<ForumPostDTO> postPage = requestService.getPublicPosts(pageable, currentUserId);
+        Page<StaffAnnouncementCardDTO> postPage = annoucementService.getAnnouncementCards(pageable);
 
-        model.addAttribute("requests", postPage.getContent());
+        model.addAttribute("announcements", postPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postPage.getTotalPages());
         model.addAttribute("allDepartments", departmentRepo.findAll());

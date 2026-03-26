@@ -58,7 +58,9 @@
                                 <time class="author-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy')}">24/01/2026</time>
                             </div>
                         </div>
-                        <span class="status-pill"><i class="far fa-check-circle"></i> Đã xử lý</span>
+                        <span class="status-pill"><i class="far fa-check-circle"></i>
+                            <span th:text="${post.status != null and !post.status.isBlank() ? post.status : 'Dang xu ly'}">Dang xu ly</span>
+                        </span>
                     </div>
 
                     <h3 class="discussion-title" th:text="${post.subject}">Tiêu đề thảo luận</h3>
@@ -118,6 +120,7 @@
 </div>
 </body>
 </html>
+
 
 
 

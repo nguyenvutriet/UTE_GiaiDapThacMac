@@ -51,6 +51,7 @@ public class RequestService {
                     dto.setId(r.getId());
                     dto.setSubject(r.getSubject());
                     dto.setDescription(r.getDescription());
+                    dto.setStatus(r.getCurrentStatus());
                     dto.setDate(r.getTimeCreate());
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
                     dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
@@ -167,6 +168,7 @@ public class RequestService {
         dto.setId(r.getId());
         dto.setSubject(r.getSubject());
         dto.setDescription(r.getDescription());
+        dto.setStatus(r.getCurrentStatus());
         dto.setDate(r.getTimeCreate()); // Dùng timeCreate cho khớp với getPublicPosts
         dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
         dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
