@@ -1,0 +1,180 @@
+/* Shared dashboard shell for all roles, based on staff feedback-received page */
+:root {
+    --dash-primary-blue: #235d95;
+    --dash-sidebar-dark: #0f477c;
+    --dash-bg: #eceff4;
+    --dash-white: #ffffff;
+    --dash-text-main: #1f2937;
+}
+
+body {
+    background-color: var(--dash-bg) !important;
+    color: var(--dash-text-main);
+}
+
+.page-layout,
+.staff-layout,
+.admin-layout {
+    display: grid !important;
+    grid-template-columns: 250px 1fr !important;
+    min-height: 100vh;
+}
+
+.page-layout > .sidebar,
+.staff-layout > .sidebar,
+.admin-layout > .sidebar {
+    background: var(--dash-primary-blue) !important;
+    color: var(--dash-white) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+}
+
+.page-layout > .sidebar .sidebar-header,
+.staff-layout > .sidebar .sidebar-header,
+.admin-layout > .sidebar .sidebar-header,
+.page-layout > .sidebar .brand,
+.staff-layout > .sidebar .brand,
+.admin-layout > .sidebar .brand,
+.page-layout > .sidebar .brand-block,
+.staff-layout > .sidebar .brand-block,
+.admin-layout > .sidebar .brand-block {
+    padding: 22px 16px 18px !important;
+    text-align: center !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.28) !important;
+}
+
+.page-layout > .sidebar .logo,
+.staff-layout > .sidebar .logo,
+.admin-layout > .sidebar .logo,
+.page-layout > .sidebar .brand-logo,
+.staff-layout > .sidebar .brand-logo,
+.admin-layout > .sidebar .brand-logo {
+    width: 118px !important;
+    height: 150px !important;
+    object-fit: cover !important;
+    margin-bottom: 10px !important;
+}
+
+.page-layout > .sidebar .user-profile,
+.staff-layout > .sidebar .user-profile,
+.admin-layout > .sidebar .user-profile,
+.page-layout > .sidebar .student-info,
+.staff-layout > .sidebar .student-info,
+.admin-layout > .sidebar .student-info {
+    padding: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    background: rgba(15, 71, 124, 0.78) !important;
+    margin: 12px !important;
+    border-radius: 12px !important;
+}
+
+.page-layout > .sidebar .avatar,
+.staff-layout > .sidebar .avatar,
+.admin-layout > .sidebar .avatar {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    border: 2px solid #ffffff !important;
+}
+
+.page-layout > .sidebar .user-role,
+.staff-layout > .sidebar .user-role,
+.admin-layout > .sidebar .user-role,
+.page-layout > .sidebar .student-name,
+.staff-layout > .sidebar .student-name,
+.admin-layout > .sidebar .student-name {
+    font-weight: 700 !important;
+    font-size: 0.98rem !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+}
+
+.page-layout > .sidebar .user-dept,
+.staff-layout > .sidebar .user-dept,
+.admin-layout > .sidebar .user-dept,
+.page-layout > .sidebar .student-id,
+.staff-layout > .sidebar .student-id,
+.admin-layout > .sidebar .student-id,
+.page-layout > .sidebar .student-role,
+.staff-layout > .sidebar .student-role,
+.admin-layout > .sidebar .student-role {
+    font-size: 0.82rem !important;
+    color: #d6e4f6 !important;
+    margin: 0 !important;
+}
+
+.page-layout > .sidebar .sidebar-nav,
+.staff-layout > .sidebar .sidebar-nav,
+.admin-layout > .sidebar .sidebar-nav {
+    flex: 1 !important;
+    padding: 10px 12px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.page-layout > .sidebar .nav-item,
+.staff-layout > .sidebar .nav-item,
+.admin-layout > .sidebar .nav-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    color: #ecf3ff !important;
+    text-decoration: none !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    margin-bottom: 8px !important;
+    transition: background 0.2s ease !important;
+}
+
+.page-layout > .sidebar .nav-item:hover,
+.staff-layout > .sidebar .nav-item:hover,
+.admin-layout > .sidebar .nav-item:hover,
+.page-layout > .sidebar .nav-item.active,
+.staff-layout > .sidebar .nav-item.active,
+.admin-layout > .sidebar .nav-item.active {
+    background: var(--dash-sidebar-dark) !important;
+    color: #ffffff !important;
+}
+
+.page-layout > .sidebar .nav-icon,
+.staff-layout > .sidebar .nav-icon,
+.admin-layout > .sidebar .nav-icon {
+    width: 18px !important;
+    min-width: 18px !important;
+    text-align: center !important;
+    background: transparent !important;
+}
+
+.page-layout > .sidebar .badge-count,
+.staff-layout > .sidebar .badge-count,
+.admin-layout > .sidebar .badge-count {
+    background: #ef4444 !important;
+    padding: 2px 7px !important;
+    border-radius: 999px !important;
+    font-size: 10px !important;
+    margin-left: auto !important;
+    color: #ffffff !important;
+    min-width: 20px !important;
+    text-align: center !important;
+}
+
+.page-layout > .sidebar .logout-btn,
+.staff-layout > .sidebar .logout-btn,
+.admin-layout > .sidebar .logout-btn {
+    padding: 18px 20px !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    font-weight: 700 !important;
+}
+
+.main-content {
+    padding: 25px;
+}
+

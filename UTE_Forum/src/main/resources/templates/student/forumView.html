@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diễn đàn</title>
+    <link rel="stylesheet" th:href="@{/css/layout/dashboard-common.css}">
     <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -22,17 +23,18 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
-            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
-            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" th:href="@{/api/history}"><i class="fas fa-box-archive nav-icon"></i><span>Góp ý tiếp nhận</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><i class="fas fa-comments nav-icon"></i><span>Diễn đàn</span></a>
+            <a class="nav-item" th:href="@{/api/notifications(tab='forum')}"><i class="fas fa-list-check nav-icon"></i><span>Quản lý thông báo</span></a>
             <a class="nav-item" th:href="@{/api/notifications}">
-                <span class="nav-icon">&#128276;</span>
+                <i class="fas fa-bell nav-icon"></i>
                 <span>Thông báo</span>
                 <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
             </a>
-            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+            <a class="nav-item" href="#"><i class="fas fa-chart-line nav-icon"></i><span>Thống kê</span></a>
+            <a class="nav-item" href="/change-password"><i class="fas fa-key nav-icon"></i><span>Đổi mật khẩu</span></a>
         </nav>
-        <a class="logout-btn" href="/logout">Đăng xuất</a>
+        <a class="logout-btn" href="/logout"><i class="fas fa-right-from-bracket"></i> Đăng xuất</a>
     </aside>
 
     <main class="main-content">

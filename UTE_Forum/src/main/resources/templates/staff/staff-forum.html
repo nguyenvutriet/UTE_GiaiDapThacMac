@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff - Diễn đàn thảo luận</title>
+    <link rel="stylesheet" th:href="@{/css/layout/dashboard-common.css}">
     <link rel="stylesheet" th:href="@{/css/staff/staff-forum.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -23,17 +24,17 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-box-archive"></i> Góp ý tiếp nhận</a>
             <a th:href="@{/staff/forum}" class="nav-item active"><i class="fas fa-comments"></i> Diễn đàn</a>
-            <a th:href="@{/staff/forum/notification-management}" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/forum/notification-management}" class="nav-item"><i class="fas fa-list-check"></i> Quản lý thông báo</a>
             <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo
                 <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
             </a>
             <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
-            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-key"></i> Đổi mật khẩu</a>
         </nav>
 
-        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-right-from-bracket"></i> Đăng xuất</a>
     </aside>
 
     <main class="main-content">
