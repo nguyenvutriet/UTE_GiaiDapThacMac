@@ -519,3 +519,106 @@ html {
     padding: 40px; /* Tạo độ cao cho khung rỗng */
     background-color: #f1f5f9; /* Nền xám đậm hơn chút */
 }
+
+/* 1. Tổng thể khung bộ lọc */
+.sidebar-widget {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.sidebar-widget h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 2. Style cho các ô Select (Khoa, Danh mục, Sắp xếp) */
+select.search-input-alt,
+.filter-stack select {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 0.95rem;
+    color: #444;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 15px;
+    /* Xóa icon mặc định để làm icon riêng nếu thích */
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 12px) center;
+}
+
+select:focus {
+    border-color: #22369a;
+    box-shadow: 0 0 0 3px rgba(17, 43, 117, 0.1);
+    background-color: #fff;
+}
+
+/* 3. Style cho ô chọn Ngày tháng (Input Date-time) */
+.date-range {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.date-range label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.date-range input[type="datetime-local"] {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: #444;
+    background: #f8f9fa;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.date-range input:focus {
+    border-color: #4a61ae;
+    background: #fff;
+}
+
+/* 4. Nút bấm (Apply & Reset) */
+.btn-apply {
+    width: 100%;
+    padding: 12px;
+    background: #397ac5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-apply:hover {
+    background: #1c48b7;
+}
+
+.btn-reset {
+    color: #666;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.btn-reset:hover {
+    color: #1438c3;
+}

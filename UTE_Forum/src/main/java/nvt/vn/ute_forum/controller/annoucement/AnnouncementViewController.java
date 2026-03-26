@@ -1,11 +1,17 @@
 package nvt.vn.ute_forum.controller.annoucement;
 
+import nvt.vn.ute_forum.model.Announcement;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.AnnouncementRepo;
+import nvt.vn.ute_forum.repository.CategoryRepo;
+import nvt.vn.ute_forum.repository.DepartmentRepo;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.AnnoucementService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller; // QUAN TRỌNG
@@ -13,6 +19,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Controller // Dùng cái này để trả về View (HTML)
 @RequestMapping("/announcement") // Đổi lại path cho đẹp, không để /api
@@ -25,6 +35,9 @@ public class AnnouncementViewController {
     private AnnoucementService announcementService;
     @Autowired
     private UsersRepo usersRepo;
+
+
+
 
     @GetMapping("/detail/{id}")
     public String showDetailPage(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails, Model model) {
@@ -40,5 +53,37 @@ public class AnnouncementViewController {
                     return "student/announcementDetail";
                 })
                 .orElse("redirect:/api/forum/view");
+    }
+
+    @GetMapping("/filter")
+    public String listAnnouncements(
+            @RequestParam(required = false) String departmentId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "newest") String sort,
+            @AuthenticationPrincipal UserDetails userDetails, // 1. Thêm cái này
+            Model model) {
+
+        // 2. Kiểm tra đăng nhập (Giống hàm detail của bạn)
+        if (userDetails == null) return "redirect:/login";
+
+        // 3. Lấy thông tin User hiện tại để hiện lên Header/Sidebar
+        Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+        model.addAttribute("user", currentUser);
+
+        // --- Logic lọc cũ của bạn ---
+        Sort sortOrder = sort.equals("oldest") ? Sort.by("date").ascending() : Sort.by("date").descending();
+
+        Specification<Announcement> spec = AnnoucementService.AnnouncementSpecifications.filterAnnouncements(
+                departmentId,  startDate, endDate);
+
+        List<Announcement> list = announcementRepository.findAll(spec, sortOrder);
+
+//         List<AnnouncementDTO> dtoList = list.stream().map(announcementService::mapToDTO).toList();
+//         model.addAttribute("announcements", dtoList);
+
+        model.addAttribute("announcements", list);
+
+        return "student/announcement-list"; // Đảm bảo đường dẫn file HTML đúng nhé
     }
 }

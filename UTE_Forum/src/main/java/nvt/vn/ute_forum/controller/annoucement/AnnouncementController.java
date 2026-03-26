@@ -10,49 +10,57 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/announcements")
+@RequestMapping("/api/announcement")
 public class AnnouncementController {
 
     @Autowired
     private AnnouncementRepo announcementRepository;
+
     @Autowired
     private AnnoucementService announcementService;
 
     @GetMapping
     public ResponseEntity<?> getAllAnnouncements(
+            @RequestParam(required = false) String departmentId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "newest") String sort,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "5") int size,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 1. Kiểm tra đăng nhập (Giống bên xóa comment của bạn)
         if (userDetails == null) {
-            return ResponseEntity.status(401).body("Chưa đăng nhập thì xem bằng niềm tin hả má? 😂");
+            return ResponseEntity.status(401).body("Chưa đăng nhập nè bà ơi! 😂");
         }
 
-        // 2. Thiết lập phân trang & Sắp xếp theo ngày mới nhất
-        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        // 1. Xử lý phân trang & sắp xếp
+        Sort sortOrder = sort.equals("oldest") ? Sort.by("date").ascending() : Sort.by("date").descending();
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        // 3. Lấy dữ liệu từ Repo
-        Page<Announcement> announcementPage = announcementRepository.findAll(pageable);
+        // 2. Tạo bộ lọc (Specification)
+        // Lưu ý: Trong file AnnoucementService, Predicate phải là jakarta.persistence.criteria.Predicate
+        var spec = AnnoucementService.AnnouncementSpecifications.filterAnnouncements(
+                departmentId,  startDate, endDate);
 
-        // 4. Map từ Entity sang DTO bằng Service bạn đã viết
-        // Việc này giúp Controller cực kỳ sạch sẽ, mọi logic map nằm ở Service
+        // 3. Thực hiện truy vấn (Repo phải extends JpaSpecificationExecutor)
+        Page<Announcement> announcementPage = announcementRepository.findAll(spec, pageable);
+
+        // 4. Chuyển đổi sang DTO để trả về JSON cho JavaScript
         Page<AnnouncementResponse> responsePage = announcementPage.map(announcementService::mapToDTO);
 
-        // 5. Trả về kết quả
         return ResponseEntity.ok(responsePage);
     }
-
-
 }

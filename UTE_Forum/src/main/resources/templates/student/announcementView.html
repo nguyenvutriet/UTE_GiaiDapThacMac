@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn</title>
-    <link rel="stylesheet" href="../../css/student/announcementView.css" th:href="@{/css/student/announcementView.css}">
+    <title>Diễn đàn & Thông báo</title>
+    <link rel="stylesheet" th:href="@{/css/student/announcementView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -15,9 +15,9 @@
             <div class="student-info">
                 <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
                 <div>
-                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
-                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
-                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                    <p class="student-name" th:text="${user?.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user?.id}">MSSV</p>
+                    <p class="student-role" th:text="${user?.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
                 </div>
             </div>
         </div>
@@ -35,69 +35,55 @@
         <header class="main-header">
             <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
             <div class="forum-tabs">
-                <button class="tab-item" onclick="window.location.href='/api/forum/view'">
-                    Diễn đàn
-                </button>
-                <button class="tab-item active"> Thông báo</button>
+                <button class="tab-item" onclick="window.location.href='/api/forum/view'">Diễn đàn</button>
+                <button class="tab-item active">Thông báo</button>
             </div>
             <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
         </header>
 
         <section class="annoucement-container">
             <div class="announcement-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
-
                 <div id="announcement-list" class="announcement">
-                    <div class="loading-state">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Đang tải thông báo từ hệ thống...</p>
-                    </div>
+                    <div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>
                 </div>
-
-                <div id="pagination-container" class="pagination-wrapper">
-                </div>
-
+                <div id="pagination-container" class="pagination-wrapper"></div>
             </div>
 
             <aside class="forum-sidebar">
                 <div class="sidebar-widget">
                     <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
+                    <input type="text" id="annSearch" class="search-input-alt" placeholder="Tìm bài viết..." onkeyup="if(event.key==='Enter') loadAnnouncements(0)">
                 </div>
 
                 <div class="sidebar-widget">
                     <h3>⏳ Bộ lọc</h3>
-                    <div class="filter-stack">
-                        <select id="filterCategory">
-                            <option value="">Tất cả danh mục</option>
-                            <option value="general">Chung</option>
-                            <option value="course">Học phần</option>
-                            <option value="facility">Cơ sở vật chất</option>
-                            <option value="other">Khác</option>
-                        </select>
+                    <form id="filterForm" class="filter-stack" onsubmit="event.preventDefault(); loadAnnouncements(0);">
 
-                        <select id="filterDepartment">
+
+
+                        <select name="departmentId" id="filterDepartment">
                             <option value="">Tất cả khoa</option>
-                            <option value="it">Công nghệ thông tin</option>
-                            <option value="ee">Điện - Điện tử</option>
-                            <option value="me">Cơ khí</option>
-                            <option value="other">Khác</option>
+                            <th:block th:each="dept : ${departments}">
+                                <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                            </th:block>
                         </select>
 
-                        <select id="filterSort">
+                        <div class="date-range">
+                            <label>Từ:</label>
+                            <input type="datetime-local" name="startDate">
+                            <label>Đến:</label>
+                            <input type="datetime-local" name="endDate">
+                        </div>
+
+                        <select name="sort" id="filterSort">
                             <option value="newest">Mới nhất</option>
                             <option value="oldest">Cũ nhất</option>
                         </select>
-                    </div>
-                    <button class="btn-apply" >Áp dụng lọc</button>
-                </div>
 
-                <div class="sidebar-widget">
-                    <h3>📈 Xu hướng</h3>
-                    <ul class="trending-list">
-                        <li>#DangKyHocPhan</li>
-                        <li>#TuyenSinh2026</li>
-                        <li>#GopYGiangDuong</li>
-                    </ul>
+                        <button type="submit" class="btn-apply">Áp dụng lọc</button>
+                        <a href="javascript:void(0)" class="btn-reset" onclick="document.getElementById('filterForm').reset(); loadAnnouncements(0);"
+                           style="text-decoration: none; text-align: center; display: block; margin-top: 10px;">Xóa lọc</a>
+                    </form>
                 </div>
             </aside>
         </section>
@@ -105,129 +91,106 @@
 </div>
 
 <script th:inline="javascript">
-    // 1. Chỉ khai báo MỘT LẦN duy nhất
     const pageSize = 5;
     const announcementList = document.getElementById('announcement-list');
     const paginationContainer = document.getElementById('pagination-container');
 
     async function loadAnnouncements(page) {
         try {
-            // Hiển thị trạng thái đang tải (tùy chọn)
-            announcementList.innerHTML = '<p class="loading-state">Đang tải dữ liệu...</p>';
+            announcementList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang lọc dữ liệu...</p></div>';
 
-            const response = await fetch(`/api/announcements?page=${page}&size=${pageSize}`);
+            // 1. Thu thập dữ liệu từ các ô lọc
+            const deptId = document.getElementsByName('departmentId')[0].value;
+            const start = document.getElementsByName('startDate')[0].value;
+            const end = document.getElementsByName('endDate')[0].value;
+            const sort = document.getElementsByName('sort')[0].value;
 
-            // 2. Xử lý lỗi đăng nhập (401)
+            // 2. Tạo URLSearchParams chứa TẤT CẢ các bộ lọc
+            const params = new URLSearchParams({
+                page: page,
+                size: pageSize,
+                departmentId: deptId,
+                startDate: start,
+                endDate: end,
+                sort: sort
+            });
+
+            // 3. Gọi API: Bà phải dùng params.toString() ở đây thì nó mới gửi lọc lên Server được!
+            const response = await fetch(`/api/announcement?${params.toString()}`);
+
             if (response.status === 401) {
-                announcementList.innerHTML = `
-                    <div class="error-card">
-                        <p>Chưa đăng nhập thì xem bằng niềm tin hả má? 😂</p>
-                        <a href="/login" class="btn-apply">Đăng nhập ngay</a>
-                    </div>`;
-                if(paginationContainer) paginationContainer.innerHTML = '';
+                announcementList.innerHTML = `<div class="error-card"><p>Vui lòng đăng nhập!</p><a href="/login" class="btn-apply">Đăng nhập</a></div>`;
                 return;
             }
 
             const data = await response.json();
-
-            // 3. Xóa nội dung cũ để render trang mới
             announcementList.innerHTML = '';
 
             if (!data.content || data.content.length === 0) {
-                announcementList.innerHTML = '<p>Hiện chưa có thông báo nào.</p>';
+                announcementList.innerHTML = '<p style="text-align:center; padding:20px;">Không tìm thấy thông báo nào phù hợp. 💨</p>';
+                paginationContainer.innerHTML = '';
                 return;
             }
 
-            // 4. Render danh sách thông báo
-            // 4. Render danh sách thông báo
+            // 4. Render Card
             data.content.forEach(ann => {
                 let attachmentsHtml = '';
-
                 if (ann.attachments && ann.attachments.length > 0) {
-                    // Lấy file đầu tiên làm ví dụ (bạn có thể lặp nếu muốn hiện nhiều ảnh)
                     const firstFile = ann.attachments[0];
-
-                    // Kiểm tra xem file đó có phải là ảnh không (hàm isImageFile bạn đã viết)
                     if (isImageFile(firstFile.fileName)) {
-                        // TẠO HTML CHO KHUNG ẢNH
-                        attachmentsHtml = `
-                <div class="ann-image-preview">
-                    <img src="${firstFile.fileUrl}"
-                         alt="${firstFile.fileName}"
-                         class="ann-posted-image"
-
-                         // XỬ LÝ KHI ẢNH VỠ (Giống ảnh mẫu bạn gửi)
-                         onerror="handleImageError(this);">
-                </div>`;
+                        attachmentsHtml = `<div class="ann-image-preview"><img src="${firstFile.fileUrl}" class="ann-posted-image" onerror="this.src='/images/default-news.png'"></div>`;
                     } else {
-                        // Nếu không phải ảnh thì hiện link file như cũ
                         attachmentsHtml = `<a href="${firstFile.fileUrl}" class="file-link">📎 ${firstFile.fileName}</a>`;
                     }
-                } else {
-                    // TRƯỜNG HỢP THÔNG BÁO KHÔNG CÓ FILE ĐÍNH KÈM
-                    // Bạn có thể hiện placeholder rỗng nếu muốn luôn có cái khung xám
-                    // attachmentsHtml = `<div class="ann-image-placeholder">No Image</div>`;
-                    attachmentsHtml = '<span></span>'; // Hoặc để trống
                 }
 
                 const card = `
-    <div class="announcement-card">
-        <div class="ann-header">
-            <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
-            <span class="ann-date">${ann.date}</span>
-        </div>
-        <div class="ann-body">
-            <h3 class="ann-title">${ann.title}</h3>
-            <p class="ann-content">${ann.content}</p>
-
-            ${attachmentsHtml}
-
-        </div>
-        <div class="ann-footer">
-            <span></span>
-            <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
-        </div>
-    </div>`;
+                <div class="announcement-card">
+                    <div class="ann-header">
+                        <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
+                        <span class="ann-date">${ann.date}</span>
+                    </div>
+                    <div class="ann-body">
+                        <h3 class="ann-title">${ann.title}</h3>
+                        <p class="ann-content">${ann.content}</p>
+                        ${attachmentsHtml}
+                    </div>
+                    <div class="ann-footer">
+                        <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>`;
                 announcementList.insertAdjacentHTML('beforeend', card);
             });
 
-            // 5. Gọi hàm render nút số 1, 2, 3...
             renderPagination(data.totalPages, data.number);
 
         } catch (error) {
-            console.error("Lỗi rồi má ơi:", error);
-            announcementList.innerHTML = '<p>Lỗi kết nối Server. Thử lại sau nhé!</p>';
+            console.error("Lỗi:", error);
+            announcementList.innerHTML = '<p>Lỗi kết nối Server!</p>';
         }
     }
 
     function renderPagination(totalPages, currentActivePage) {
         if (!paginationContainer) return;
         paginationContainer.innerHTML = '';
-
-        // Nếu chỉ có 1 trang thì không hiện nút làm gì cho tốn diện tích
         if (totalPages <= 1) return;
 
         for (let i = 0; i < totalPages; i++) {
             const pageButton = document.createElement('button');
             pageButton.innerText = i + 1;
             pageButton.className = (i === currentActivePage) ? 'page-btn active' : 'page-btn';
-
             pageButton.onclick = () => {
                 loadAnnouncements(i);
-                // Cuộn lên đầu phần thông báo để user dễ nhìn
-                document.querySelector('.main-header').scrollIntoView({ behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             };
-
             paginationContainer.appendChild(pageButton);
         }
     }
 
-    // Chạy lần đầu khi load trang
     document.addEventListener('DOMContentLoaded', () => loadAnnouncements(0));
 
     function isImageFile(fileName) {
         if (!fileName) return false;
-        // Kiểm tra các đuôi file ảnh phổ biến như trong code của bạn
         const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
         return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
     }

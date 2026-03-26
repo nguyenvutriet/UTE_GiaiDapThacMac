@@ -4,11 +4,15 @@ import nvt.vn.ute_forum.dto.AnnouncementResponse;
 import nvt.vn.ute_forum.model.Announcement;
 import nvt.vn.ute_forum.repository.AnnouncementRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Predicate; // ĐÚNG
+ import java.util.stream.Collectors;
 
 @Service
 public class AnnoucementService {
@@ -44,6 +48,35 @@ public class AnnoucementService {
         }
 
         return dto;
+    }
+
+    public class AnnouncementSpecifications {
+        public static Specification<Announcement> filterAnnouncements(
+                String departmentId,
+                LocalDateTime startDate,
+                LocalDateTime endDate) {
+
+            return (root, query, cb) -> {
+                List<Predicate> predicates = new ArrayList<>();
+
+                // 1. Lọc theo Department (thông qua User)
+                if (departmentId != null && !departmentId.isEmpty()) {
+                    predicates.add(cb.equal(root.get("user").get("department").get("id"), departmentId));
+                }
+
+
+
+                // 3. Lọc trong khoảng thời gian
+                if (startDate != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
+                }
+                if (endDate != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
+                }
+
+                return cb.and(predicates.toArray(new Predicate[0]));
+            };
+        }
     }
 
 }
