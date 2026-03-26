@@ -370,6 +370,29 @@ body {
 }
 
 
+.status-pill.pending {
+  color: #b45309;
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.status-pill.forwarding {
+  color: #6b21a8;
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+}
+
+.status-pill.approved {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.status-pill.rejected {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
 .request-subject {
   margin: 0;
   padding: 0 12px;

@@ -12,7 +12,7 @@
     <div class="brand-block">
       <img class="brand-logo" src="/images/ute_logo.png" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
       <div class="student-info">
-        <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+        <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
 
         <div>
           <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
@@ -76,8 +76,8 @@
         <article class="feedback-card" th:each="req : ${requests}">
           <div class="card-head">
             <span class="status-pill"
-                  th:classappend="${req.currentStatus == 'Đã xử lý' or req.currentStatus == 'RESOLVED' ? ' done' : (req.currentStatus == 'Đang xử lý' or req.currentStatus == 'PROCESSING' ? ' processing' : ' waiting')}"
-                  th:text="${req.currentStatus}">Đang xử lý</span>
+                  th:classappend="${req.currentStatus == 'PENDING' ? ' pending' : req.currentStatus == 'FORWARDING' ? ' forwarding' : req.currentStatus == 'APPROVED' ? ' approved' : req.currentStatus == 'RESOLVED' ? ' done' : req.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
+                  th:text="${req.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : req.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : req.currentStatus == 'APPROVED' ? 'Đang xử lý' : req.currentStatus == 'RESOLVED' ? 'Đã xử lý' : req.currentStatus == 'REJECTED' ? 'Từ chối' : req.currentStatus}">Đang chờ tiếp nhận</span>
           </div>
           <h3 class="request-subject" th:text="${req.subject}">Tiêu đề góp ý</h3>
           <div class="request-meta-group">
@@ -122,8 +122,8 @@
           <h2 th:text="${selectedRequest.subject}">Tiêu đề góp ý</h2>
           <div class="detail-meta">
             <span class="status-pill"
-                  th:classappend="${selectedRequest.currentStatus == 'Đã xử lý' or selectedRequest.currentStatus == 'RESOLVED' ? ' done' : (selectedRequest.currentStatus == 'Đang xử lý' or selectedRequest.currentStatus == 'PROCESSING' ? ' processing' : ' waiting')}"
-                  th:text="${selectedRequest.currentStatus}">Đang xử lý</span>
+                  th:classappend="${selectedRequest.currentStatus == 'PENDING' ? ' pending' : selectedRequest.currentStatus == 'FORWARDING' ? ' forwarding' : selectedRequest.currentStatus == 'APPROVED' ? ' approved' : selectedRequest.currentStatus == 'RESOLVED' ? ' done' : selectedRequest.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
+                  th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
             <span class="meta-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
             <span class="meta-chip" th:text="${'Phòng ban tiếp nhận: ' + (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
           </div>
@@ -149,7 +149,7 @@
                 <div class="timeline-card">
                   <div class="timeline-head">
                     <div class="timeline-head-left">
-                      <span class="status-pill" th:classappend="${' ' + item.cssClass}" th:text="${item.status}">Đang xử lý</span>
+                      <span class="status-pill" th:classappend="${item.cssClass == 'done' ? ' done' : item.cssClass == 'forwarding' ? ' forwarding' : item.cssClass == 'approved' ? ' approved' : item.cssClass == 'pending' ? ' pending' : item.cssClass == 'rejected' ? ' rejected' : ' pending'}" th:text="${item.status}">Đang chờ tiếp nhận</span>
                     </div>
                     <time th:text="${item.time}">2026-03-21</time>
                   </div>

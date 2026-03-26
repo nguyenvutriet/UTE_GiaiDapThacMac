@@ -27,6 +27,40 @@ import java.util.stream.Collectors;
 public class SubmittedFeedbackHistoryController {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    enum RequestStatusEnum {
+        PENDING("Đang chờ tiếp nhận", "pending", "Đang chờ tiếp nhận"),
+        FORWARDING("Đã được chuyển tiếp", "forwarding", "Đã được chuyển tiếp"),
+        APPROVED("Đang xử lý", "approved", "Đang xử lý"),
+        RESOLVED("Đã xử lý", "done", "Đã xử lý"),
+        REJECTED("Từ chối", "rejected", "Từ chối");
+//        PROCESSING("Đang chờ xử lý", "approved", "Đang xử lý");
+
+        private final String displayText;
+        private final String cssClass;
+        private final String translateText;
+
+        RequestStatusEnum(String displayText, String cssClass, String translateText) {
+            this.displayText = displayText;
+            this.cssClass = cssClass;
+            this.translateText = translateText;
+        }
+
+        public String getDisplayText() { return displayText; }
+        public String getCssClass() { return cssClass; }
+        public String getTranslateText() { return translateText; }
+
+        public static RequestStatusEnum fromStatus(String status) {
+            if (status == null || status.isBlank()) {
+                return PENDING;
+            }
+            try {
+                return RequestStatusEnum.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                return PENDING;
+            }
+        }
+    }
+
     private final RequestService requestService;
     private final ForwardingLogService forwardingLogService;
     private final RequestStatusHistoryService requestStatusHistoryService;
@@ -277,7 +311,7 @@ public class SubmittedFeedbackHistoryController {
                 String fromDepartment = safeDepartmentName(matchedLog.getFromdepartment() == null ? null : matchedLog.getFromdepartment().getName());
                 String toDepartment = safeDepartmentName(matchedLog.getTodepartment() == null ? null : matchedLog.getTodepartment().getName());
                 String note = safeValue(matchedLog.getNote()).trim();
-                String forwardingMessage = "Đang được chuyển tiếp đến " + toDepartment + " (từ " + fromDepartment + ").";
+                String forwardingMessage = "Đã được chuyển tiếp đến " + toDepartment + " (từ " + fromDepartment + ")."+'\n';
                 if (!note.isBlank()) {
                     forwardingMessage += " Ghi chú: " + note + ".";
                 }
@@ -366,29 +400,7 @@ public class SubmittedFeedbackHistoryController {
     }
 
     private String translateStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return "Đang xử lý";
-        }
-
-        if ("PENDING".equalsIgnoreCase(status)) {
-            return "Chờ tiếp nhận";
-        }
-        if ("APPROVED".equalsIgnoreCase(status)) {
-            return "Đã duyệt";
-        }
-        if ("REJECTED".equalsIgnoreCase(status)) {
-            return "Từ chối";
-        }
-        if ("RESOLVED".equalsIgnoreCase(status)) {
-            return "Đã xử lý";
-        }
-        if ("FORWARDING".equalsIgnoreCase(status)) {
-            return "Đang chuyển tiếp";
-        }
-        if ("PROCESSING".equalsIgnoreCase(status)) {
-            return "Đang xử lý";
-        }
-        return status;
+        return RequestStatusEnum.fromStatus(status).getTranslateText();
     }
 
     private String resolveCurrentDepartment(Request selectedRequest, List<ForwardingLog> forwardingLogs) {
@@ -412,19 +424,7 @@ public class SubmittedFeedbackHistoryController {
     }
 
     private String toCssClass(String status) {
-        if (status == null) {
-            return "processing";
-        }
-        if ("RESOLVED".equalsIgnoreCase(status) || "Đã xử lý".equalsIgnoreCase(status)) {
-            return "done";
-        }
-        if ("REJECTED".equalsIgnoreCase(status) || "Từ chối".equalsIgnoreCase(status)) {
-            return "waiting";
-        }
-        if ("PROCESSING".equalsIgnoreCase(status) || "Đang xử lý".equalsIgnoreCase(status)) {
-            return "processing";
-        }
-        return "waiting";
+        return RequestStatusEnum.fromStatus(status).getCssClass();
     }
 
     public static class TimelineItem {
