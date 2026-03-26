@@ -262,9 +262,6 @@ html {
     justify-self: end;
 
     width: 280px; /* 🤏 Cố định độ rộng nhỏ lại một chút */
-    /* Thêm 2 dòng này */
-    z-index: 999;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Tạo bóng nhẹ để trông Sidebar nổi lên trên */
 }
 
 .sidebar-widget {
@@ -335,40 +332,190 @@ html {
     background: #004470;
 }
 
-/* Container bao quanh 2 tabs - Ép nó nằm ngang */
-.announcement-nav {
-    display: flex !important; /* Đảm bảo luôn nằm ngang */
-    flex-direction: row;      /* Ép hàng ngang */
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 20px;
-    background-color: transparent; /* Để nền trắng cho sạch */
-    width: 100%;
+/* Cột chứa nội dung bên trái */
+.announcement-wrapper {
+    flex: 1; /* Luôn chiếm hết không gian còn lại */
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Định dạng từng Tab */
-.nav-tabb {
-    padding: 10px 20px;
+/* Container tổng */
+.annoucement-container {
+    display: flex; /* Kích hoạt chế độ dàn hàng ngang */
+    align-items: flex-start; /* Không cho các cột kéo dài bằng nhau nếu không cần */
+    gap: 20px; /* Khoảng cách giữa danh sách và sidebar */
+    width: 100%;
+    padding: 20px;
+}
+.announcement {
+    width: 100%; /* Ép nó luôn rộng 100% của cột trái */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+/* Layout cho danh sách thông báo */
+#announcement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1; /* Để nó chiếm không gian bên trái sidebar */
+}
+
+/* Card thông báo */
+.announcement-card {
+    min-height: 180px; /* (Tùy chọn) Giữ một độ cao tối thiểu để trang không bị hụt */
+    width: 100%; /* Đảm bảo card luôn vừa khít với thằng cha .announcement */
+    box-sizing: border-box; /* Tính toán padding vào trong width */
+    background: white;
+    border-radius: 8px;
+
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #edf2f7;
+    transition: transform 0.2s;
+}
+
+.announcement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.ann-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+}
+
+.dept-name {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.ann-date {
+    color: #a0aec0;
+    font-size: 0.85rem;
+}
+
+.ann-title {
+    color: #1a202c;
+    margin: 10px 0;
+    font-size: 1.2rem;
+}
+
+.ann-content {
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    /* Cắt chữ sau 3 dòng */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ann-footer {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-link {
+    background: #f1f5f9;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.btn-detail {
+    color: #3182ce;
     font-weight: 600;
-    font-size: 14px;
-    color: #555;
+    text-decoration: none;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #3182ce;
     cursor: pointer;
-    text-transform: uppercase;
-    position: relative;
-    display: inline-block; /* Quan trọng để không bị mất kích thước */
+    border-radius: 5px;
+    transition: 0.3s;
 }
 
-/* Tab đang được chọn (Active) */
-.nav-tabb.active {
-    color: #00558b; /* Màu xanh đồng bộ với header của bạn */
+.page-btn.active {
+    background: #3182ce;
+    color: white;
+    border-color: #3182ce;
 }
 
-/* Đường gạch dưới màu đỏ/hồng sát mép dưới */
-.nav-tabb.active::after {
-    content: "";
-    position: absolute;
-    bottom: -1px; /* Đè lên đường border-bottom của cha */
-    left: 0;
+.page-btn:hover:not(.active) {
+    background: #ebf8ff;
+}
+
+/* Container bọc ngoài tấm ảnh */
+.ann-image-preview {
+    margin: 15px 0;
     width: 100%;
-    height: 3px;
-    background-color: #e91e63;
+    /* Bạn có thể cố định độ cao tối đa nếu muốn các khung bằng nhau */
+    /* max-height: 300px; */
+    overflow: hidden;
+    display: flex;
+    justify-content: flex-start; /* Ảnh canh trái */
+}
+
+/* Style cho tấm ảnh / khung placeholder */
+.ann-image-preview img,
+.ann-image-placeholder {
+    width: auto; /* Chiều rộng tự động theo ảnh */
+    max-width: 100%; /* Không vượt quá chiều rộng card */
+    height: auto;
+
+    /* STYLE GIỐNG ẢNH MẪU CỦA BẠN */
+    background-color: #f8fafc; /* Màu nền xám nhạt */
+    border: 1px solid #e2e8f0;   /* Viền xám nhẹ */
+    border-radius: 12px;         /* Bo góc đẹp */
+    padding: 5px;                /* Tạo khoảng cách nhỏ giữa ảnh và viền */
+
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02); /* Đổ bóng cực nhẹ */
+    transition: all 0.2s ease;
+}
+
+/* Hiệu ứng khi di chuột vào ảnh */
+.ann-image-preview img:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+
+/* Style riêng cho trường hợp KHÔNG CÓ ẢNH (Placeholder rỗng) */
+.ann-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    padding: 40px; /* Tạo độ cao cho khung rỗng */
+    background-color: #f1f5f9; /* Nền xám đậm hơn chút */
 }

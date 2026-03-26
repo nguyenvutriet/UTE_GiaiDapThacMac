@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diễn đàn</title>
-    <link rel="stylesheet" href="../../css/student/announcementView_iden.css" th:href="@{/css/student/announcementView_iden.css}">
+    <link rel="stylesheet" href="../../css/student/announcementDetail.css" th:href="@{/css/student/announcementDetail.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -44,62 +44,60 @@
         </header>
 
         <section class="annoucement-container">
-            <div class="announcement">
-                <div class="announcement-nav">
-                    <div class="nav-tabb" onclick="window.location.href='/announcement'">
-                        THÔNG BÁO CHUNG
+            <div class="announcement-card-detail">
+                <div class="ann-meta">
+                    <span><i class="fas fa-university"></i> <span th:text="${ann.creatorName}">Phòng Đào tạo</span></span>
+                    <span><i class="fas fa-calendar-alt"></i> <span th:text="${ann.date}">26/03/2026</span></span>
+                </div>
+
+                <h1 class="ann-title-detail" th:text="${ann.title}">Tiêu đề thông báo</h1>
+
+
+
+                <div class="ann-content-full" th:text="${ann.content}">
+                    Nội dung chi tiết ở đây...
+                </div>
+                <div th:each="file : ${ann.attachments}" th:if="${file.fileName.matches('.*\.(jpg|jpeg|png|gif|webp)$')}">
+                    <div class="ann-image-preview">
+                        <img th:src="${file.fileUrl}" alt="image">
                     </div>
-                    <div class="nav-tabb active">THÔNG BÁO CÁ NHÂN</div>
-                </div>
-                <div class="announcement-content">
-
                 </div>
 
 
+
+                <div th:each="file : ${ann.attachments}">
+                    <a th:href="${file.fileUrl}" class="file-link" target="_blank" style="margin-bottom: 15px;">
+                        <i class="fas fa-paperclip"></i> <span th:text="${file.fileName}">file_name.pdf</span>
+                    </a>
+
+                    <div th:if="${file.fileName.toLowerCase().endsWith('.pdf')}" class="pdf-preview-container">
+                        <iframe th:src="${file.fileUrl + '#toolbar=0'}"
+                                width="60%"
+                                height="450px"
+                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                        </iframe>
+                    </div>
+
+                    <div th:if="${file.fileName.toLowerCase().endsWith('.doc') || file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.xlsx')}"
+                         class="office-preview-container">
+                        <iframe th:src="'https://docs.google.com/viewer?url=' + ${file.fileUrl} + '&embedded=true'"
+                                width="100%"
+                                height="600px"
+                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                        </iframe>
+                    </div>
+                </div>
+
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                </a>
             </div>
-
-            <aside class="forum-sidebar">
-                <div class="sidebar-widget">
-                    <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
-                </div>
-
-                <div class="sidebar-widget">
-                    <h3>⏳ Bộ lọc</h3>
-                    <div class="filter-stack">
-                        <select id="filterCategory">
-                            <option value="">Tất cả danh mục</option>
-                            <option value="general">Chung</option>
-                            <option value="course">Học phần</option>
-                            <option value="facility">Cơ sở vật chất</option>
-                            <option value="other">Khác</option>
-                        </select>
-
-                        <select id="filterDepartment">
-                            <option value="">Tất cả khoa</option>
-                            <option value="it">Công nghệ thông tin</option>
-                            <option value="ee">Điện - Điện tử</option>
-                            <option value="me">Cơ khí</option>
-                            <option value="other">Khác</option>
-                        </select>
-
-                        <select id="filterSort">
-                            <option value="newest">Mới nhất</option>
-                            <option value="oldest">Cũ nhất</option>
-                        </select>
-                    </div>
-                    <button class="btn-apply" >Áp dụng lọc</button>
-                </div>
-
-                <div class="sidebar-widget">
-                    <h3>📈 Xu hướng</h3>
-                    <ul class="trending-list">
-                        <li>#DangKyHocPhan</li>
-                        <li>#TuyenSinh2026</li>
-                        <li>#GopYGiangDuong</li>
-                    </ul>
-                </div>
-            </aside>
         </section>
     </main>
 </div>
+
+<script th:inline="javascript">
+
+</script>
+</body>
+</html>

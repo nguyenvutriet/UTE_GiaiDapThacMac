@@ -29,18 +29,5 @@ public class NavigationController {
         return "student/announcementView";
     }
 
-    @GetMapping("/announcement_iden")
-    public String showAnnouncementIdenPage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails != null) {
-            // Lấy thông tin user từ database dựa trên email/username đã đăng nhập
-            Users user = usersRepo.findByEmail(userDetails.getUsername());
-            // Đưa object user vào model với key là "user" để HTML đọc được
-            model.addAttribute("user", user);
-        } else {
-            // Nếu chưa đăng nhập mà lỡ vào đây thì cho về trang login hoặc xử lý tùy má
-            return "redirect:/login";
-        }
 
-        return "student/announcementView_iden";
-    }
 }

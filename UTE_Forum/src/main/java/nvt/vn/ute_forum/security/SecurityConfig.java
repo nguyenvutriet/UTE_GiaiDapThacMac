@@ -95,7 +95,10 @@ public class SecurityConfig {
                                 .deleteCookies("JSESSIONID")
                 )
                 .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()) // CHO PHÉP HIỂN THỊ FRAME TỪ CÙNG NGUỒN
+        );
 
 
         return http.build();
