@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn & Thông báo</title>
+    <link rel="stylesheet" th:href="@{/css/student/announcementView.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user?.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user?.id}">MSSV</p>
+                    <p class="student-role" th:text="${user?.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item" onclick="window.location.href='/api/forum/view'">Diễn đàn</button>
+                <button class="tab-item active">Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
+        </header>
+
+        <section class="annoucement-container">
+            <div class="announcement-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div id="announcement-list" class="announcement">
+                    <div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>
+                </div>
+                <div id="pagination-container" class="pagination-wrapper"></div>
+            </div>
+
+            <aside class="forum-sidebar">
+                <div class="sidebar-widget">
+                    <h3>🔍 Tìm kiếm</h3>
+                    <input type="text" id="annSearch" class="search-input-alt" placeholder="Tìm bài viết..." onkeyup="if(event.key==='Enter') loadAnnouncements(0)">
+                </div>
+
+                <div class="sidebar-widget">
+                    <h3>⏳ Bộ lọc</h3>
+                    <form id="filterForm" class="filter-stack" onsubmit="event.preventDefault(); loadAnnouncements(0);">
+
+
+
+                        <select name="departmentId" id="filterDepartment">
+                            <option value="">Tất cả khoa</option>
+                            <th:block th:each="dept : ${departments}">
+                                <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                            </th:block>
+                        </select>
+
+                        <div class="date-range">
+                            <label>Từ:</label>
+                            <input type="datetime-local" name="startDate">
+                            <label>Đến:</label>
+                            <input type="datetime-local" name="endDate">
+                        </div>
+
+                        <select name="sort" id="filterSort">
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                        </select>
+
+                        <button type="submit" class="btn-apply">Áp dụng lọc</button>
+                        <a href="javascript:void(0)" class="btn-reset" onclick="document.getElementById('filterForm').reset(); loadAnnouncements(0);"
+                           style="text-decoration: none; text-align: center; display: block; margin-top: 10px;">Xóa lọc</a>
+                    </form>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script th:inline="javascript">
+    const pageSize = 5;
+    const announcementList = document.getElementById('announcement-list');
+    const paginationContainer = document.getElementById('pagination-container');
+
+    async function loadAnnouncements(page) {
+        try {
+            announcementList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang lọc dữ liệu...</p></div>';
+
+            // 1. Thu thập dữ liệu từ các ô lọc
+            const deptId = document.getElementsByName('departmentId')[0].value;
+            const start = document.getElementsByName('startDate')[0].value;
+            const end = document.getElementsByName('endDate')[0].value;
+            const sort = document.getElementsByName('sort')[0].value;
+
+            // 2. Tạo URLSearchParams chứa TẤT CẢ các bộ lọc
+            const params = new URLSearchParams({
+                page: page,
+                size: pageSize,
+                departmentId: deptId,
+                startDate: start,
+                endDate: end,
+                sort: sort
+            });
+
+            // 3. Gọi API: Bà phải dùng params.toString() ở đây thì nó mới gửi lọc lên Server được!
+            const response = await fetch(`/api/announcement?${params.toString()}`);
+
+            if (response.status === 401) {
+                announcementList.innerHTML = `<div class="error-card"><p>Vui lòng đăng nhập!</p><a href="/login" class="btn-apply">Đăng nhập</a></div>`;
+                return;
+            }
+
+            const data = await response.json();
+            announcementList.innerHTML = '';
+
+            if (!data.content || data.content.length === 0) {
+                announcementList.innerHTML = '<p style="text-align:center; padding:20px;">Không tìm thấy thông báo nào phù hợp. 💨</p>';
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // 4. Render Card
+            data.content.forEach(ann => {
+                let attachmentsHtml = '';
+                if (ann.attachments && ann.attachments.length > 0) {
+                    const firstFile = ann.attachments[0];
+                    if (isImageFile(firstFile.fileName)) {
+                        attachmentsHtml = `<div class="ann-image-preview"><img src="${firstFile.fileUrl}" class="ann-posted-image" onerror="this.src='/images/default-news.png'"></div>`;
+                    } else {
+                        attachmentsHtml = `<a href="${firstFile.fileUrl}" class="file-link">📎 ${firstFile.fileName}</a>`;
+                    }
+                }
+
+                const card = `
+                <div class="announcement-card">
+                    <div class="ann-header">
+                        <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
+                        <span class="ann-date">${ann.date}</span>
+                    </div>
+                    <div class="ann-body">
+                        <h3 class="ann-title">${ann.title}</h3>
+                        <p class="ann-content">${ann.content}</p>
+                        ${attachmentsHtml}
+                    </div>
+                    <div class="ann-footer">
+                        <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>`;
+                announcementList.insertAdjacentHTML('beforeend', card);
+            });
+
+            renderPagination(data.totalPages, data.number);
+
+        } catch (error) {
+            console.error("Lỗi:", error);
+            announcementList.innerHTML = '<p>Lỗi kết nối Server!</p>';
+        }
+    }
+
+    function renderPagination(totalPages, currentActivePage) {
+        if (!paginationContainer) return;
+        paginationContainer.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        for (let i = 0; i < totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.innerText = i + 1;
+            pageButton.className = (i === currentActivePage) ? 'page-btn active' : 'page-btn';
+            pageButton.onclick = () => {
+                loadAnnouncements(i);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            paginationContainer.appendChild(pageButton);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadAnnouncements(0));
+
+    function isImageFile(fileName) {
+        if (!fileName) return false;
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+        return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+    }
+</script>
+</body>
+</html>

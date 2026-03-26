@@ -69,7 +69,8 @@ public class SecurityConfig {
                                 "/api/vote-comment/**",
                                 "/api/forum/view",
                                 "/staff/list-feedbacks",
-                                "/feedback/send"
+                                "/feedback/send",
+                                "/api/forum/staff"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(
@@ -95,7 +96,10 @@ public class SecurityConfig {
                                 .deleteCookies("JSESSIONID")
                 )
                 .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()) // CHO PHÉP HIỂN THỊ FRAME TỪ CÙNG NGUỒN
+        );
 
 
         return http.build();

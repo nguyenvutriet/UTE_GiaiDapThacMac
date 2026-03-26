@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diễn đàn</title>
+    <link rel="stylesheet" href="../../css/student/announcementDetail.css" th:href="@{/css/student/announcementDetail.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item" onclick="window.location.href='/api/forum/view'">
+                    Diễn đàn
+                </button>
+                <button class="tab-item active"> Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
+        </header>
+
+        <section class="annoucement-container">
+            <div class="announcement-card-detail">
+                <div class="ann-meta">
+                    <span><i class="fas fa-university"></i> <span th:text="${ann.creatorName}">Phòng Đào tạo</span></span>
+                    <span><i class="fas fa-calendar-alt"></i> <span th:text="${ann.date}">26/03/2026</span></span>
+                </div>
+
+                <h1 class="ann-title-detail" th:text="${ann.title}">Tiêu đề thông báo</h1>
+
+
+
+                <div class="ann-content-full" th:text="${ann.content}">
+                    Nội dung chi tiết ở đây...
+                </div>
+                <div th:each="file : ${ann.attachments}" th:if="${file.fileName.matches('.*\.(jpg|jpeg|png|gif|webp)$')}">
+                    <div class="ann-image-preview">
+                        <img th:src="${file.fileUrl}" alt="image">
+                    </div>
+                </div>
+
+
+
+                <div th:each="file : ${ann.attachments}">
+                    <a th:href="${file.fileUrl}" class="file-link" target="_blank" style="margin-bottom: 15px;">
+                        <i class="fas fa-paperclip"></i> <span th:text="${file.fileName}">file_name.pdf</span>
+                    </a>
+
+                    <div th:if="${file.fileName.toLowerCase().endsWith('.pdf')}" class="pdf-preview-container">
+                        <iframe th:src="${file.fileUrl + '#toolbar=0'}"
+                                width="60%"
+                                height="450px"
+                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                        </iframe>
+                    </div>
+
+                    <div th:if="${file.fileName.toLowerCase().endsWith('.doc') || file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.xlsx')}"
+                         class="office-preview-container">
+                        <iframe th:src="'https://docs.google.com/viewer?url=' + ${file.fileUrl} + '&embedded=true'"
+                                width="100%"
+                                height="600px"
+                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                        </iframe>
+                    </div>
+                </div>
+
+                <a href="javascript:history.back()" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                </a>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script th:inline="javascript">
+
+</script>
+</body>
+</html>

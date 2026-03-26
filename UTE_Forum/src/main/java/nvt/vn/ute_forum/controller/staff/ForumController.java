@@ -1,4 +1,5 @@
-package nvt.vn.ute_forum.controller.forum;
+package nvt.vn.ute_forum.controller.staff;
+
 
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 
-@Controller
+@Controller("staffForumController") // Đặt tên khác ở đây
 @RequestMapping("/api/forum")
 public class ForumController {
 
@@ -38,7 +39,7 @@ public class ForumController {
     @Autowired
     private nvt.vn.ute_forum.repository.DepartmentRepo departmentRepo;
 
-    @GetMapping("/view")
+    @GetMapping("/staff")
     public String showForumPage(
             @RequestParam(defaultValue = "0") int page,
             Model model,
@@ -66,60 +67,8 @@ public class ForumController {
         model.addAttribute("totalPages", postPage.getTotalPages());
         model.addAttribute("allCategories", categoryRepo.findAll());
         model.addAttribute("allDepartments", departmentRepo.findAll());
-        return "student/forumView";
+        return "staff/forumView";
     }
 
-    @PostMapping("/react")
-    @ResponseBody
-    public ResponseEntity<?> reactPost( // Đổi sang ResponseEntity cho chuyên nghiệp má ơi
-                                        @RequestParam String postId,
-                                        @RequestParam String type, // Nhận String rồi ép kiểu trong Service cho an toàn, tránh lỗi 400
-                                        @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        if (userDetails == null) {
-            return ResponseEntity.status(401).body("Chưa đăng nhập má ơi!");
-        }
 
-        Users user = usersRepo.findByEmail(userDetails.getUsername());
-        if (user == null) {
-            return ResponseEntity.status(404).body("Không tìm thấy user");
-        }
-
-        try {
-            // Ép kiểu String sang Enum ReactionType
-            ReactionType reactionType = ReactionType.valueOf(type.toUpperCase());
-
-            // Gọi Service và nhận về một Object bọc cả (Counts + CurrentType)
-            Map<String, Object> result = requestService.votePost(postId, user.getId(), reactionType);
-
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Loại reaction không hợp lệ!");
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Lỗi rồi: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/filter")
-    public String filterPosts(
-            @RequestParam(required = false) String categoryId,
-            @RequestParam(required = false) String departmentId,
-            @RequestParam(defaultValue = "newest") String sortBy,
-            @AuthenticationPrincipal UserDetails userDetails,
-            Model model) {
-
-        String currentUserId = null;
-        if (userDetails != null) {
-            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
-            if (currentUser != null) currentUserId = currentUser.getId();
-        }
-
-        // Lấy dữ liệu đã lọc
-        List<ForumPostDTO> posts = requestService.getFilteredPosts(categoryId, departmentId, sortBy, currentUserId);
-
-        model.addAttribute("requests", posts); // Đè dữ liệu mới vào biến 'requests'
-
-        // Trả về fragment "post-list" trong file "student/forumView"
-        return "student/forumView :: .post-list";
-    }
 }

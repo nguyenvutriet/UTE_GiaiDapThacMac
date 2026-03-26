@@ -65,7 +65,7 @@ public class EmailService {
 
         int time = Math.toIntExact(Instant.now().getEpochSecond() - otpTimeStamp.getEpochSecond());
 
-        if(time > 60){
+        if(time > 90){
             return false;
         }
 

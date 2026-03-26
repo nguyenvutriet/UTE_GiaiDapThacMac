@@ -13,15 +13,17 @@ public class CommentDTO {
     // 🔥 THÊM 2 CÁI NÀY
     private String reactionType;
     private Map<String, Long> reactions;
+    private String userRole;
 
     public CommentDTO() {}
 
-    public CommentDTO(String userName, String content, LocalDateTime date, String id, boolean canDelete) {
+    public CommentDTO(String userName, String content, LocalDateTime date, String id, boolean canDelete, String userRole) {
         this.userName = userName;
         this.content = content;
         this.date = date;
         this.id = id;
         this.canDelete = canDelete;
+        this.userRole = userRole;
     }
 
     // Getter Setter
@@ -46,4 +48,7 @@ public class CommentDTO {
 
     public Map<String, Long> getReactions() { return reactions; }
     public void setReactions(Map<String, Long> reactions) { this.reactions = reactions; }
+
+    public String getUserRole() { return userRole; }
+    public void setUserRole(String userRole) { this.userRole = userRole; }
 }

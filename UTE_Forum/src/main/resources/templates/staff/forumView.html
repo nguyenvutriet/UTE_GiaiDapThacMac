@@ -3,54 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn</title>
-    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
+    <title>Cán bộ - Quản lý góp ý</title>
+
+    <!-- CSS riêng -->
+    <link rel="stylesheet" href="/css/staff/forumView.css">
+    <link rel="stylesheet" href="/css/staff/staff-style.css">
+
+
+    <!-- Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
-<div class="page-layout">
+<div class="staff-layout">
+
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="brand-block">
-            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
-            <div class="student-info">
-                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
-                <div>
-                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
-                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
-                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
-                </div>
+        <div class="sidebar-header">
+            <img src="/images/logo_no_bg.png" class="logo">
+        </div>
+
+        <div class="user-profile">
+            <img src="/images/staff.png" class="avatar">
+            <div class="user-info">
+                <span th:text="${user.department.name}"></span>
+                <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
+
         <nav class="sidebar-nav">
-            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
-            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
-            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
-            <a class="nav-item" th:href="@{/api/notifications}">
-                <span class="nav-icon">&#128276;</span>
-                <span>Thông báo</span>
-                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
-            </a>
-            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+            <a href="/staff/list-feedbacks" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a href="#" class="nav-item active"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
         </nav>
-        <a class="logout-btn" href="/logout">Đăng xuất</a>
+
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
     </aside>
 
     <main class="main-content">
         <header class="main-header">
             <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
-            <div class="forum-tabs">
-                <button class="tab-item active">Thảo luận</button>
-                <button class="tab-item" onclick="location.href='/announcement'">Thông báo</button>
-            </div>
+
             <div class="main-header-bottom"><h1 class="page-tab">DIỄN ĐÀN</h1></div>
         </header>
 
         <section class="forum-container">
             <div class="post-list">
-                <div class="quick-post-card">
-                    <img th:src="@{/images/student.png}" class="mini-avatar">
-                    <button class="fake-input">Bạn muốn chia sẻ điều gì?</button>
-                </div>
+
 
                 <article class="post-card" th:each="post : ${requests}">
                     <div th:onclick="openPostModal([[${post}]])" style="cursor: pointer;">
@@ -180,7 +184,7 @@
                             💬 <span class="js-comment-count" th:id="'cmt-count-' + ${post.id}"
                                     th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
                         </button>
-                        <button class="action-btn">🔗 <span>Chia sẻ</span></button>
+
                     </div>
 
                     <div th:id="'comment-box-' + ${post.id}" class="comment-container" >
@@ -245,8 +249,8 @@
             </aside>
         </section>
     </main>
-</div>
 
+</div>
 <div id="postModal" class="modal-overlay" onclick="closeModalOutside(event)">
     <div class="modal-container">
         <div class="modal-main-content">
@@ -308,9 +312,8 @@
             'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
             'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
         };
-
-
         const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
+
 
         // 🔥 TEXT CỦA USER
         const reactConfig = reactionData[cmt.reactionType] || {
@@ -882,13 +885,13 @@
             html += `
         <div class="reaction-user">
             <span>${reactionData[u.type]}</span>
-                <b style="font-size: 14px; color: #050505;">${u.userName}</b>
+            <b style="font-size: 14px; color: #050505;">${u.userName}</b>
                 ${isVerified ? `
                     <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0;">
                         <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
                     </svg>
                 ` : ''}
-                <small style="color:gray;">(${u.userId})</small>
+            <small style="color:gray;">(${u.userId})</small>
         </div>
         `;
         });
@@ -1078,6 +1081,7 @@
                 userName: u.fullName,
                 userId: u.userId,
                 userRole: u.userRole
+
             }));
 
             // Gọi hàm render của má (nhớ check tên hàm renderReactionModall coi có dư chữ 'l' hông nha)

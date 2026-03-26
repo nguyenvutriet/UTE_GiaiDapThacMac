@@ -52,6 +52,7 @@ public class RequestService {
                     dto.setSubject(r.getSubject());
                     dto.setDescription(r.getDescription());
                     dto.setDate(r.getTimeCreate());
+                    dto.setStatus(r.getCurrentStatus());
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
                     dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
                     dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
@@ -94,42 +95,40 @@ public class RequestService {
     }
 
     @Transactional
-    public Map<String, Long> votePost(String requestId, String userId, ReactionType type) {
+    public Map<String, Object> votePost(String requestId, String userId, ReactionType type) {
         Request request = requestRepo.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-
         Users user = usersRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Tìm vote cũ
         Vote vote = voteRepo.findById_UserIdAndId_RequestId(userId, requestId).orElse(null);
+        String currentType = "";
 
         if (vote != null) {
             if (vote.getType() == type) {
-                // Nếu user click lại reaction cũ → unreact
                 voteRepo.delete(vote);
+                voteRepo.flush(); // Xóa xong phải flush để tính tổng cho đúng
+                currentType = ""; // Trạng thái sau khi Unvote
             } else {
-                // Nếu user đổi reaction
                 vote.setType(type);
                 vote.setVoteAt(LocalDateTime.now());
                 voteRepo.save(vote);
+                currentType = type.name();
             }
         } else {
-            // Nếu chưa vote → tạo vote mới
             vote = new Vote(new VoteId(userId, requestId), user, request, type, LocalDateTime.now());
             voteRepo.save(vote);
+            currentType = type.name();
         }
 
-        // Tính tổng reactions
+        // Lấy tổng số lượng
         List<Vote> votes = voteRepo.findByRequest_Id(requestId);
-        return Map.of(
-                "LIKE", votes.stream().filter(v -> v.getType() == ReactionType.LIKE).count(),
-                "LOVE", votes.stream().filter(v -> v.getType() == ReactionType.LOVE).count(),
-                "HAHA", votes.stream().filter(v -> v.getType() == ReactionType.HAHA).count(),
-                "WOW", votes.stream().filter(v -> v.getType() == ReactionType.WOW).count(),
-                "SAD", votes.stream().filter(v -> v.getType() == ReactionType.SAD).count(),
-                "ANGRY", votes.stream().filter(v -> v.getType() == ReactionType.ANGRY).count()
-        );
+        Map<String, Long> counts = new HashMap<>();
+        for (ReactionType r : ReactionType.values()) counts.put(r.name(), 0L);
+        votes.forEach(v -> counts.put(v.getType().name(), counts.get(v.getType().name()) + 1));
+
+        // Trả về cả 2: Số lượng và Trạng thái của user này
+        return Map.of("counts", counts, "currentType", currentType);
     }
 
     public List<ForumPostDTO> getFilteredPosts(String catId, String deptId, String sort, String currentUserId) {

@@ -53,6 +53,24 @@ body {
     margin-bottom: 14px;
 }
 
+.user-name {
+    font-size: min(16px, 2vw); /* tự co nếu dài */
+    max-width: 150px;         /* giới hạn chiều ngang */
+    display: block;
+    white-space: normal;      /* cho xuống dòng */
+    line-height: 1.3;
+}
+
+.user-name {
+    font-size: min(16px, 3vw);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column; /* ⭐ xuống dòng */
+    gap: 4px;               /* ⭐ tạo khoảng cách */
+}
+
 /* USER BLOCK */
 .user-profile {
     padding: 15px;
@@ -215,6 +233,38 @@ body {
 .processing { background: #dbeafe; color: #1e40af; }
 .forwarded { background: #f3e8ff; color: #6b21a8; }
 
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Đã xử lý */
+.status-tag.success {
+    background: #d1f5e0;
+    color: #1e9e5a;
+}
+
+/* Đang xử lý */
+.status-tag.pending {
+    background: #e0ecff;
+    color: #2f6fed;
+}
+
+/* Chuyển tiếp */
+.status-tag.forwarding {
+    background: #ede0ff;
+    color: #7b3fe4;
+}
+
+.status-tag.rejected {
+    background: #fde2e2;
+    color: #dc2626;
+}
 /* ===== PAGINATION ===== */
 .pagination {
     display: flex;
@@ -236,3 +286,23 @@ body {
     background: var(--primary-blue);
     color: white;
 }
+
+.p-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none; /* ⭐ chặn click */
+    cursor: default;
+}
+
+.sort-link {
+    text-decoration: none;
+    color: inherit;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sort-link:hover {
+    color: #4f46e5;
+}
+

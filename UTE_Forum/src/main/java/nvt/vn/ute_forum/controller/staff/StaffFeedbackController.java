@@ -30,13 +30,17 @@ public class StaffFeedbackController {
     @GetMapping("/list-feedbacks")
     public String viewAllFeedbacks(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "timeCreate") String sortField,
+            @RequestParam(defaultValue = "DESC") String sortDir,
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // Phân trang 12 dòng mỗi trang cho giao diện Staff
-        Pageable pageable = PageRequest.of(page, 12, Sort.by("timeCreate").descending());
+        Sort sort = sortDir.equalsIgnoreCase("ASC") ?
+                Sort.by(sortField).ascending() :
+                Sort.by(sortField).descending();
 
-        // Lấy ID user hiện tại để pass vào service
+        Pageable pageable = PageRequest.of(page, 12, sort);
+
         String currentUserId = null;
         if (userDetails != null) {
             Users staff = usersRepo.findByEmail(userDetails.getUsername());
@@ -46,14 +50,16 @@ public class StaffFeedbackController {
             }
         }
 
-        // Gọi service mới, có truyền currentUserId
-        Page<ForumPostDTO> feedbackPage = requestService.getPublicPosts(pageable, currentUserId);
+        Page<ForumPostDTO> feedbackPage =
+                requestService.getPublicPosts(pageable, currentUserId);
 
         model.addAttribute("feedbacks", feedbackPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", feedbackPage.getTotalPages());
 
-        // Trả về file nằm trong: templates/staff/feedback_list.html
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+
         return "staff/staff-list";
     }
 }
