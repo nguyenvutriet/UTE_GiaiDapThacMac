@@ -50,7 +50,7 @@
 
       <div class="form-alert" th:if="${error}" th:text="${error}">Có lỗi xảy ra</div>
 
-      <form class="send-grid" th:action="@{/feedback/send}" method="post" enctype="multipart/form-data">
+      <form class="send-grid" th:action="@{/api/submit}" method="post" enctype="multipart/form-data">
         <article class="panel panel-large">
           <h2><span class="panel-icon">&#128196;</span>Chi tiết góp ý</h2>
 

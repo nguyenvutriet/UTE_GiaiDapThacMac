@@ -54,7 +54,7 @@ public class SubmitFeedbackController {
         return "student/submit-feedback";
     }
 
-    @PostMapping("/api/submit")
+    @PostMapping({"/api/submit", "/feedback/send"})
     public String sendFeedback(@RequestParam(value = "subject") String subject,
                                @RequestParam(value = "description") String description,
                                @RequestParam(value = "category") String categoryId,
