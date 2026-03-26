@@ -29,6 +29,16 @@ public class AnnoucementService {
                 .map(this::toCardDTO);
     }
 
+    public Page<StaffAnnouncementCardDTO> searchAnnouncementCards(Pageable pageable,
+                                                                  String keyword,
+                                                                  String departmentId) {
+        String normalizedKeyword = normalizeFilterValue(keyword);
+        String normalizedDepartmentId = normalizeFilterValue(departmentId);
+
+        return announcementRepo.searchAnnouncements(normalizedKeyword, normalizedDepartmentId, pageable)
+                .map(this::toCardDTO);
+    }
+
     private StaffAnnouncementCardDTO toCardDTO(Announcement announcement) {
         StaffAnnouncementCardDTO dto = new StaffAnnouncementCardDTO();
         dto.setId(announcement.getId());
@@ -69,5 +79,12 @@ public class AnnoucementService {
         } catch (DateTimeParseException ex) {
             return "--/--/----";
         }
+    }
+
+    private String normalizeFilterValue(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

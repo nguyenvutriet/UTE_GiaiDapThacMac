@@ -69,27 +69,33 @@
                 <div class="empty-state" th:if="${#lists.isEmpty(announcements)}">Chưa có thông báo nào.</div>
 
                 <div class="pagination" th:if="${totalPages > 0}">
-                    <a th:href="@{/staff/forum/notification-management(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
+                    <a th:href="@{/staff/forum/notification-management(page=${currentPage - 1},q=${q},departmentId=${departmentId},sortBy=${sortBy})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
                     <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}">Trang 1 / 1</span>
-                    <a th:href="@{/staff/forum/notification-management(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn">Sau</a>
+                    <a th:href="@{/staff/forum/notification-management(page=${currentPage + 1},q=${q},departmentId=${departmentId},sortBy=${sortBy})}" th:if="${currentPage + 1 < totalPages}" class="page-btn">Sau</a>
                 </div>
             </div>
 
             <aside class="right-panel">
-                <div class="widget">
+                <form class="widget" method="get" th:action="@{/staff/forum/notification-management}">
                     <h3><i class="fas fa-search"></i> Tìm kiếm</h3>
                     <label class="sr-only" for="staff-announcement-keyword">Từ khóa tìm kiếm thông báo</label>
-                    <input id="staff-announcement-keyword" type="text" class="search-input" placeholder="Nhập từ khóa...">
-                </div>
+                    <input id="staff-announcement-keyword" type="text" class="search-input" name="q" th:value="${q}" placeholder="Nhập từ khóa...">
 
-                <div class="widget">
                     <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
                     <label class="widget-label" for="announcement-department">Phòng ban</label>
-                    <select id="announcement-department">
+                    <select id="announcement-department" name="departmentId">
                         <option value="">Phòng ban</option>
-                        <option th:each="dept : ${allDepartments}" th:value="${dept.id}" th:text="${dept.name}"></option>
+                        <option th:each="dept : ${allDepartments}" th:value="${dept.id}" th:text="${dept.name}" th:selected="${departmentId == dept.id}"></option>
                     </select>
-                </div>
+
+                    <label class="widget-label" for="announcement-sort">Sắp xếp</label>
+                    <select id="announcement-sort" name="sortBy">
+                        <option value="newest" th:selected="${sortBy == 'newest'}">Mới nhất</option>
+                        <option value="oldest" th:selected="${sortBy == 'oldest'}">Cũ nhất</option>
+                    </select>
+
+                    <button class="create-btn" type="submit">Tìm kiếm</button>
+                </form>
 
                 <a class="create-btn" th:href="@{/staff/forum/notification-management}"><i class="fas fa-plus"></i> Tạo thông báo</a>
             </aside>

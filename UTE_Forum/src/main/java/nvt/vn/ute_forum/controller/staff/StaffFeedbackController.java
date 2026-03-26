@@ -73,10 +73,17 @@ public class StaffFeedbackController {
     @GetMapping("/forum")
     public String viewStaffForum(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String departmentId,
+            @RequestParam(defaultValue = "newest") String sortBy,
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, 8, Sort.by("timeCreate").descending());
+        Sort sort = "oldest".equalsIgnoreCase(sortBy)
+                ? Sort.by("timeCreate").ascending()
+                : Sort.by("timeCreate").descending();
+        Pageable pageable = PageRequest.of(page, 8, sort);
 
         String currentUserId = null;
         if (userDetails != null) {
@@ -87,7 +94,7 @@ public class StaffFeedbackController {
             }
         }
 
-        Page<ForumPostDTO> postPage = requestService.getPublicPosts(pageable, currentUserId);
+        Page<ForumPostDTO> postPage = requestService.searchPublicPosts(pageable, currentUserId, q, categoryId, departmentId);
 
         model.addAttribute("requests", postPage.getContent());
         model.addAttribute("currentPage", page);
@@ -95,6 +102,10 @@ public class StaffFeedbackController {
         model.addAttribute("allCategories", categoryRepo.findAll());
         model.addAttribute("allDepartments", departmentRepo.findAll());
         model.addAttribute("activeForumTab", "discussion");
+        model.addAttribute("q", q);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("departmentId", departmentId);
+        model.addAttribute("sortBy", sortBy);
 
         return "staff/staff-forum";
     }
@@ -102,10 +113,16 @@ public class StaffFeedbackController {
     @GetMapping("/forum/notification-management")
     public String viewForumNotificationManagement(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String departmentId,
+            @RequestParam(defaultValue = "newest") String sortBy,
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Pageable pageable = PageRequest.of(page, 8);
+        Sort sort = "oldest".equalsIgnoreCase(sortBy)
+                ? Sort.by("id").ascending()
+                : Sort.by("id").descending();
+        Pageable pageable = PageRequest.of(page, 8, sort);
 
         if (userDetails != null) {
             Users staff = usersRepo.findByEmail(userDetails.getUsername());
@@ -114,13 +131,16 @@ public class StaffFeedbackController {
             }
         }
 
-        Page<StaffAnnouncementCardDTO> postPage = annoucementService.getAnnouncementCards(pageable);
+        Page<StaffAnnouncementCardDTO> postPage = annoucementService.searchAnnouncementCards(pageable, q, departmentId);
 
         model.addAttribute("announcements", postPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", postPage.getTotalPages());
         model.addAttribute("allDepartments", departmentRepo.findAll());
         model.addAttribute("activeForumTab", "announcement");
+        model.addAttribute("q", q);
+        model.addAttribute("departmentId", departmentId);
+        model.addAttribute("sortBy", sortBy);
 
         return "staff/staff-forum-notification-management";
     }

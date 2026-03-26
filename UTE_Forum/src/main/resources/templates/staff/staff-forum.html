@@ -81,39 +81,39 @@
                 <div class="empty-state" th:if="${#lists.isEmpty(requests)}">Chưa có bài thảo luận nào.</div>
 
                 <div class="pagination" th:if="${totalPages > 0}">
-                    <a th:href="@{/staff/forum(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
+                    <a th:href="@{/staff/forum(page=${currentPage - 1},q=${q},categoryId=${categoryId},departmentId=${departmentId},sortBy=${sortBy})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
                     <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}">Trang 1 / 1</span>
-                    <a th:href="@{/staff/forum(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn">Sau</a>
+                    <a th:href="@{/staff/forum(page=${currentPage + 1},q=${q},categoryId=${categoryId},departmentId=${departmentId},sortBy=${sortBy})}" th:if="${currentPage + 1 < totalPages}" class="page-btn">Sau</a>
                 </div>
             </div>
 
             <aside class="right-panel">
-                <div class="widget">
+                <form class="widget" method="get" th:action="@{/staff/forum}">
                     <h3><i class="fas fa-search"></i> Tìm kiếm</h3>
                     <label class="sr-only" for="staff-discussion-keyword">Từ khóa tìm kiếm</label>
-                    <input id="staff-discussion-keyword" type="text" class="search-input" placeholder="Nhập từ khóa...">
-                </div>
+                    <input id="staff-discussion-keyword" type="text" class="search-input" name="q" th:value="${q}" placeholder="Nhập từ khóa...">
 
-                <div class="widget">
                     <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
                     <label class="widget-label" for="discussion-category">Danh mục</label>
-                    <select id="discussion-category">
+                    <select id="discussion-category" name="categoryId">
                         <option value="">Danh mục</option>
-                        <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.subject}"></option>
+                        <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.subject}" th:selected="${categoryId == cat.id}"></option>
                     </select>
 
                     <label class="widget-label" for="discussion-department">Phòng ban</label>
-                    <select id="discussion-department">
+                    <select id="discussion-department" name="departmentId">
                         <option value="">Phòng ban</option>
-                        <option th:each="dept : ${allDepartments}" th:value="${dept.id}" th:text="${dept.name}"></option>
+                        <option th:each="dept : ${allDepartments}" th:value="${dept.id}" th:text="${dept.name}" th:selected="${departmentId == dept.id}"></option>
                     </select>
 
                     <label class="widget-label" for="discussion-sort">Sắp xếp</label>
-                    <select id="discussion-sort">
-                        <option value="newest">Mới nhất</option>
-                        <option value="oldest">Cũ nhất</option>
+                    <select id="discussion-sort" name="sortBy">
+                        <option value="newest" th:selected="${sortBy == 'newest'}">Mới nhất</option>
+                        <option value="oldest" th:selected="${sortBy == 'oldest'}">Cũ nhất</option>
                     </select>
-                </div>
+
+                    <button class="create-btn" type="submit">Tìm kiếm</button>
+                </form>
             </aside>
         </section>
     </main>

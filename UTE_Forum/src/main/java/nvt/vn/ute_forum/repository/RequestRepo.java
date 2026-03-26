@@ -19,6 +19,29 @@ public interface RequestRepo extends JpaRepository<Request, String> {
     // Thêm Pageable vào đây và đổi kiểu trả về thành Page<Request>
     Page<Request> findByPostStatus(String status, Pageable pageable);
 
+    @Query(value = "SELECT DISTINCT r FROM Request r " +
+            "LEFT JOIN r.categories c " +
+            "WHERE r.postStatus = 'PUBLIC' " +
+            "AND (:keyword IS NULL OR " +
+            "LOWER(COALESCE(r.subject, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(r.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(r.user.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:categoryId IS NULL OR c.id = :categoryId) " +
+            "AND (:departmentId IS NULL OR r.department.id = :departmentId)",
+            countQuery = "SELECT COUNT(DISTINCT r.id) FROM Request r " +
+                    "LEFT JOIN r.categories c " +
+                    "WHERE r.postStatus = 'PUBLIC' " +
+                    "AND (:keyword IS NULL OR " +
+                    "LOWER(COALESCE(r.subject, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(COALESCE(r.description, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(COALESCE(r.user.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+                    "AND (:categoryId IS NULL OR c.id = :categoryId) " +
+                    "AND (:departmentId IS NULL OR r.department.id = :departmentId)")
+    Page<Request> searchPublicPosts(@Param("keyword") String keyword,
+                                    @Param("categoryId") String categoryId,
+                                    @Param("departmentId") String departmentId,
+                                    Pageable pageable);
+
     @Query("SELECT DISTINCT r FROM Request r " +
             "LEFT JOIN r.categories c " +
             "WHERE r.postStatus = 'PUBLIC' " +
@@ -34,8 +57,4 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             @Param("departmentId") String departmentId,
             @Param("sortBy") String sortBy
     );
-
-
-
-
 }

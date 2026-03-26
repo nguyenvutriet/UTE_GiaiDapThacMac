@@ -153,6 +153,19 @@ public class RequestService {
                 .collect(Collectors.toList());
     }
 
+    public Page<ForumPostDTO> searchPublicPosts(Pageable pageable,
+                                                String currentUserId,
+                                                String keyword,
+                                                String categoryId,
+                                                String departmentId) {
+        String normalizedKeyword = normalizeFilterValue(keyword);
+        String normalizedCategoryId = normalizeFilterValue(categoryId);
+        String normalizedDepartmentId = normalizeFilterValue(departmentId);
+
+        return requestRepo.searchPublicPosts(normalizedKeyword, normalizedCategoryId, normalizedDepartmentId, pageable)
+                .map(request -> convertToFullDTO(request, currentUserId));
+    }
+
     public Optional<ForumPostDTO> getPublicPostById(String postId, String currentUserId) {
         if (postId == null || postId.isBlank()) {
             return Optional.empty();
@@ -247,6 +260,13 @@ public class RequestService {
 
     public Request saveOrUpdate(Request request) {
         return requestRepo.save(request);
+    }
+
+    private String normalizeFilterValue(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
 }
