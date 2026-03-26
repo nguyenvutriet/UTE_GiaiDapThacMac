@@ -3,6 +3,8 @@ package nvt.vn.ute_forum.controller.staff;
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.repository.CategoryRepo;
+import nvt.vn.ute_forum.repository.DepartmentRepo;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,12 @@ public class StaffFeedbackController {
 
     @Autowired
     private UsersRepo usersRepo;
+
+    @Autowired
+    private CategoryRepo categoryRepo;
+
+    @Autowired
+    private DepartmentRepo departmentRepo;
 
     @GetMapping("/list-feedbacks")
     public String viewAllFeedbacks(
@@ -55,5 +63,62 @@ public class StaffFeedbackController {
 
         // Trả về file nằm trong: templates/staff/feedback_list.html
         return "staff/staff-list";
+    }
+
+    @GetMapping("/forum")
+    public String viewStaffForum(
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Pageable pageable = PageRequest.of(page, 8, Sort.by("timeCreate").descending());
+
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users staff = usersRepo.findByEmail(userDetails.getUsername());
+            if (staff != null) {
+                currentUserId = staff.getId();
+                model.addAttribute("staff", staff);
+            }
+        }
+
+        Page<ForumPostDTO> postPage = requestService.getPublicPosts(pageable, currentUserId);
+
+        model.addAttribute("requests", postPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", postPage.getTotalPages());
+        model.addAttribute("allCategories", categoryRepo.findAll());
+        model.addAttribute("allDepartments", departmentRepo.findAll());
+        model.addAttribute("activeForumTab", "discussion");
+
+        return "staff/staff-forum";
+    }
+
+    @GetMapping("/forum/notification-management")
+    public String viewForumNotificationManagement(
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Pageable pageable = PageRequest.of(page, 8, Sort.by("timeCreate").descending());
+
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users staff = usersRepo.findByEmail(userDetails.getUsername());
+            if (staff != null) {
+                currentUserId = staff.getId();
+                model.addAttribute("staff", staff);
+            }
+        }
+
+        Page<ForumPostDTO> postPage = requestService.getPublicPosts(pageable, currentUserId);
+
+        model.addAttribute("requests", postPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", postPage.getTotalPages());
+        model.addAttribute("allDepartments", departmentRepo.findAll());
+        model.addAttribute("activeForumTab", "announcement");
+
+        return "staff/staff-forum-notification-management";
     }
 }

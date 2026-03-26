@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff - Diễn đàn thảo luận</title>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-forum.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="staff-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
+        </div>
+
+        <div class="user-profile">
+            <img th:src="@{/images/staff.png}" class="avatar" alt="avatar">
+            <div class="user-info">
+                <span class="user-role" th:text="${staff != null ? staff.fullName : 'Cán bộ Thanh tra'}">Cán bộ Thanh tra</span>
+                <span class="user-dept" th:text="${staff != null and staff.department != null ? staff.department.name : 'Nhân viên phòng ban'}">Nhân viên phòng ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a th:href="@{/staff/forum}" class="nav-item active"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a th:href="@{/staff/forum/notification-management}" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-head">
+            <h1>Diễn đàn</h1>
+            <p>Nơi chia sẻ, thảo luận và cập nhật thông tin mới nhất từ nhà trường.</p>
+        </header>
+
+        <div class="forum-tabs">
+            <a th:href="@{/staff/forum}" class="tab-item active"><i class="far fa-comment"></i> Thảo luận</a>
+            <a th:href="@{/staff/forum/notification-management}" class="tab-item"><i class="far fa-bullhorn"></i> Thông báo</a>
+        </div>
+
+        <section class="content-grid">
+            <div class="post-list">
+                <article class="discussion-card" th:each="post : ${requests}">
+                    <div class="discussion-head">
+                        <div class="author-wrap">
+                            <span class="author-avatar"><i class="far fa-user"></i></span>
+                            <div>
+                                <p class="author-name" th:text="${post.userName}">Nguyễn Văn A</p>
+                                <time class="author-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy')}">24/01/2026</time>
+                            </div>
+                        </div>
+                        <span class="status-pill"><i class="far fa-check-circle"></i> Đã xử lý</span>
+                    </div>
+
+                    <h3 class="discussion-title" th:text="${post.subject}">Tiêu đề thảo luận</h3>
+                    <p class="discussion-text" th:text="${post.description}">Nội dung thảo luận...</p>
+
+                    <div class="tag-row">
+                        <span class="chip"><i class="fas fa-tag"></i> <span th:text="${post.categories != null and !post.categories.isEmpty() ? post.categories.get(0) : 'Danh mục'}">Danh mục</span></span>
+                        <span class="chip"><i class="far fa-building"></i> <span th:text="${post.departmentName}">Phòng ban</span></span>
+                        <span class="chip"><i class="far fa-dot-circle"></i> <span th:text="${post.id}">REQ_01</span></span>
+                    </div>
+
+                    <div class="discussion-actions">
+                        <span><i class="far fa-thumbs-up"></i> <span th:text="${post.totalReactions}">0</span> Thích</span>
+                        <span><i class="far fa-comment"></i> <span th:text="${post.commentCount}">0</span> Bình luận</span>
+                    </div>
+                </article>
+
+                <div class="empty-state" th:if="${#lists.isEmpty(requests)}">Chưa có bài thảo luận nào.</div>
+
+                <div class="pagination" th:if="${totalPages > 0}">
+                    <a th:href="@{/staff/forum(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn">Trước</a>
+                    <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}">Trang 1 / 1</span>
+                    <a th:href="@{/staff/forum(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn">Sau</a>
+                </div>
+            </div>
+
+            <aside class="right-panel">
+                <div class="widget">
+                    <h3><i class="fas fa-search"></i> Tìm kiếm</h3>
+                    <label class="sr-only" for="staff-discussion-keyword">Từ khóa tìm kiếm</label>
+                    <input id="staff-discussion-keyword" type="text" class="search-input" placeholder="Nhập từ khóa...">
+                </div>
+
+                <div class="widget">
+                    <h3><i class="fas fa-filter"></i> Bộ lọc</h3>
+                    <label class="widget-label" for="discussion-category">Danh mục</label>
+                    <select id="discussion-category">
+                        <option value="">Danh mục</option>
+                        <option th:each="cat : ${allCategories}" th:value="${cat.id}" th:text="${cat.subject}"></option>
+                    </select>
+
+                    <label class="widget-label" for="discussion-department">Phòng ban</label>
+                    <select id="discussion-department">
+                        <option value="">Phòng ban</option>
+                        <option th:each="dept : ${allDepartments}" th:value="${dept.id}" th:text="${dept.name}"></option>
+                    </select>
+
+                    <label class="widget-label" for="discussion-sort">Sắp xếp</label>
+                    <select id="discussion-sort">
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
+                    </select>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+
+
+
+
