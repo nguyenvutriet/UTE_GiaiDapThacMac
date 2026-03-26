@@ -1360,4 +1360,65 @@ html {
     background: #e2e8f0;
 }
 
+.quick-search-container {
+    position: relative;
+    width: 100%;
+    padding: 12px 0;
+}
 
+.quick-search-box {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 8px 15px;
+}
+
+.quick-search-box input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: none;
+    font-size: 14px;
+}
+
+.search-icon {
+    margin-right: 10px;
+    color: #888;
+}
+
+.search-suggestion-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    list-style: none;
+    padding: 0;
+    margin-top: 5px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    z-index: 999;
+}
+
+.search-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.search-suggestion-item:hover {
+    background: #eef7ff;
+}
+
+.search-title {
+    font-weight: bold;
+}
+
+.search-desc {
+    font-size: 13px;
+    color: #555;
+}

@@ -37,6 +37,19 @@ public interface RequestRepo extends JpaRepository<Request, String> {
     );
 
 
+    @Query("""
+        SELECT r FROM Request r
+        LEFT JOIN r.user u
+        LEFT JOIN r.department d
+        LEFT JOIN r.categories c
+        WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(c.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        ORDER BY r.timeCreate DESC
+        """)
+    List<Request> searchByKeyword(@Param("keyword") String keyword);
 
 
 }

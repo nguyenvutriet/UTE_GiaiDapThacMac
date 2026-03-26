@@ -122,4 +122,10 @@ public class ForumController {
         // Trả về fragment "post-list" trong file "student/forumView"
         return "student/forumView :: .post-list";
     }
+
+    @GetMapping("/search")
+    @ResponseBody
+    public List<ForumPostDTO> searchPosts(@RequestParam("keyword") String keyword) {
+        return requestService.searchPosts(keyword); // em implement rồi
+    }
 }

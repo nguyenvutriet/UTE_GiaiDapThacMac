@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.dto.CommentDTO;
 import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.CommentRepo;
+import nvt.vn.ute_forum.repository.CommentReportRepo;
 import nvt.vn.ute_forum.repository.RequestRepo;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.VoteCommentRepo;
@@ -21,8 +22,26 @@ public class CommentService {
     @Autowired
     private VoteCommentRepo voteCommentRepo;
 
+    //*
+    @Autowired
+    private CommentReportRepo reportRepo;
+
+    // Lấy comment theo ID
+    public Comment getCommentById(String commentId) {
+        return commentRepo.findById(commentId)
+                .orElse(null); // trả về null nếu không tìm thấy
+    }
+
+    // Lưu report
+    @Transactional
+    public void saveCommentReport(CommentReport report) {
+        reportRepo.save(report);
+    }
+    //*
+
+
     public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
-        return commentRepo.findByRequestId(requestId).stream()
+        return commentRepo.findActiveByRequestId(requestId).stream()
                 .map(c -> {
 
                     String commentOwnerId = String.valueOf(c.getUser().getId());
@@ -101,5 +120,24 @@ public boolean deleteCommentIfOwner(String commentId, String currentUserId) {
         return false;
     }).orElse(false);
 }
+
+//    @Transactional
+//    public boolean deleteCommentAsAdmin(String commentId) {
+//        return commentRepo.findById(commentId).map(comment -> {
+//            commentRepo.delete(comment);
+//            return true;
+//        }).orElse(false); // Nếu không tìm thấy comment trả về false
+//    }
+    public void deleteCommentAsAdmin(String commentId) {
+        commentRepo.findById(commentId).ifPresent(c -> {
+            c.setIsActive(false); // ẩn
+            commentRepo.save(c);
+        });
+    }
+
+    @Transactional
+    public Comment save(Comment comment) {
+        return commentRepo.save(comment);
+    }
 
 }

@@ -2,6 +2,8 @@ package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "commentreport")
 public class CommentReport {
@@ -12,6 +14,9 @@ public class CommentReport {
 
     @Column(name = "reason", nullable = false)
     private String reason;
+
+    @Column(nullable = false)
+    private String status = "pending";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
@@ -25,6 +30,9 @@ public class CommentReport {
     @JoinColumn(name = "admin_id")
     private Users admin;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+
     public CommentReport() {
     }
 
@@ -37,6 +45,7 @@ public class CommentReport {
         this.id = id;
         this.reason = reason;
         this.comment = comment;
+        this.status = "pending";
         this.student = student;
         this.admin = admin;
     }
@@ -55,6 +64,14 @@ public class CommentReport {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Comment getComment() {
@@ -76,8 +93,17 @@ public class CommentReport {
     public Users getAdmin() {
         return admin;
     }
-
     public void setAdmin(Users admin) {
         this.admin = admin;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+
 }

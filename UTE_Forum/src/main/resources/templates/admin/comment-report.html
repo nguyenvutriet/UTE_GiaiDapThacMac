@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý bình luận vi phạm</title>
+
+  <link rel="stylesheet" th:href="@{/css/student/forumView.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/css/admin/category.css}">
+  <link rel="stylesheet" th:href="@{/css/admin/comment-report.css}">
+
+
+</head>
+
+<body>
+<div class="page-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand-block">
+      <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+      <div class="admin-info">
+        <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+        <div>
+          <p class="admin-name" th:text="${user.fullName}">Tên Admin</p>
+          <p class="admin-id" th:text="'Mã quản trị: ' + ${user.id}"></p>
+          <p class="admin-role">Quản trị viên hệ thống</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span></a>
+      <a class="nav-item active" href="/admin/reports"><span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span></a>
+      <a class="nav-item" href="/admin/category"><span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span></a>
+      <a class="nav-item" href="/admin/forum"><span class="nav-icon">&#128172;</span><span>Diễn đàn</span></a>
+      <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+      <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+    </nav>
+
+    <a class="logout-btn" href="/logout">Đăng xuất</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="main-header">
+      <div class="main-header-top">
+        <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+      </div>
+      <div class="main-header-bottom">
+        <h1 class="page-tab">Quản lý bình luận vi phạm</h1>
+      </div>
+    </header>
+
+    <div class="category-panel">
+
+      <!-- Summary chips -->
+      <div class="category-summary">
+        <span class="summary-chip chip-total"    id="chipTotal">📋 Tổng: 0</span>
+        <span class="summary-chip chip-pending"  id="chipPending">⏳ Đang chờ: 0</span>
+        <span class="summary-chip chip-done"     id="chipDone">✅ Không vi phạm: 0</span>
+        <span class="summary-chip chip-violation" id="chipViolation">🚫 Vi phạm: 0</span>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+
+        <!-- Search -->
+        <div class="search-wrapper">
+          <i class="fa fa-search"></i>
+          <input id="searchInput" class="search-input" type="text"
+                 th:value="${keyword}"
+                 placeholder="Tìm kiếm nội dung bình luận, lý do..."
+                 oninput="liveSearch()">
+        </div>
+
+        <!-- Date range -->
+        <div class="date-filter-group">
+          <i class="fa fa-calendar" style="color:#94a3b8; font-size:0.8rem;"></i>
+          <label>Từ</label>
+          <input type="date" id="dateFrom" class="date-input" onchange="applyDateFilter()">
+          <span class="date-sep">—</span>
+          <label>đến</label>
+          <input type="date" id="dateTo" class="date-input" onchange="applyDateFilter()">
+          <button class="clear-date-btn" onclick="clearDateFilter()" title="Xóa lọc ngày">✕</button>
+        </div>
+
+        <!-- Status filter -->
+        <div class="filter-wrapper" id="filterWrapper">
+          <button onclick="toggleStatusFilter(event)" class="filter-btn">
+            <i class="fa fa-filter" style="font-size:0.8rem; opacity:0.7;"></i>
+            <span id="filterLabel"
+                  th:text="${status == 'pending' ? 'Đang chờ'
+                  : (status == 'done' ? 'Đã xử lý' : 'Tất cả')}">Tất cả</span>
+            <span style="font-size:0.7rem; opacity:0.6;">▾</span>
+          </button>
+
+          <div id="statusDropdown" class="filter-dropdown popup-menu">
+            <div onclick="applyStatus('ALL')" class="menu-item">🔘 Tất cả</div>
+            <div onclick="applyStatus('pending')" class="menu-item">
+              <span class="status pending" style="font-size:0.78rem; padding:2px 8px;">Đang chờ</span>
+            </div>
+            <div onclick="applyStatus('done')" class="menu-item">
+              <span class="status no-violation" style="font-size:0.78rem; padding:2px 8px;">Đã xử lý</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <table class="category-table" id="reportTable">
+        <thead>
+        <tr>
+          <th class="col-comment">BÌNH LUẬN</th>
+          <th class="col-reason">LÝ DO BÁO CÁO</th>
+          <th class="col-reporter">NGƯỜI BÁO CÁO</th>
+          <th class="col-admin">ADMIN DUYỆT</th>
+          <th class="col-time sortable" id="sortTimeTh" onclick="sortByTime()">
+            THỜI GIAN
+            <span class="sort-icon">
+              <span id="sortUp" class="active">▲</span>
+              <span id="sortDown">▼</span>
+            </span>
+          </th>
+          <th class="col-source" style="text-align:center;">NGUỒN</th>
+          <th class="col-status" style="text-align:center;">TRẠNG THÁI</th>
+          <th class="col-action"></th>
+        </tr>
+        </thead>
+
+        <tbody id="reportList">
+        <tr th:each="r : ${reports}"
+            th:classappend="${r.status == 'done' && r.commentActive == false} ? 'row-violation' : ''"
+            th:data-time="${r.createdAt}"
+            th:data-status="${r.status}"
+            th:data-active="${r.commentActive}">
+
+          <td class="comment-cell" th:text="${r.commentContent}" th:title="${r.commentContent}">Nội dung</td>
+          <td class="reason-cell" th:text="${r.reason}" th:title="${r.reason}">Lý do</td>
+          <td th:text="${r.reporter}">Người báo cáo</td>
+          <td style="color:#64748b; font-size:0.85rem;" th:text="${r.admin != null ? r.admin : '—'}">Admin</td>
+
+          <td style="font-size:0.83rem; color:#64748b; white-space:nowrap;"
+              th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</td>
+
+          <td style="text-align:center;">
+            <a th:href="${r.source}" th:if="${r.source != null && r.source != ''}"
+               target="_blank" class="link-source">Xem</a>
+            <span th:if="${r.source == null || r.source == ''}" style="color:#cbd5e1;">—</span>
+          </td>
+
+          <td style="text-align:center;">
+            <!-- Đang chờ -->
+            <span th:if="${r.status == 'pending'}" class="status pending">Đang chờ</span>
+
+            <!-- Đã xử lý - không vi phạm -->
+            <span th:if="${r.status == 'done' && r.commentActive != false}"
+                  class="status no-violation">Không vi phạm</span>
+
+            <!-- Vi phạm -->
+            <span th:if="${r.status == 'done' && r.commentActive == false}"
+                  class="status violation">Vi phạm</span>
+          </td>
+
+          <td class="menu-cell">
+            <div class="menu-btn" onclick="toggleMenu(event, this)">⋮</div>
+            <div class="popup-menu">
+              <th:block th:if="${r.status == 'pending'}">
+                <button th:data-id="${r.id}"
+                        onclick="markNotViolation(this)"
+                        class="menu-item success-action">
+                  ✅ Không vi phạm
+                </button>
+                <button th:data-id="${r.id}"
+                        onclick="openDeleteConfirm(this)"
+                        class="menu-item delete-btn">
+                  🚫 Vi phạm — ẩn bình luận
+                </button>
+              </th:block>
+
+              <th:block th:if="${r.status == 'done'}">
+                <button class="menu-item disabled" disabled>
+                  <span th:if="${r.commentActive == false}">🚫 Đã ẩn bình luận</span>
+                  <span th:if="${r.commentActive != false}">✅ Đã xử lý xong</span>
+                </button>
+              </th:block>
+            </div>
+          </td>
+        </tr>
+
+        <tr th:if="${#lists.isEmpty(reports)}" class="empty-row-tr">
+          <td colspan="8">Không có dữ liệu báo cáo</td>
+        </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<!-- ===== POPUP: CONFIRM VI PHẠM ===== -->
+<div id="confirmDeletePopup" class="popup-overlay">
+  <div class="popup-box">
+    <h3>🚫 Xác nhận vi phạm</h3>
+    <p>Bình luận này sẽ bị <strong>ẩn khỏi hệ thống</strong> và báo cáo sẽ được đánh dấu đã xử lý. Bạn có chắc muốn tiếp tục?</p>
+    <div class="popup-actions">
+      <button onclick="closeDeletePopup()" class="cancel-btn">Hủy</button>
+      <button id="confirmDeleteBtn" class="danger-btn">🚫 Xác nhận vi phạm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ===== SUMMARY ===== */
+  (function updateSummary() {
+    const rows = [...document.querySelectorAll('#reportList tr:not(.empty-row-tr)')];
+    const total = rows.length;
+    const pending   = rows.filter(r => r.dataset.status === 'pending').length;
+    const violation = rows.filter(r => r.dataset.status === 'done' && r.dataset.active === 'false').length;
+    const nv        = rows.filter(r => r.dataset.status === 'done' && r.dataset.active !== 'false').length;
+
+    document.getElementById('chipTotal').textContent     = `📋 Tổng: ${total}`;
+    document.getElementById('chipPending').textContent   = `⏳ Đang chờ: ${pending}`;
+    document.getElementById('chipDone').textContent      = `✅ Không vi phạm: ${nv}`;
+    document.getElementById('chipViolation').textContent = `🚫 Vi phạm: ${violation}`;
+  })();
+
+  /* ===== SORT BY TIME ===== */
+  let sortDir = 'desc'; // default: mới nhất trước
+
+  function parseVNDate(str) {
+    if (!str) return new Date(0);
+    const [date, time] = str.trim().split(' ');
+    const [d, m, y] = date.split('/').map(Number);
+    const [hh, mm] = (time || '00:00').split(':').map(Number);
+    return new Date(y, m - 1, d, hh, mm);
+  }
+
+  function sortByTime() {
+    sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+
+    const tbody = document.getElementById('reportList');
+    const rows = [...tbody.querySelectorAll('tr:not(.empty-row-tr)')];
+
+    rows.sort((a, b) => {
+      const ta = parseVNDate(a.children[4]?.textContent);
+      const tb = parseVNDate(b.children[4]?.textContent);
+      return sortDir === 'desc' ? tb - ta : ta - tb;
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+
+    document.getElementById('sortUp').classList.toggle('active', sortDir === 'asc');
+    document.getElementById('sortDown').classList.toggle('active', sortDir === 'desc');
+  }
+
+  // Initial sort: newest first
+  window.addEventListener('DOMContentLoaded', () => {
+    sortDir = 'asc'; // will be flipped to desc
+    sortByTime();
+  });
+
+  /* ===== LIVE SEARCH ===== */
+  function liveSearch() {
+    const kw = document.getElementById('searchInput').value.toLowerCase();
+    filterRows();
+  }
+
+  /* ===== DATE FILTER ===== */
+  function applyDateFilter() { filterRows(); }
+
+  function clearDateFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value   = '';
+    filterRows();
+  }
+
+  /* ===== COMBINED FILTER ===== */
+  function filterRows() {
+    const kw       = document.getElementById('searchInput').value.toLowerCase();
+    const dateFrom = document.getElementById('dateFrom').value; // yyyy-mm-dd
+    const dateTo   = document.getElementById('dateTo').value;
+
+    const rows = document.querySelectorAll('#reportList tr:not(.empty-row-tr)');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const timeCell = row.children[4]?.textContent.trim(); // dd/MM/yyyy HH:mm
+      const rowDate  = parseVNDate(timeCell);
+
+      let show = true;
+
+      if (kw && !text.includes(kw)) show = false;
+
+      if (show && dateFrom) {
+        const from = new Date(dateFrom + 'T00:00:00');
+        if (rowDate < from) show = false;
+      }
+
+      if (show && dateTo) {
+        const to = new Date(dateTo + 'T23:59:59');
+        if (rowDate > to) show = false;
+      }
+
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    const emptyRow = document.querySelector('.empty-row-tr');
+    if (emptyRow) emptyRow.style.display = visible === 0 ? '' : 'none';
+  }
+
+  /* ===== MENU TOGGLE (fixed position) ===== */
+  function toggleMenu(event, btn) {
+    event.stopPropagation();
+    const menu = btn.nextElementSibling;
+    const isVisible = menu.style.display === 'block';
+
+    document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+
+    if (!isVisible) {
+      const rect = btn.getBoundingClientRect();
+      menu.style.display = 'block';
+
+      const menuH = menu.offsetHeight || 100;
+      const spaceBelow = window.innerHeight - rect.bottom;
+
+      menu.style.top  = spaceBelow >= menuH ? (rect.bottom + 4) + 'px' : (rect.top - menuH - 4) + 'px';
+      menu.style.left = 'auto';
+      menu.style.right = (window.innerWidth - rect.right) + 'px';
+    }
+  }
+
+  /* ===== STATUS FILTER DROPDOWN (fixed position) ===== */
+  function toggleStatusFilter(event) {
+    event.stopPropagation();
+    const dd = document.getElementById('statusDropdown');
+    const isVisible = dd.style.display === 'block';
+
+    document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+
+    if (!isVisible) {
+      const btn  = event.currentTarget;
+      const rect = btn.getBoundingClientRect();
+      dd.style.display = 'block';
+      dd.style.top  = (rect.bottom + 4) + 'px';
+      dd.style.left = rect.left + 'px';
+      dd.style.right = 'auto';
+    }
+  }
+
+  function applyStatus(status) {
+    if (status === 'ALL') window.location.href = '/admin/reports';
+    else window.location.href = '/admin/reports?status=' + status;
+  }
+
+  // Close all on outside click / scroll
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.menu-cell') && !e.target.closest('.filter-wrapper')) {
+      document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+    }
+  });
+
+  document.addEventListener('scroll', () => {
+    document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+  }, true);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.popup-overlay').forEach(o => o.style.display = 'none');
+      document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+    }
+  });
+
+  /* ===== ACTIONS ===== */
+  function markNotViolation(btn) {
+    const id = btn.dataset.id;
+    document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+    fetch('/admin/reports/' + id + '/resolve?action=not_violation', { method: 'POST' })
+            .then(() => location.reload())
+            .catch(err => alert('Lỗi: ' + err));
+  }
+
+  let selectedId = null;
+
+  function openDeleteConfirm(btn) {
+    selectedId = btn.dataset.id;
+    document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
+    document.getElementById('confirmDeletePopup').style.display = 'flex';
+  }
+
+  function closeDeletePopup() {
+    selectedId = null;
+    document.getElementById('confirmDeletePopup').style.display = 'none';
+  }
+
+  document.getElementById('confirmDeleteBtn').onclick = function() {
+    if (!selectedId) return;
+    fetch('/admin/reports/' + selectedId + '/resolve?action=violation', { method: 'POST' })
+            .then(() => location.reload())
+            .catch(err => alert('Lỗi: ' + err));
+    closeDeletePopup();
+  };
+
+  // Close popup on overlay click
+  document.querySelectorAll('.popup-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) this.style.display = 'none';
+    });
+  });
+</script>
+</body>
+</html>
