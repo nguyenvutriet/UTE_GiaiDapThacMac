@@ -312,6 +312,8 @@
             'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
             'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
         };
+        const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
+
 
         // 🔥 TEXT CỦA USER
         const reactConfig = reactionData[cmt.reactionType] || {
@@ -338,7 +340,13 @@
         <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
         <div style="max-width: 85%; flex: 1;">
             <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
-                <b style="font-size:13px;">${cmt.userName}</b>
+                <b style="font-size:13px; color: #050505; line-height: 1;">${cmt.userName}</b>
+
+                ${isVerified ? `
+                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0; margin-top: 1px;">
+                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                    </svg>
+                ` : ''}
                 <span style="font-size:14px;">${cmt.content}</span>
 
                 <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
@@ -873,10 +881,16 @@
     `;
 
         list.forEach(u => {
+            const isVerified = u.userRole && u.userRole !== 'ROLE_STUDENT';
             html += `
         <div class="reaction-user">
             <span>${reactionData[u.type]}</span>
-            <b>${u.userName}</b>
+            <b style="font-size: 14px; color: #050505;">${u.userName}</b>
+                ${isVerified ? `
+                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0;">
+                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                    </svg>
+                ` : ''}
             <small style="color:gray;">(${u.userId})</small>
         </div>
         `;
@@ -1065,7 +1079,9 @@
             const formattedData = data.map(u => ({
                 type: u.type,
                 userName: u.fullName,
-                userId: u.userId
+                userId: u.userId,
+                userRole: u.userRole
+
             }));
 
             // Gọi hàm render của má (nhớ check tên hàm renderReactionModall coi có dư chữ 'l' hông nha)
@@ -1100,14 +1116,22 @@
         }
 
         list.forEach(u => {
+            const isVerified = u.userRole && u.userRole !== 'ROLE_STUDENT';
             html += `
-        <div class="reaction-user">
-            <span class="reaction-icon">${reactionData[u.type] || '👍'}</span>
-            <div class="user-info">
-                <b class="user-name">${u.userName}</b>
-                <small class="user-id">@${u.userId}</small>
-            </div>
+        <div class="reaction-user" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 4px 8px;">
+        <span style="font-size: 20px; min-width: 24px;">${reactionData[u.type] || '👍'}</span>
+
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <b style="font-size: 14px; color: #050505;">${u.userName}</b>
+
+            ${isVerified ? `
+                <svg viewBox="0 0 16 16" width="14" height="14" style="flex-shrink: 0;">
+                    <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                </svg>` : ''}
+
+            <small style="color: #65676b; font-size: 13px; margin-left: 2px;">@${u.userId}</small>
         </div>
+    </div>
         `;
         });
 

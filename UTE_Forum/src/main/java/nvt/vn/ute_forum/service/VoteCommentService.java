@@ -91,7 +91,8 @@ public class VoteCommentService {
                 .map(row -> new ReactionUserDTO(
                         String.valueOf(row[0]),
                         (String) row[1],
-                        row[2].toString()
+                        row[2].toString(),
+                        row[3].toString()           // userRole 🔥 Lấy trực tiếp giá trị DB
                 ))
                 .toList();
     }

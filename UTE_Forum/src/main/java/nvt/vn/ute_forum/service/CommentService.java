@@ -33,7 +33,8 @@ public class CommentService {
                             c.getContent(),
                             c.getDate(),
                             c.getId(),
-                            canDelete
+                            canDelete,
+                            c.getUser().getRole() // <-- Truyền thêm Role của User vào đây
                     );
 
                     Optional<VoteComment> userVote = Optional.empty();

@@ -32,21 +32,21 @@ public class CommentController {
     @Autowired
     private VoteCommentRepo voteCommentRepo;
 
+    @GetMapping("/{requestId}")
+    public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
+        String currentUserId = "";
 
-@GetMapping("/{requestId}")
-public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
-    String currentUserId = "";
-
-    if (principal != null) {
-        // Lấy user từ DB dựa trên email trong Principal
-        Users user = usersService.getByEmail(principal.getName());
-        if (user != null) {
-            currentUserId = String.valueOf(user.getId());
+        if (principal != null) {
+            // Lấy user từ DB dựa trên email trong Principal
+            Users user = usersService.getByEmail(principal.getName());
+            if (user != null) {
+                currentUserId = String.valueOf(user.getId());
+            }
+            System.out.println("Role thực tế trong DB: " + user.getRole()); // Kiểm tra hàm getRole() này
         }
-    }
 
-    return commentService.getCommentsByRequestId(requestId, currentUserId);
-}
+        return commentService.getCommentsByRequestId(requestId, currentUserId);
+    }
 
     @Autowired
     private UsersService usersService; // Theo ảnh là UsersService (có chữ s)
@@ -79,12 +79,15 @@ public List<CommentDTO> getComments(@PathVariable String requestId, Principal pr
 
             // 5. Trả về DTO khớp hoàn toàn với cấu trúc JS đang nhận
             return ResponseEntity.ok(new CommentDTO(
-                    user.getFullName(),          // userName
-                    newComment.getContent(),     // content
-                    newComment.getDate(),        // date
+                    user.getFullName(),                 // userName
+                    newComment.getContent(),            // content
+                    newComment.getDate(),               // date
                     String.valueOf(newComment.getId()), // id (String)
-                    true                         // status/success flag
+                    true,                               // status
+                    user.getRole()                      // 🔥 TRUYỀN THÊM ROLE Ở ĐÂY (Giả sử hàm là getRole())
+
             ));
+
 
         } catch (Exception e) {
             e.printStackTrace();

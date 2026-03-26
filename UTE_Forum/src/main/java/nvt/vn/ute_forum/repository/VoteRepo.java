@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface VoteRepo extends JpaRepository<Vote, VoteId> {
     List<Vote> findByRequest_Id(String requestId);
     Optional<Vote> findById_UserIdAndId_RequestId(String userId, String requestId);
-    @Query("SELECT new nvt.vn.ute_forum.dto.ReactionDetailDTO(u.id, u.fullName, v.type) " +
+    @Query("SELECT new nvt.vn.ute_forum.dto.ReactionDetailDTO(u.id, u.fullName, v.type, u.role) " +
             "FROM Vote v " +
             "JOIN v.user u " +
             "WHERE v.id.requestId = :requestId " +
