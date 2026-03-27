@@ -1,13 +1,200 @@
-<h2 th:text="${feedback.subject}"></h2>
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết phản hồi</title>
 
-<p th:text="${feedback.description}"></p>
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/staff/staff-style.css">
 
-<p>
-    Người gửi:
-    <span th:text="${feedback.user.fullName}"></span>
-</p>
+    <!-- Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
 
-<p>
-    Trạng thái:
-    <span th:text="${feedback.currentStatus}"></span>
-</p>
+<body>
+<div class="staff-layout">
+
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+            <img src="/images/logo_no_bg.png" class="logo">
+        </div>
+
+        <div class="user-profile">
+            <img src="/images/staff.png" class="avatar">
+            <div class="user-info">
+                <span th:text="${currentUser.department.name}"></span>
+                <span class="user-dept">Nhân viên phòng ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item active">
+                <i class="fas fa-inbox"></i> Góp ý tiếp nhận
+            </a>
+
+            <a th:href="@{/api/forum/staff}" class="nav-item">
+                <i class="fas fa-comments"></i> Diễn đàn
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fas fa-tasks"></i> Quản lý thông báo
+            </a>
+
+            <a th:href="@{/staff/notifications}" class="nav-item">
+                <i class="fas fa-bell"></i> Thông báo
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fas fa-chart-line"></i> Thống kê
+            </a>
+
+            <a href="/change-password" class="nav-item">
+                <i class="fas fa-user-shield"></i> Đổi mật khẩu
+            </a>
+        </nav>
+
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <main class="main-content">
+
+        <!-- ====== HEADER ====== -->
+        <div class="table-card">
+            <h2 th:text="${feedback.subject}"></h2>
+
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+
+                <!-- STATUS -->
+                <span class="badge"
+                      th:classappend="
+                        ${feedback.currentStatus == 'RESOLVED'} ? ' success' :
+                        (${feedback.currentStatus == 'PENDING'} ? ' pending' :
+                        (${feedback.currentStatus == 'FORWARDING'} ? ' forwarding' :
+                        (${feedback.currentStatus == 'REJECTED'} ? ' rejected' : '')))
+                      ">
+
+                    <!-- ICON -->
+                    <i th:if="${feedback.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                    <i th:if="${feedback.currentStatus == 'PENDING'}" class="fas fa-spinner fa-spin"></i>
+                    <i th:if="${feedback.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
+                    <i th:if="${feedback.currentStatus == 'REJECTED'}" class="fas fa-ban"></i>
+
+                                <!-- TEXT -->
+                    <span th:text="
+                        ${feedback.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
+                        (${feedback.currentStatus == 'PENDING'} ? 'Đang xử lý' :
+                        (${feedback.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                        (${feedback.currentStatus == 'REJECTED'} ? 'Từ chối' : 'Không xác định')))
+                    "></span>
+                </span>
+
+                <!-- DATE -->
+                <span class="badge">
+                    <i class="fas fa-calendar"></i>
+                    <span th:text="${#temporals.format(feedback.timeCreate, 'dd/MM/yyyy')}"></span>
+                </span>
+
+                <!-- USER -->
+                <span class="badge pink">
+                    <i class="fas fa-user"></i>
+                    <span th:text="${feedback.user.fullName}"></span>
+                </span>
+
+                <!-- DEPARTMENT -->
+                <span class="badge blue">
+                    <i class="fas fa-building"></i>
+                    <span th:text="${feedback.department.name}"></span>
+                </span>
+
+                <!-- CATEGORY -->
+                <span class="badge orange" th:if="${feedback.categories != null}">
+                    <i class="fas fa-tag"></i>
+                    <span th:text="${#strings.listJoin(feedback.categories.![subject], ', ')}"></span>
+                </span>
+
+                <!-- LOCATION (demo) -->
+                <span class="badge green">
+                    <i class="fas fa-map-marker-alt"></i>
+                    A101
+                </span>
+
+            </div>
+
+            <!-- CONTENT -->
+            <div style="margin-top:20px;">
+                <h4>Nội dung:</h4>
+                <p th:text="${feedback.description}"></p>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+
+            <!-- LEFT: LỊCH SỬ -->
+            <div class="table-card">
+                <h3><i class="fas fa-history"></i> Lịch sử trạng thái</h3>
+
+                <div class="timeline">
+
+                    <div th:each="his : ${feedback.statusHistory}" class="timeline-item">
+
+                        <div class="timeline-dot"></div>
+
+                        <div class="timeline-content">
+
+                            <!-- STATUS -->
+                            <span class="badge"
+                                  th:classappend="
+                            ${his.status == 'RESOLVED'} ? ' success' :
+                            (${his.status == 'PENDING'} ? ' pending' :
+                            (${his.status == 'FORWARDING'} ? ' forwarding' :
+                            (${his.status == 'REJECTED'} ? ' rejected' : '')))
+                          "
+                                  th:text="${his.status}">
+                    </span>
+
+                            <!-- TIME -->
+                            <span class="time"
+                                  th:text="${#temporals.format(his.timeUpdate, 'HH:mm dd/MM/yyyy')}">
+                    </span>
+
+                            <!-- DESCRIPTION -->
+                            <p th:text="${his.note}"></p>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- RIGHT: TRAO ĐỔI -->
+            <div class="table-card">
+                <h3><i class="fas fa-comments"></i> Trao đổi</h3>
+
+                <div th:if="${feedback.comments.isEmpty()}">
+                    <p>Chưa có trao đổi</p>
+                </div>
+
+                <div th:each="cmt : ${feedback.comments}" class="comment-box">
+                    <div class="comment-header">
+                        <b th:text="${cmt.user.fullName}"></b>
+                        <span th:text="${#temporals.format(cmt.timeCreate, 'dd/MM/yyyy')}"></span>
+                    </div>
+
+                    <p th:text="${cmt.content}"></p>
+
+                    <span class="badge success">Đang mở</span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+</body>
+</html>
