@@ -1,8 +1,10 @@
 package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "message")
@@ -16,7 +18,7 @@ public class Message {
     private String content;
 
     @Column(name = "createat", nullable = false)
-    private LocalDate createAt;
+    private LocalDateTime createAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "clarificationconversation_id")
@@ -24,28 +26,41 @@ public class Message {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Users sender;
+
+    // Keep backward compatibility with DB schema where message.user_id is NOT NULL.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private Users user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviever_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Users receiver;
 
     public Message() {
     }
 
-    public Message(String id, String content, LocalDate createAt) {
+    public Message(String id, String content, LocalDateTime createAt) {
         this.id = id;
         this.content = content;
         this.createAt = createAt;
     }
 
-    public Message(String id, String content, LocalDate createAt, ClarificationConversation clarificationConversation, Users sender, Users reviever) {
+    public Message(String id,
+                   String content,
+                   LocalDateTime createAt,
+                   ClarificationConversation clarificationConversation,
+                   Users sender,
+                   Users receiver) {
         this.id = id;
         this.content = content;
         this.createAt = createAt;
         this.clarificationConversation = clarificationConversation;
         this.sender = sender;
-        this.receiver = reviever;
+        this.receiver = receiver;
     }
 
     public String getId() {
@@ -64,11 +79,11 @@ public class Message {
         this.content = content;
     }
 
-    public LocalDate getCreateAt() {
+    public LocalDateTime getCreateAt() {
         return createAt;
     }
 
-    public void setCreateAt(LocalDate createAt) {
+    public void setCreateAt(LocalDateTime createAt) {
         this.createAt = createAt;
     }
 
@@ -86,6 +101,14 @@ public class Message {
 
     public void setSender(Users sender) {
         this.sender = sender;
+    }
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
     }
 
     public Users getReceiver() {

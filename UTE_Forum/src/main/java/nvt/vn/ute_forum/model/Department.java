@@ -1,5 +1,6 @@
 package nvt.vn.ute_forum.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;

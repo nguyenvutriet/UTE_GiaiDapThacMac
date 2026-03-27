@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can bo - Quan ly thong bao</title>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-style.css}">
+    <link rel="stylesheet" th:href="@{/css/staff/staff-announcement-management.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="staff-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="/images/logo_no_bg.png" class="logo" alt="logo">
+        </div>
+
+        <div class="user-profile">
+            <img src="/images/staff.png" class="avatar" alt="avatar">
+            <div class="user-info">
+                <span class="user-role" th:text="${user.department.name}">Phong ban</span>
+                <span class="user-dept">Nhan vien phong ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
+            <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
+            <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thong bao <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
+            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+        </nav>
+
+        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <section class="table-card announcement-card-wrapper">
+            <div class="toolbar announcement-toolbar">
+                <div class="search-wrapper announcement-search">
+                    <i class="fas fa-search"></i>
+                    <input id="searchInput" type="text" placeholder="Tim kiem theo tieu de hoac noi dung...">
+                </div>
+
+                <div class="toolbar-actions">
+                    <select id="departmentFilter" class="filter-control">
+                        <option value="">Tat ca</option>
+                        <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"></option>
+                    </select>
+
+                    <select id="sortFilter" class="filter-control">
+                        <option value="newest">Moi nhat</option>
+                        <option value="oldest">Cu nhat</option>
+                    </select>
+
+                    <button id="newAnnouncementBtn" type="button" class="new-ann-btn">
+                        <i class="fas fa-plus-circle"></i>
+                        Tạo thông báo mới
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="staff-table announcement-table">
+                    <thead>
+                    <tr>
+                        <th>Tieu de</th>
+                        <th>Noi dung</th>
+                        <th>Ngay tao</th>
+                        <th class="action-col">Tac vu</th>
+                    </tr>
+                    </thead>
+                    <tbody id="announcementTableBody">
+                    <tr>
+                        <td colspan="4" class="empty-cell">
+                            <i class="fas fa-spinner fa-spin"></i> Dang tai du lieu...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination" id="paginationContainer">
+                <button id="prevBtn" class="p-btn" type="button"><i class="fas fa-chevron-left"></i></button>
+                <span class="page-info" id="pageInfo">Trang 1 / 1</span>
+                <button id="nextBtn" class="p-btn" type="button"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="editModal" class="edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="edit-modal-content">
+        <div class="edit-modal-head">
+            <h2 id="editModalTitle">Sua thong bao</h2>
+            <button type="button" id="closeEditModalBtn" class="modal-close-btn" aria-label="Dong">&times;</button>
+        </div>
+
+        <form id="editAnnouncementForm" class="edit-form">
+            <input type="hidden" id="editAnnouncementId">
+
+            <label for="editTitle">Tieu de</label>
+            <input id="editTitle" type="text" maxlength="255" required>
+
+            <label for="editContent">Noi dung</label>
+            <textarea id="editContent" rows="7" required></textarea>
+
+            <label>Tep dinh kem hien tai</label>
+            <ul id="editExistingAttachmentList" class="edit-attachment-list"></ul>
+
+            <label for="editAttachmentInput">Them tep dinh kem</label>
+            <div id="editUploadZone" class="edit-upload-zone" role="button" tabindex="0">
+                <i class="fas fa-upload"></i>
+                <p>Chon tep hoac keo tha vao day</p>
+                <span>Kich thuoc toi da moi tep: 100 MB</span>
+                <button type="button" id="editChooseFileBtn" class="choose-file-btn">Chon tep</button>
+            </div>
+            <input id="editAttachmentInput" type="file" multiple class="hidden-file-input">
+            <ul id="editNewAttachmentList" class="edit-attachment-list"></ul>
+
+            <div class="edit-form-actions">
+                <button type="button" id="cancelEditBtn" class="modal-btn secondary">Huy</button>
+                <button type="submit" id="saveEditBtn" class="modal-btn primary">Luu thay doi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const state = {
+        page: 0,
+        size: 6,
+        totalPages: 1,
+        keyword: ""
+    };
+
+    const tableBody = document.getElementById("announcementTableBody");
+    const searchInput = document.getElementById("searchInput");
+    const departmentFilter = document.getElementById("departmentFilter");
+    const sortFilter = document.getElementById("sortFilter");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const pageInfo = document.getElementById("pageInfo");
+    const paginationContainer = document.getElementById("paginationContainer");
+    const newAnnouncementBtn = document.getElementById("newAnnouncementBtn");
+    const editModal = document.getElementById("editModal");
+    const editAnnouncementForm = document.getElementById("editAnnouncementForm");
+    const editAnnouncementIdInput = document.getElementById("editAnnouncementId");
+    const editTitleInput = document.getElementById("editTitle");
+    const editContentInput = document.getElementById("editContent");
+    const closeEditModalBtn = document.getElementById("closeEditModalBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const saveEditBtn = document.getElementById("saveEditBtn");
+    const editExistingAttachmentList = document.getElementById("editExistingAttachmentList");
+    const editNewAttachmentList = document.getElementById("editNewAttachmentList");
+    const editAttachmentInput = document.getElementById("editAttachmentInput");
+    const editUploadZone = document.getElementById("editUploadZone");
+    const editChooseFileBtn = document.getElementById("editChooseFileBtn");
+
+    const announcementStore = new Map();
+    const editRemoveAttachmentIds = new Set();
+    let editNewFiles = [];
+
+    function escapeHtml(text) {
+        if (!text) return "";
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function cutText(text, maxLength) {
+        if (!text) return "";
+        return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+    }
+
+    function renderExistingAttachments(attachments = []) {
+        if (!attachments || attachments.length === 0) {
+            editExistingAttachmentList.innerHTML = '<li class="empty-attachment">Khong co tep dinh kem.</li>';
+            return;
+        }
+
+        editExistingAttachmentList.innerHTML = attachments.map((file) => {
+            const fileId = file.id || "";
+            const encodedId = encodeURIComponent(fileId);
+            const removeClass = editRemoveAttachmentIds.has(fileId) ? " marked-remove" : "";
+            const buttonText = editRemoveAttachmentIds.has(fileId) ? "Huy xoa" : "Xoa";
+
+            return `
+                <li class="attachment-item${removeClass}">
+                    <a href="${escapeHtml(file.fileUrl || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(file.fileName || "tep")}</a>
+                    <button type="button" class="attachment-action-btn" data-attachment-id="${encodedId}">${buttonText}</button>
+                </li>
+            `;
+        }).join("");
+    }
+
+    function renderNewEditFiles() {
+        if (!editNewFiles || editNewFiles.length === 0) {
+            editNewAttachmentList.innerHTML = "";
+            return;
+        }
+
+        editNewAttachmentList.innerHTML = editNewFiles.map((file, index) => {
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+            return `
+                <li class="attachment-item new-file-item">
+                    <span>${escapeHtml(file.name)} (${sizeMb} MB)</span>
+                    <button type="button" class="attachment-action-btn remove-new-file-btn" data-new-index="${index}">Xoa</button>
+                </li>
+            `;
+        }).join("");
+    }
+
+    function addNewEditFiles(files) {
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        const maxFileSize = 100 * 1024 * 1024;
+        const existingKeys = new Set(editNewFiles.map((file) => `${file.name}-${file.size}-${file.lastModified}`));
+
+        for (const file of files) {
+            if (!file || file.size === 0) {
+                continue;
+            }
+
+            if (file.size > maxFileSize) {
+                window.alert(`Tep ${file.name} vuot qua 100MB.`);
+                continue;
+            }
+
+            const key = `${file.name}-${file.size}-${file.lastModified}`;
+            if (existingKeys.has(key)) {
+                continue;
+            }
+            existingKeys.add(key);
+            editNewFiles.push(file);
+        }
+
+        renderNewEditFiles();
+    }
+
+    function renderRows(rows) {
+        announcementStore.clear();
+
+        if (!rows || rows.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-cell">Khong co thong bao phu hop.</td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = rows.map((ann) => {
+            announcementStore.set(ann.id, ann);
+            const safeId = encodeURIComponent(ann.id);
+
+            return `
+            <tr>
+                <td class="title-cell">${escapeHtml(ann.title)}</td>
+                <td class="content-cell">${escapeHtml(cutText(ann.content, 90))}</td>
+                <td>${escapeHtml(ann.date || "-")}</td>
+                <td class="action-col">
+                    <div class="action-buttons">
+                        <button class="icon-action edit-action" type="button" title="Sua" onclick="openEditModal('${safeId}')">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <a class="icon-action view-action" href="/announcement/detail/${safeId}" title="Xem chi tiet">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="icon-action delete-action" type="button" title="Xoa" onclick="deleteAnnouncement('${safeId}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }).join("");
+    }
+
+    function setLoading() {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty-cell"><i class="fas fa-spinner fa-spin"></i> Dang tai du lieu...</td>
+            </tr>
+        `;
+    }
+
+    function updatePagination() {
+        pageInfo.textContent = `Trang ${state.page + 1} / ${Math.max(state.totalPages, 1)}`;
+        prevBtn.disabled = state.page <= 0;
+        nextBtn.disabled = state.page + 1 >= state.totalPages;
+    }
+
+    async function loadAnnouncements(page = 0) {
+        state.page = page;
+        state.keyword = searchInput.value.trim();
+        setLoading();
+
+        try {
+            if (state.keyword.length > 0) {
+                const response = await fetch(`/api/announcement/search?keyword=${encodeURIComponent(state.keyword)}`);
+                if (!response.ok) throw new Error("search_failed");
+
+                const rows = await response.json();
+                state.totalPages = 1;
+                paginationContainer.classList.add("hidden");
+                renderRows(rows);
+                updatePagination();
+                return;
+            }
+
+            const params = new URLSearchParams({
+                page: String(page),
+                size: String(state.size),
+                sort: sortFilter.value,
+                departmentId: departmentFilter.value
+            });
+
+            const response = await fetch(`/api/announcement?${params.toString()}`);
+            if (!response.ok) throw new Error("fetch_failed");
+
+            const data = await response.json();
+            state.totalPages = data.totalPages || 1;
+
+            if (state.totalPages > 0 && state.page >= state.totalPages) {
+                loadAnnouncements(state.totalPages - 1);
+                return;
+            }
+
+            paginationContainer.classList.remove("hidden");
+            renderRows(data.content || []);
+            updatePagination();
+        } catch (error) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-cell error-cell">Khong the tai du lieu. Vui long thu lai.</td>
+                </tr>
+            `;
+            paginationContainer.classList.remove("hidden");
+            state.totalPages = 1;
+            updatePagination();
+        }
+    }
+
+    prevBtn.addEventListener("click", () => {
+        if (state.page > 0) loadAnnouncements(state.page - 1);
+    });
+
+    nextBtn.addEventListener("click", () => {
+        if (state.page + 1 < state.totalPages) loadAnnouncements(state.page + 1);
+    });
+
+    searchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            loadAnnouncements(0);
+        }
+    });
+
+    departmentFilter.addEventListener("change", () => loadAnnouncements(0));
+    sortFilter.addEventListener("change", () => loadAnnouncements(0));
+
+    newAnnouncementBtn.addEventListener("click", () => {
+        window.location.href = "/staff/announcement-management/create";
+    });
+
+    editChooseFileBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        editAttachmentInput.click();
+    });
+
+    editUploadZone.addEventListener("click", () => {
+        editAttachmentInput.click();
+    });
+
+    editUploadZone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            editAttachmentInput.click();
+        }
+    });
+
+    editUploadZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        editUploadZone.classList.add("drag-over");
+    });
+
+    editUploadZone.addEventListener("dragleave", () => {
+        editUploadZone.classList.remove("drag-over");
+    });
+
+    editUploadZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        editUploadZone.classList.remove("drag-over");
+        addNewEditFiles(Array.from(event.dataTransfer.files || []));
+    });
+
+    editAttachmentInput.addEventListener("change", () => {
+        addNewEditFiles(Array.from(editAttachmentInput.files || []));
+        editAttachmentInput.value = "";
+    });
+
+    editExistingAttachmentList.addEventListener("click", (event) => {
+        const targetButton = event.target.closest(".attachment-action-btn");
+        if (!targetButton) {
+            return;
+        }
+
+        const encodedId = targetButton.dataset.attachmentId;
+        if (!encodedId) {
+            return;
+        }
+
+        const attachmentId = decodeURIComponent(encodedId);
+        if (editRemoveAttachmentIds.has(attachmentId)) {
+            editRemoveAttachmentIds.delete(attachmentId);
+        } else {
+            editRemoveAttachmentIds.add(attachmentId);
+        }
+
+        const announcement = announcementStore.get(editAnnouncementIdInput.value);
+        renderExistingAttachments((announcement && announcement.attachments) || []);
+    });
+
+    editNewAttachmentList.addEventListener("click", (event) => {
+        const targetButton = event.target.closest(".remove-new-file-btn");
+        if (!targetButton) {
+            return;
+        }
+
+        const index = Number(targetButton.dataset.newIndex);
+        if (Number.isNaN(index)) {
+            return;
+        }
+
+        editNewFiles.splice(index, 1);
+        renderNewEditFiles();
+    });
+
+    function openEditModal(encodedId) {
+        const id = decodeURIComponent(encodedId);
+        const announcement = announcementStore.get(id);
+
+        if (!announcement) {
+            window.alert("Khong tim thay thong bao de sua.");
+            return;
+        }
+
+        editAnnouncementIdInput.value = id;
+        editTitleInput.value = announcement.title || "";
+        editContentInput.value = announcement.content || "";
+        editRemoveAttachmentIds.clear();
+        editNewFiles = [];
+        renderExistingAttachments(announcement.attachments || []);
+        renderNewEditFiles();
+        editModal.classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+        editModal.classList.add("hidden");
+        editAnnouncementForm.reset();
+        editAnnouncementIdInput.value = "";
+        editRemoveAttachmentIds.clear();
+        editNewFiles = [];
+        editExistingAttachmentList.innerHTML = "";
+        editNewAttachmentList.innerHTML = "";
+        editAttachmentInput.value = "";
+    }
+
+    async function deleteAnnouncement(encodedId) {
+        const id = decodeURIComponent(encodedId);
+        const confirmed = window.confirm("Ban co chac chan muon xoa thong bao nay khong?");
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/announcement/${encodeURIComponent(id)}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "delete_failed");
+            }
+
+            loadAnnouncements(state.keyword.length > 0 ? 0 : state.page);
+        } catch (error) {
+            window.alert("Khong the xoa thong bao. " + (error.message || "Vui long thu lai."));
+        }
+    }
+
+    editAnnouncementForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const id = editAnnouncementIdInput.value;
+        const title = editTitleInput.value.trim();
+        const content = editContentInput.value.trim();
+
+        if (!title || !content) {
+            window.alert("Tieu de va noi dung khong duoc de trong.");
+            return;
+        }
+
+        saveEditBtn.disabled = true;
+
+        try {
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append("content", content);
+
+            editNewFiles.forEach((file) => {
+                formData.append("attachments", file);
+            });
+
+            editRemoveAttachmentIds.forEach((attachmentId) => {
+                formData.append("removeAttachmentIds", attachmentId);
+            });
+
+            const response = await fetch(`/api/announcement/${encodeURIComponent(id)}`, {
+                method: "PUT",
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "update_failed");
+            }
+
+            closeEditModal();
+            loadAnnouncements(state.keyword.length > 0 ? 0 : state.page);
+        } catch (error) {
+            window.alert("Khong the cap nhat thong bao. " + (error.message || "Vui long thu lai."));
+        } finally {
+            saveEditBtn.disabled = false;
+        }
+    });
+
+    closeEditModalBtn.addEventListener("click", closeEditModal);
+    cancelEditBtn.addEventListener("click", closeEditModal);
+
+    editModal.addEventListener("click", (event) => {
+        if (event.target === editModal) {
+            closeEditModal();
+        }
+    });
+
+    window.openEditModal = openEditModal;
+    window.deleteAnnouncement = deleteAnnouncement;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        loadAnnouncements(0);
+    });
+</script>
+</body>
+</html>
+

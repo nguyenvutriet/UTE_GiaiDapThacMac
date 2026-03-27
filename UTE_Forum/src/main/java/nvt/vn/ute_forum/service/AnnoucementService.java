@@ -39,6 +39,7 @@ public class AnnoucementService {
         if (ann.getAttachments() != null) {
             List<AnnouncementResponse.FileDTO> fileDTOs = ann.getAttachments().stream()
                     .map(file -> new AnnouncementResponse.FileDTO(
+                            file.getId(),
                             file.getFileName(),
                             file.getFileUrl(),
                             file.getFileType()

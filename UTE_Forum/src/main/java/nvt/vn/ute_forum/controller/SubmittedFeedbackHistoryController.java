@@ -3,19 +3,25 @@ package nvt.vn.ute_forum.controller;
 
 import nvt.vn.ute_forum.model.ForwardingLog;
 import nvt.vn.ute_forum.model.Category;
+import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.RequestStatusHistory;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.ForwardingLogService;
+import nvt.vn.ute_forum.service.MessageService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.RequestStatusHistoryService;
 import nvt.vn.ute_forum.service.UsersService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
@@ -65,15 +71,21 @@ public class SubmittedFeedbackHistoryController {
     private final ForwardingLogService forwardingLogService;
     private final RequestStatusHistoryService requestStatusHistoryService;
     private final UsersService usersService;
+    private final ClarificationConversationService clarificationConversationService;
+    private final MessageService messageService;
 
     public SubmittedFeedbackHistoryController(RequestService requestService,
                                               ForwardingLogService forwardingLogService,
                                               RequestStatusHistoryService requestStatusHistoryService,
-                                              UsersService usersService) {
+                                              UsersService usersService,
+                                              ClarificationConversationService clarificationConversationService,
+                                              MessageService messageService) {
         this.requestService = requestService;
         this.forwardingLogService = forwardingLogService;
         this.requestStatusHistoryService = requestStatusHistoryService;
         this.usersService = usersService;
+        this.clarificationConversationService = clarificationConversationService;
+        this.messageService = messageService;
     }
 
     @GetMapping("/api/history")
@@ -98,6 +110,14 @@ public class SubmittedFeedbackHistoryController {
         List<RequestStatusHistory> statusHistories = selectedRequest == null
                 ? new ArrayList<>()
                 : requestStatusHistoryService.getByRequestId(selectedRequest.getId());
+        ClarificationConversation selectedConversation = selectedRequest == null
+                ? null
+                : clarificationConversationService.findByRequestId(selectedRequest.getId()).orElse(null);
+        boolean chatEnabled = selectedConversation != null && Boolean.TRUE.equals(selectedConversation.getOpen());
+        List<MessageService.ChatMessageView> conversationMessages = chatEnabled
+                ? messageService.getConversationMessages(selectedConversation.getId(), user.getId())
+                : new ArrayList<>();
+        List<OpenConversationItem> openConversations = buildOpenConversations(user.getId());
 
         model.addAttribute("user", user);
         model.addAttribute("roleLabel", "Sinh vien");
@@ -105,6 +125,10 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("selectedRequest", selectedRequest);
         model.addAttribute("selectedTimeline", buildTimeline(selectedRequest, statusHistories, forwardingLogs));
         model.addAttribute("currentHandlingDepartment", resolveCurrentDepartment(selectedRequest, forwardingLogs));
+        model.addAttribute("chatEnabled", chatEnabled);
+        model.addAttribute("chatConversationId", chatEnabled ? selectedConversation.getId() : "");
+        model.addAttribute("chatMessages", conversationMessages);
+        model.addAttribute("openConversations", openConversations);
         model.addAttribute("keyword", safeValue(keyword));
         model.addAttribute("departmentId", safeValue(departmentId));
         model.addAttribute("status", safeValue(status));
@@ -114,6 +138,72 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("statusOptions", buildStatusOptions(allRequests));
 
         return "student/submitted-feedback-history";
+    }
+
+    @GetMapping("/api/history/chat/messages")
+    @ResponseBody
+    public ResponseEntity<?> getConversationMessages(@RequestParam("conversationId") String conversationId,
+                                                     Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Chưa đăng nhập"));
+        }
+
+        Optional<ClarificationConversation> conversationOptional = clarificationConversationService
+                .findOpenByConversationIdForStudent(conversationId, user.getId());
+
+        if (conversationOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Cuộc hội thoại không tồn tại hoặc đã đóng"));
+        }
+
+        ClarificationConversation conversation = conversationOptional.get();
+        String requestId = conversation.getRequest() == null ? "" : safeValue(conversation.getRequest().getId());
+        String subject = conversation.getRequest() == null ? "Trao đổi" : safeValue(conversation.getRequest().getSubject());
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("conversationId", conversation.getId());
+        response.put("requestId", requestId);
+        response.put("subject", subject);
+        response.put("messages", messageService.getConversationMessages(conversation.getId(), user.getId()));
+        return ResponseEntity.ok(response);
+    }
+
+    private List<OpenConversationItem> buildOpenConversations(String userId) {
+        return clarificationConversationService.getOpenConversationsByStudentId(userId)
+                .stream()
+                .filter(Objects::nonNull)
+                .map(conversation -> {
+                    Request request = conversation.getRequest();
+                    String subject = request == null ? "Trao đổi" : safeValue(request.getSubject());
+                    String requestId = request == null ? "" : safeValue(request.getId());
+                    String dateLabel = conversation.getCreateAt() == null
+                            ? ""
+                            : conversation.getCreateAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+                    String preview = messageService.getConversationMessages(conversation.getId(), userId)
+                            .stream()
+                            .reduce((first, second) -> second)
+                            .map(last -> {
+                                String text = safeValue(last.text()).trim();
+                                if (!text.isBlank()) {
+                                    return text;
+                                }
+                                return "Nhấn để xem chi tiết cuộc trao đổi...";
+                            })
+                            .orElse("Nhấn để xem chi tiết cuộc trao đổi...");
+
+                    return new OpenConversationItem(
+                            safeValue(conversation.getId()),
+                            requestId,
+                            subject,
+                            dateLabel,
+                            preview,
+                            "Đang mở"
+                    );
+                })
+                .collect(Collectors.toList());
     }
 
     private List<Request> applyFilters(List<Request> source,
@@ -500,6 +590,53 @@ public class SubmittedFeedbackHistoryController {
 
         public String getLabel() {
             return label;
+        }
+    }
+
+    public static class OpenConversationItem {
+        private final String conversationId;
+        private final String requestId;
+        private final String subject;
+        private final String dateLabel;
+        private final String preview;
+        private final String statusLabel;
+
+        public OpenConversationItem(String conversationId,
+                                    String requestId,
+                                    String subject,
+                                    String dateLabel,
+                                    String preview,
+                                    String statusLabel) {
+            this.conversationId = conversationId;
+            this.requestId = requestId;
+            this.subject = subject;
+            this.dateLabel = dateLabel;
+            this.preview = preview;
+            this.statusLabel = statusLabel;
+        }
+
+        public String getConversationId() {
+            return conversationId;
+        }
+
+        public String getRequestId() {
+            return requestId;
+        }
+
+        public String getSubject() {
+            return subject;
+        }
+
+        public String getDateLabel() {
+            return dateLabel;
+        }
+
+        public String getPreview() {
+            return preview;
+        }
+
+        public String getStatusLabel() {
+            return statusLabel;
         }
     }
 }

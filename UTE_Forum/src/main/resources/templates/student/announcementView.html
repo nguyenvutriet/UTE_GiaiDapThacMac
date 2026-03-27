@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn & Thông báo</title>
+    <title>Thông báo</title>
     <link rel="stylesheet" th:href="@{/css/student/announcementView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -95,6 +95,52 @@
                         <a href="javascript:void(0)" class="btn-reset" onclick="document.getElementById('filterForm').reset(); loadAnnouncements(0);"
                            style="text-decoration: none; text-align: center; display: block; margin-top: 10px;">Xóa lọc</a>
                     </form>
+                </div>
+
+                <div class="sidebar-widget department-info-section">
+                    <h3 style="padding-left: 10px; margin-bottom: 15px; font-size: 1.1rem; color: #2c3e50;">
+                        🏢 Thông tin phòng ban
+                    </h3>
+
+                    <select id="infoDeptSelect" onchange="showDeptDetailFromSelect(this.value)">
+                        <option value="">-- Chọn phòng ban --</option>
+                        <th:block th:each="dept : ${departments}">
+                            <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                        </th:block>
+                    </select>
+
+                    <div id="dept-info-display" class="info-card-container" style="display: none;">
+                        <div class="info-row">
+                            <i class="fas fa-signal" style="color: #007bff; width: 25px;"></i>
+                            <strong style="flex: 1;">Trạng thái:</strong>
+                            <span id="info-status"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-envelope" style="color: #17a2b8; width: 25px;"></i>
+                            <strong style="flex: 1;">Email:</strong>
+                            <span id="info-email" style="color: #666;"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-phone-alt" style="color: #6c757d; width: 25px;"></i>
+                            <strong style="flex: 1;">SĐT:</strong>
+                            <span id="info-phone" style="color: #666;"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt" style="color: #ff4757; width: 25px;"></i>
+                            <strong style="flex: 1;">Vị trí:</strong>
+                            <span id="info-location" style="color: #666;"></span>
+                        </div>
+
+                        <div class="description-box" style="margin-top: 15px; padding: 12px; background: #f8fbff; border-radius: 10px; border: 1px dashed #d0e3ff;">
+                            <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 0.85em; color: #444;">
+                                <i class="fas fa-align-left"></i> Mô tả ngắn:
+                            </p>
+                            <p id="info-desc" style="margin: 0; font-style: italic; color: #777; font-size: 0.9em; line-height: 1.4;"></p>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </section>
@@ -206,52 +252,7 @@
         return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
     }
 
-    // const searchInput = document.getElementById('globalSearchInput');
-    // const suggestionsList = document.getElementById('searchSuggestions');
-    // let debounceTimer;
-    //
-    // searchInput.addEventListener('input', function() {
-    //     clearTimeout(debounceTimer);
-    //     const keyword = this.value.trim();
-    //
-    //     if (keyword.length < 2) {
-    //         suggestionsList.style.display = 'none';
-    //         return;
-    //     }
-    //
-    //     debounceTimer = setTimeout(() => {
-    //         fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`)
-    //             .then(res => res.json())
-    //             .then(data => {
-    //                 renderSuggestions(data);
-    //             });
-    //     }, 300); // Đợi 0.3s sau khi ngừng gõ
-    // });
-    //
-    // function renderSuggestions(data) {
-    //     if (data.length === 0) {
-    //         suggestionsList.innerHTML = '<li><a href="#">Không tìm thấy thông báo nào ❌</a></li>';
-    //     } else {
-    //         suggestionsList.innerHTML = data.map(ann => `
-    //         <li>
-    //             <a href="/announcement/detail/${ann.id}">
-    //                 <div class="suggest-item">
-    //                     <strong class="suggest-title">${ann.title}</strong>
-    //                     <span class="suggest-dept">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
-    //                 </div>
-    //             </a>
-    //         </li>
-    //     `).join('');
-    //     }
-    //     suggestionsList.style.display = 'block';
-    // }
-    //
-    // // Click ra ngoài thì ẩn danh sách gợi ý
-    // document.addEventListener('click', (e) => {
-    //     if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-    //         suggestionsList.style.display = 'none';
-    //     }
-    // });
+
     // 1. Lấy đúng ID từ HTML của bà nè
     const searchInput = document.getElementById('globalSearchInput');
     const suggestionsList = document.getElementById('searchResultList'); // Cái bảng nhỏ bay lơ lửng
@@ -378,6 +379,48 @@
         searchInput.value = ''; // Xoá chữ trong ô tìm kiếm
         paginationBox.style.display = 'flex'; // Hiện lại phân trang
         loadAnnouncements(0); // Gọi lại hàm load gốc của bà (trang 0)
+    }
+
+    async function showDeptDetailFromSelect(deptId) {
+        const infoBox = document.getElementById('dept-info-display');
+        if (!deptId) {
+            infoBox.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/departments/${deptId}`);
+            const dept = await response.json();
+
+            // DÒNG NÀY QUAN TRỌNG: Bà nhìn vào Console (F12) xem nó in ra cái gì
+            console.log("Dữ liệu DTO nhận được:", dept);
+
+            if (Object.keys(dept).length === 0) {
+                console.error("CẢNH BÁO: DTO trả về rỗng {}. Bà hãy kiểm tra lại Constructor trong file DepartmentDTO.java!");
+            }
+
+            // 1. Đổ dữ liệu (Bà check kỹ tên biến trong DTO của bà nhé)
+            document.getElementById('info-email').innerText = dept.email || 'N/A';
+            document.getElementById('info-phone').innerText = dept.phone || 'N/A';
+            document.getElementById('info-location').innerText = dept.location || 'N/A';
+            document.getElementById('info-desc').innerText = dept.description || '';
+
+            // 2. Xử lý trạng thái từ DTO
+            const statusSpan = document.getElementById('info-status');
+            // Lấy đúng cái tên isActive từ JSON bà đã in ra được ở Console
+            const activeValue = dept.isActive;
+
+// Ép kiểu và kiểm tra chuẩn xác
+            if (activeValue === true || activeValue === 1 || String(activeValue) === "true") {
+                statusSpan.innerHTML = '<b style="color: #28a745;">● Còn hoạt động</b>';
+            } else {
+                statusSpan.innerHTML = '<b style="color: #dc3545;">● Ngưng hoạt động</b>';
+            }
+
+            infoBox.style.display = 'block';
+        } catch (error) {
+            console.error("Lỗi:", error);
+        }
     }
 </script>
 </body>
