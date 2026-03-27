@@ -113,22 +113,25 @@
                         <td>
                             <span class="status-tag"
                                   th:classappend="
-                                    ${fb.currentStatus == 'RESOLVED'} ? ' success' :
-                                    (${fb.currentStatus == 'PENDING'} ? ' pending' :
+                                    ${fb.currentStatus == 'PENDING'} ? ' pending' :
+                                    (${fb.currentStatus == 'APPROVED'} ? ' processing' :
+                                    (${fb.currentStatus == 'RESOLVED'} ? ' success' :
                                     (${fb.currentStatus == 'FORWARDING'} ? ' forwarding' :
-                                    (${fb.currentStatus == 'REJECTED'} ? ' rejected' : '')))
+                                    (${fb.currentStatus == 'REJECTED'} ? ' rejected' : ''))))
                                   ">
 
+                                <i th:if="${fb.currentStatus == 'PENDING'}" class="fas fa-exclamation-circle"></i>
+                                <i th:if="${fb.currentStatus == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
                                 <i th:if="${fb.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
-                                <i th:if="${fb.currentStatus == 'PENDING'}" class="fas fa-spinner fa-spin"></i>
                                 <i th:if="${fb.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
                                 <i th:if="${fb.currentStatus == 'REJECTED'}" class="fas fa-ban"></i>
 
                                 <span th:text="
-                                    ${fb.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
-                                    (${fb.currentStatus == 'PENDING'} ? 'Đang xử lý' :
+                                    ${fb.currentStatus == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                                    (${fb.currentStatus == 'APPROVED'} ? 'Đang xử lý' :
+                                    (${fb.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
                                     (${fb.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
-                                    (${fb.currentStatus == 'REJECTED'} ? 'Từ chối' : '')))
+                                    (${fb.currentStatus == 'REJECTED'} ? 'Từ chối' : ''))))
                                 "></span>
 
                             </span>
