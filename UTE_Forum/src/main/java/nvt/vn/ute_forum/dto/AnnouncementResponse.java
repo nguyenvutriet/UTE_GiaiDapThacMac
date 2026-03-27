@@ -12,17 +12,21 @@ public class AnnouncementResponse {
 
     // --- Inner Class để chứa thông tin file ---
     public static class FileDTO {
+        private String id;
         private String fileName;
         private String fileUrl;
         private String fileType;
 
-        public FileDTO(String fileName, String fileUrl, String fileType) {
+        public FileDTO(String id, String fileName, String fileUrl, String fileType) {
+            this.id = id;
             this.fileName = fileName;
             this.fileUrl = fileUrl;
             this.fileType = fileType;
         }
 
         // Getters & Setters cho FileDTO
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
         public String getFileName() { return fileName; }
         public void setFileName(String fileName) { this.fileName = fileName; }
         public String getFileUrl() { return fileUrl; }
