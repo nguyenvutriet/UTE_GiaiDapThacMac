@@ -41,8 +41,11 @@ public class Users {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private List<Request> requests = new ArrayList<>();
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "sender")
     private List<Message> messages = new ArrayList<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "receiver")
+    private List<Message> receivedMessages = new ArrayList<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private List<Comment> comments = new ArrayList<>();
@@ -111,7 +114,7 @@ public class Users {
         this.forwardingLogs = forwardingLogs;
     }
 
-    public Users(String id, String fullName, String email, String password, String role, List<Announcement> announcements, List<Notification> notifications, Department department, List<Request> requests, List<Message> messages, List<Comment> comments, List<CommentReport> submitedcommentReports, List<CommentReport> approvedcommentReports, List<ForwardingLog> forwardingLogs, List<Vote> votes) {
+    public Users(String id, String fullName, String email, String password, String role, List<Announcement> announcements, List<Notification> notifications, Department department, List<Request> requests, List<Message> messages, List<Comment> comments, List<CommentReport> submitedcommentReports, List<CommentReport> approvedcommentReports, List<ForwardingLog> forwardingLogs, List<Vote> votes, List<Message> receivedMessages) {
         this.id = id;
         this.fullName = fullName;
         this.email = email;
@@ -127,6 +130,7 @@ public class Users {
         ApprovedcommentReports = approvedcommentReports;
         this.forwardingLogs = forwardingLogs;
         this.votes = votes;
+        this.receivedMessages = receivedMessages;
     }
 
     public String getId() {
@@ -251,5 +255,11 @@ public class Users {
     }
 
 
+    public List<Message> getReceivedMessages() {
+        return receivedMessages;
+    }
 
+    public void setReceivedMessages(List<Message> receivedMessages) {
+        this.receivedMessages = receivedMessages;
+    }
 }

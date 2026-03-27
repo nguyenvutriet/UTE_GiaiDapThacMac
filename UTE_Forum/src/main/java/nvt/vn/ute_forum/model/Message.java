@@ -23,8 +23,12 @@ public class Message {
     private ClarificationConversation clarificationConversation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
+    @JoinColumn(name = "sender_id", nullable = false)
+    private Users sender;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviever_id", nullable = false)
+    private Users reviever;
 
     public Message() {
     }
@@ -35,12 +39,13 @@ public class Message {
         this.createAt = createAt;
     }
 
-    public Message(String id, String content, LocalDate createAt, ClarificationConversation clarificationConversation, Users user) {
+    public Message(String id, String content, LocalDate createAt, ClarificationConversation clarificationConversation, Users sender, Users reviever) {
         this.id = id;
         this.content = content;
         this.createAt = createAt;
         this.clarificationConversation = clarificationConversation;
-        this.user = user;
+        this.sender = sender;
+        this.reviever = reviever;
     }
 
     public String getId() {
@@ -75,11 +80,19 @@ public class Message {
         this.clarificationConversation = clarificationConversation;
     }
 
-    public Users getUser() {
-        return user;
+    public Users getSender() {
+        return sender;
     }
 
-    public void setUser(Users user) {
-        this.user = user;
+    public void setSender(Users sender) {
+        this.sender = sender;
+    }
+
+    public Users getReviever() {
+        return reviever;
+    }
+
+    public void setReviever(Users reviever) {
+        this.reviever = reviever;
     }
 }
