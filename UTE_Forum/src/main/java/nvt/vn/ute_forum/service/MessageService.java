@@ -71,8 +71,8 @@ public class MessageService {
         message.setId(idGeneratorService.nextMessageId());
         message.setClarificationConversation(conversation);
         message.setSender(sender);
-        message.setUser(sender);
-        message.setReceiver(resolveReceiver(requestId, sender));
+        Users receiver = resolveReceiver(requestId, sender);
+        message.setReceiver(receiver);
         message.setCreateAt(LocalDateTime.now());
         message.setContent(serializePayload(text, attachments));
 
@@ -140,7 +140,7 @@ public class MessageService {
             return "";
         }
         try {
-            Users source = message.getSender() != null ? message.getSender() : message.getUser();
+            Users source = message.getSender();
             return source == null ? "" : nullSafe(source.getId());
         } catch (RuntimeException ex) {
             return "";
@@ -152,7 +152,7 @@ public class MessageService {
             return "Người dùng";
         }
         try {
-            Users source = message.getSender() != null ? message.getSender() : message.getUser();
+            Users source = message.getSender();
             if (source == null) {
                 return "Người dùng";
             }
