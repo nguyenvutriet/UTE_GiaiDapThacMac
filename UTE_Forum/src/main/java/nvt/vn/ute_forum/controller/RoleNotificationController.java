@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
@@ -46,6 +47,23 @@ public class RoleNotificationController {
         return "staff/staff-notification";
     }
 
+    @PostMapping("/staff/notifications/delete")
+    public String deleteStaffNotification(@RequestParam("notificationId") String notificationId,
+                                          @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                          Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/api/forum/view";
+        }
+
+        notificationService.deleteForUser(notificationId, user.getId());
+        return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+    }
+
     @GetMapping("/admin/notifications")
     public String showAdminNotifications(@RequestParam(value = "tab", defaultValue = "all") String tab,
                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
@@ -62,6 +80,23 @@ public class RoleNotificationController {
         populateNotificationModel(model, user, tab, filter);
         model.addAttribute("admin", user);
         return "admin/admin-notification";
+    }
+
+    @PostMapping("/admin/notifications/delete")
+    public String deleteAdminNotification(@RequestParam("notificationId") String notificationId,
+                                          @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                          Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/api/forum/view";
+        }
+
+        notificationService.deleteForUser(notificationId, user.getId());
+        return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
     private void populateNotificationModel(Model model, Users user, String tab, String filter) {
@@ -96,7 +131,7 @@ public class RoleNotificationController {
         String content = notification.getContent() == null ? "" : notification.getContent();
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        return new NotificationItem(title, content, timeLabel, icon, iconClass, tabKey, isRead);
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
     }
 
     private String tabByType(String type) {
@@ -224,7 +259,8 @@ public class RoleNotificationController {
         return usersService.getByEmail(email.trim());
     }
 
-    private record NotificationItem(String title,
+    private record NotificationItem(String id,
+                                    String title,
                                     String content,
                                     String timeLabel,
                                     String icon,

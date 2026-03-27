@@ -5,10 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface UsersRepo extends JpaRepository<Users, String> {
 
     Users findByEmail(String email);
     Optional<Users> findOptionalByEmail(String email);
+    List<Users> findByRole(String role);
+    List<Users> findByRoleAndDepartment_IdIn(String role, Collection<String> departmentIds);
 }
