@@ -1,6 +1,8 @@
 package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.time.LocalDateTime;
 
@@ -23,8 +25,20 @@ public class Message {
     private ClarificationConversation clarificationConversation;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private Users sender;
+
+    // Keep backward compatibility with DB schema where message.user_id is NOT NULL.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
     private Users user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviever_id", nullable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private Users receiver;
 
     public Message() {
     }
@@ -35,12 +49,18 @@ public class Message {
         this.createAt = createAt;
     }
 
-    public Message(String id, String content, LocalDateTime createAt, ClarificationConversation clarificationConversation, Users user) {
+    public Message(String id,
+                   String content,
+                   LocalDateTime createAt,
+                   ClarificationConversation clarificationConversation,
+                   Users sender,
+                   Users receiver) {
         this.id = id;
         this.content = content;
         this.createAt = createAt;
         this.clarificationConversation = clarificationConversation;
-        this.user = user;
+        this.sender = sender;
+        this.receiver = receiver;
     }
 
     public String getId() {
@@ -75,6 +95,14 @@ public class Message {
         this.clarificationConversation = clarificationConversation;
     }
 
+    public Users getSender() {
+        return sender;
+    }
+
+    public void setSender(Users sender) {
+        this.sender = sender;
+    }
+
     public Users getUser() {
         return user;
     }
@@ -82,4 +110,14 @@ public class Message {
     public void setUser(Users user) {
         this.user = user;
     }
+
+    public Users getReceiver() {
+        return receiver;
+    }
+
+    public void setReceiver(Users receiver) {
+        this.receiver = receiver;
+    }
+
+
 }

@@ -55,4 +55,8 @@ public class ClarificationConversationService {
         return clarificationConversationRepo.findOpenByIdAndStudentId(conversationId, studentId);
     }
 
+    public ClarificationConversation getClarificationConversation(String requestId){
+        return clarificationConversationRepo.findByRequestId(requestId);
+    }
+
 }

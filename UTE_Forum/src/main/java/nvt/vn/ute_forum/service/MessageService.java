@@ -2,8 +2,11 @@ package nvt.vn.ute_forum.service;
 
 import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Message;
+import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.MessageRepo;
+import nvt.vn.ute_forum.repository.RequestRepo;
+import nvt.vn.ute_forum.repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +32,20 @@ public class MessageService {
 
     private final MessageRepo messageRepo;
     private final IdGeneratorService idGeneratorService;
+    private final UsersRepo usersRepo;
+    private final RequestRepo requestRepo;
 
     @Value("${app.upload.dir:uploads/}")
     private String uploadDir;
 
     public MessageService(MessageRepo messageRepo,
-                          IdGeneratorService idGeneratorService) {
+                          IdGeneratorService idGeneratorService,
+                          UsersRepo usersRepo,
+                          RequestRepo requestRepo) {
         this.messageRepo = messageRepo;
         this.idGeneratorService = idGeneratorService;
+        this.usersRepo = usersRepo;
+        this.requestRepo = requestRepo;
     }
 
     @Transactional(readOnly = true)
@@ -53,6 +62,7 @@ public class MessageService {
 
     @Transactional
     public ChatMessageView saveMessage(ClarificationConversation conversation,
+                                       String requestId,
                                        Users sender,
                                        String text,
                                        List<ChatAttachment> attachments,
@@ -60,7 +70,9 @@ public class MessageService {
         Message message = new Message();
         message.setId(idGeneratorService.nextMessageId());
         message.setClarificationConversation(conversation);
+        message.setSender(sender);
         message.setUser(sender);
+        message.setReceiver(resolveReceiver(requestId, sender));
         message.setCreateAt(LocalDateTime.now());
         message.setContent(serializePayload(text, attachments));
 
@@ -108,8 +120,8 @@ public class MessageService {
 
     private ChatMessageView toView(Message message, String currentUserId) {
         MessagePayload payload = deserializePayload(message.getContent());
-        String senderId = message.getUser() == null ? "" : nullSafe(message.getUser().getId());
-        String senderName = message.getUser() == null ? "Người dùng" : nullSafe(message.getUser().getFullName());
+        String senderId = resolveSenderId(message);
+        String senderName = resolveSenderName(message);
         String timeLabel = message.getCreateAt() == null ? "" : message.getCreateAt().format(DATE_FORMATTER);
 
         return new ChatMessageView(
@@ -121,6 +133,70 @@ public class MessageService {
                 timeLabel,
                 currentUserId != null && currentUserId.equals(senderId)
         );
+    }
+
+    private String resolveSenderId(Message message) {
+        if (message == null) {
+            return "";
+        }
+        try {
+            Users source = message.getSender() != null ? message.getSender() : message.getUser();
+            return source == null ? "" : nullSafe(source.getId());
+        } catch (RuntimeException ex) {
+            return "";
+        }
+    }
+
+    private String resolveSenderName(Message message) {
+        if (message == null) {
+            return "Người dùng";
+        }
+        try {
+            Users source = message.getSender() != null ? message.getSender() : message.getUser();
+            if (source == null) {
+                return "Người dùng";
+            }
+            String value = nullSafe(source.getFullName());
+            return value.isBlank() ? "Người dùng" : value;
+        } catch (RuntimeException ex) {
+            return "Người dùng";
+        }
+    }
+
+    private Users resolveReceiver(String requestId, Users sender) {
+        if (sender == null) {
+            throw new IllegalArgumentException("Người gửi không hợp lệ");
+        }
+
+        if (requestId == null || requestId.isBlank()) {
+            return sender;
+        }
+
+        Request request = requestRepo.findById(requestId).orElse(null);
+        if (request == null) {
+            return sender;
+        }
+
+        String senderRole = nullSafe(sender.getRole());
+        if ("ROLE_STUDENT".equalsIgnoreCase(senderRole)) {
+            if (request.getDepartment() == null || request.getDepartment().getId() == null) {
+                return sender;
+            }
+
+            List<Users> departmentUsers = usersRepo.findByRoleAndDepartment_Id(
+                    "ROLE_DEPARTMENT",
+                    request.getDepartment().getId()
+            );
+
+            return departmentUsers.stream()
+                    .filter(candidate -> candidate != null && candidate.getId() != null)
+                    .filter(candidate -> !candidate.getId().equals(sender.getId()))
+                    .findFirst()
+                    .orElse(sender);
+        }
+
+        Users requestOwner = request.getUser();
+        return requestOwner == null ? sender : requestOwner;
     }
 
     private String serializePayload(String text, List<ChatAttachment> attachments) {

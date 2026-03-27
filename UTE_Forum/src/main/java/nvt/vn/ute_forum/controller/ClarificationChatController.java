@@ -76,6 +76,7 @@ public class ClarificationChatController {
             ClarificationConversation conversation = conversationOptional.get();
             MessageService.ChatMessageView savedMessage = messageService.saveMessage(
                     conversation,
+                    payload.requestId(),
                     user,
                     content,
                     attachments,
@@ -147,5 +148,6 @@ public class ClarificationChatController {
                                   List<MessageService.ChatAttachment> attachments) {
     }
 }
+
 
 

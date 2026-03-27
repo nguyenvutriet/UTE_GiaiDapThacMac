@@ -47,4 +47,6 @@ public interface ClarificationConversationRepo extends JpaRepository<Clarificati
 			""")
 	Optional<ClarificationConversation> findOpenByIdAndStudentId(@Param("conversationId") String conversationId,
 																 @Param("studentId") String studentId);
+
+    ClarificationConversation findByRequestId(String requestId);
 }

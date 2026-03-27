@@ -18,7 +18,7 @@ public class FileAttachment {
     @Column(name = "fileurl", nullable = false)
     private String fileUrl;
 
-    @Column(name = "filetype", unique = true)
+    @Column(name = "filetype")
     private String fileType;
 
     @Column(name = "filesize", nullable = false)
