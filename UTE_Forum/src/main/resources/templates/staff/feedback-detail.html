@@ -159,11 +159,11 @@
 
                             <!-- TIME -->
                             <span class="time"
-                                  th:text="${#temporals.format(his.timeUpdate, 'HH:mm dd/MM/yyyy')}">
+                                  th:text="${#temporals.format(his.createAt, 'HH:mm dd/MM/yyyy')}">
                     </span>
 
                             <!-- DESCRIPTION -->
-                            <p th:text="${his.note}"></p>
+                            <p th:text="${his.status}"></p>
 
                         </div>
                     </div>
@@ -175,20 +175,9 @@
             <div class="table-card">
                 <h3><i class="fas fa-comments"></i> Trao đổi</h3>
 
-                <div th:if="${feedback.comments.isEmpty()}">
-                    <p>Chưa có trao đổi</p>
-                </div>
+                <p>Chưa có cuộc trao đổi nào</p>
 
-                <div th:each="cmt : ${feedback.comments}" class="comment-box">
-                    <div class="comment-header">
-                        <b th:text="${cmt.user.fullName}"></b>
-                        <span th:text="${#temporals.format(cmt.timeCreate, 'dd/MM/yyyy')}"></span>
-                    </div>
 
-                    <p th:text="${cmt.content}"></p>
-
-                    <span class="badge success">Đang mở</span>
-                </div>
             </div>
 
         </div>
