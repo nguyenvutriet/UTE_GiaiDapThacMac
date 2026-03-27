@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <title>Chi tiết phản hồi</title>
 
-    <!-- CSS -->
     <link rel="stylesheet" href="/css/staff/staff-style.css">
-
-    <!-- Icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     <link rel="stylesheet" href="/css/department/ChatBox.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
-<body>
+<body th:data-conversation-id="${conversation != null ? conversation.id : ''}">
 <div class="staff-layout">
 
-    <!-- ================= SIDEBAR ================= -->
+    <!-- SIDEBAR giữ nguyên -->
     <aside class="sidebar">
-
         <div class="sidebar-header">
             <img src="/images/logo_no_bg.png" class="logo">
         </div>
@@ -62,16 +59,15 @@
         </a>
     </aside>
 
-    <!-- ================= MAIN ================= -->
+    <!-- MAIN -->
     <main class="main-content">
 
-        <!-- ====== HEADER ====== -->
+        <!-- HEADER giữ nguyên -->
         <div class="table-card">
             <h2 th:text="${feedback.subject}"></h2>
 
             <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
 
-                <!-- STATUS -->
                 <span class="badge"
                       th:classappend="
                         ${feedback.currentStatus == 'RESOLVED'} ? ' success' :
@@ -80,54 +76,29 @@
                         (${feedback.currentStatus == 'REJECTED'} ? ' rejected' : '')))
                       ">
 
-                    <!-- ICON -->
                     <i th:if="${feedback.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
                     <i th:if="${feedback.currentStatus == 'PENDING'}" class="fas fa-spinner fa-spin"></i>
-                    <i th:if="${feedback.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
-                    <i th:if="${feedback.currentStatus == 'REJECTED'}" class="fas fa-ban"></i>
 
-                                <!-- TEXT -->
-                    <span th:text="
-                        ${feedback.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
-                        (${feedback.currentStatus == 'PENDING'} ? 'Đang xử lý' :
-                        (${feedback.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
-                        (${feedback.currentStatus == 'REJECTED'} ? 'Từ chối' : 'Không xác định')))
-                    "></span>
+                    <span th:text="${feedback.currentStatus}"></span>
                 </span>
 
-                <!-- DATE -->
                 <span class="badge">
                     <i class="fas fa-calendar"></i>
                     <span th:text="${#temporals.format(feedback.timeCreate, 'dd/MM/yyyy')}"></span>
                 </span>
 
-                <!-- USER -->
                 <span class="badge pink">
                     <i class="fas fa-user"></i>
                     <span th:text="${feedback.user.fullName}"></span>
                 </span>
 
-                <!-- DEPARTMENT -->
                 <span class="badge blue">
                     <i class="fas fa-building"></i>
                     <span th:text="${feedback.department.name}"></span>
                 </span>
 
-                <!-- CATEGORY -->
-                <span class="badge orange" th:if="${feedback.categories != null}">
-                    <i class="fas fa-tag"></i>
-                    <span th:text="${#strings.listJoin(feedback.categories.![subject], ', ')}"></span>
-                </span>
-
-                <!-- LOCATION (demo) -->
-                <span class="badge green">
-                    <i class="fas fa-map-marker-alt"></i>
-                    A101
-                </span>
-
             </div>
 
-            <!-- CONTENT -->
             <div style="margin-top:20px;">
                 <h4>Nội dung:</h4>
                 <p th:text="${feedback.description}"></p>
@@ -136,66 +107,38 @@
 
         <div class="detail-grid">
 
-            <!-- LEFT: LỊCH SỬ -->
+            <!-- LEFT giữ nguyên -->
             <div class="table-card">
                 <h3><i class="fas fa-history"></i> Lịch sử trạng thái</h3>
 
                 <div class="timeline">
-
                     <div th:each="his : ${feedback.statusHistory}" class="timeline-item">
-
                         <div class="timeline-dot"></div>
-
                         <div class="timeline-content">
-
-                            <!-- STATUS -->
-                            <span class="badge"
-                                  th:classappend="
-                            ${his.status == 'RESOLVED'} ? ' success' :
-                            (${his.status == 'PENDING'} ? ' pending' :
-                            (${his.status == 'FORWARDING'} ? ' forwarding' :
-                            (${his.status == 'REJECTED'} ? ' rejected' : '')))
-                          "
-                                  th:text="${his.status}">
-                    </span>
-
-                            <!-- TIME -->
+                            <span class="badge" th:text="${his.status}"></span>
                             <span class="time"
-                                  th:text="${#temporals.format(his.createAt, 'HH:mm dd/MM/yyyy')}">
-                    </span>
-
-                            <!-- DESCRIPTION -->
-                            <p th:text="${his.status}"></p>
-
+                                  th:text="${#temporals.format(his.createAt, 'HH:mm dd/MM/yyyy')}"></span>
                         </div>
                     </div>
-
                 </div>
             </div>
 
-            <!-- RIGHT: TRAO ĐỔI -->
+            <!-- RIGHT -->
             <div class="table-card">
                 <h3><i class="fas fa-comments"></i> Trao đổi</h3>
 
-                <!-- ===== CHƯA CÓ TRAO ĐỔI ===== -->
+                <!-- CHƯA CÓ -->
                 <div th:if="${conversation == null}" class="no-chat">
                     <p>Chưa có cuộc trao đổi nào</p>
-
                     <button class="open-chat-btn" onclick="openCreatePopup()">
-                        <i class="fas fa-plus"></i> Mở trao đổi
+                        Mở trao đổi
                     </button>
                 </div>
 
-                <!-- ===== ĐÃ CÓ TRAO ĐỔI ===== -->
-                <div th:if="${conversation != null}" class="chat-preview" onclick="openChatBox()">
-                    <div class="chat-item">
-                        <i class="fas fa-user-circle"></i>
-                        <div>
-                            <b th:text="${conversation.subject}"></b>
-                            <p>Nhấn để xem chi tiết cuộc trao đổi...</p>
-                            <span class="badge success" th:if="${conversation.getOpen()}">Đang mở</span>
-                        </div>
-                    </div>
+                <!-- ĐÃ CÓ -->
+                <div th:if="${conversation != null}" onclick="openChatBox()">
+                    <b th:text="${conversation.subject}"></b>
+                    <p>Nhấn để mở trao đổi</p>
                 </div>
 
             </div>
@@ -203,10 +146,9 @@
         </div>
 
     </main>
-
 </div>
 
-<!-- ===== POPUP TẠO TRAO ĐỔI ===== -->
+<!-- POPUP -->
 <div id="createPopup" class="popup-overlay">
     <div class="popup-box">
         <h3>Tạo cuộc trao đổi</h3>
@@ -220,6 +162,7 @@
     </div>
 </div>
 
+<!-- CHAT BOX -->
 <div id="chatBox" class="chat-box">
 
     <div class="chat-header">
@@ -229,18 +172,14 @@
 
     <div class="chat-body">
 
-        <div th:each="msg : ${conversation != null ? conversation.messages : {}}">
+        <div th:each="msg : ${conversation != null ? conversation.messages : T(java.util.Collections).emptyList()}">
 
-            <!-- message phải -->
             <div class="msg right" th:if="${msg.sender.id == currentUser.id}">
                 <div class="bubble" th:text="${msg.content}"></div>
-                <span th:text="${#temporals.format(msg.createAt, 'HH:mm')}"></span>
             </div>
 
-            <!-- message trái -->
             <div class="msg left" th:if="${msg.sender.id != currentUser.id}">
                 <div class="bubble" th:text="${msg.content}"></div>
-                <span th:text="${#temporals.format(msg.createAt, 'HH:mm')}"></span>
             </div>
 
         </div>
@@ -248,13 +187,16 @@
     </div>
 
     <div class="chat-input">
-        <input type="text" placeholder="Nhập tin nhắn...">
-        <button><i class="fas fa-paper-plane"></i></button>
+        <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
+        <button onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+        </button>
     </div>
 
 </div>
 
 <script>
+
     function openCreatePopup() {
         document.getElementById("createPopup").style.display = "flex";
     }
@@ -265,27 +207,65 @@
 
     function openChatBox() {
         document.getElementById("chatBox").classList.add("active");
+        scrollToBottom();
     }
 
     function closeChat() {
         document.getElementById("chatBox").classList.remove("active");
     }
 
+    // CREATE
     function submitConversation() {
         let subject = document.getElementById("subjectInput").value;
 
-        if (!subject) {
-            alert("Vui lòng nhập tiêu đề!");
+        if (!subject.trim()) {
+            alert("Nhập tiêu đề!");
             return;
         }
 
-        // submit về server
         fetch('/staff/create-conversation', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({subject: subject})
         }).then(() => location.reload());
     }
+
+    // SEND MESSAGE
+    function sendMessage() {
+        let content = document.getElementById("messageInput").value;
+        let conversationId = document.body.dataset.conversationId;
+
+        if (!content.trim()) return;
+
+        fetch('/staff/send-message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                content: content,
+                conversationId: conversationId
+            })
+        }).then(() => location.reload());
+    }
+
+    // ENTER SEND
+    document.addEventListener("DOMContentLoaded", () => {
+        let input = document.getElementById("messageInput");
+
+        if (input) {
+            input.addEventListener("keypress", function(e) {
+                if (e.key === "Enter") sendMessage();
+            });
+        }
+
+        scrollToBottom();
+    });
+
+    // AUTO SCROLL
+    function scrollToBottom() {
+        let chat = document.querySelector(".chat-body");
+        if (chat) chat.scrollTop = chat.scrollHeight;
+    }
+
 </script>
 
 </body>

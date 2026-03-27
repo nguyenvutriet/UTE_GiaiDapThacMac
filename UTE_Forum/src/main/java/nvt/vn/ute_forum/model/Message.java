@@ -96,5 +96,5 @@ public class Message {
         this.receiver = receiver;
     }
 
-    
+
 }
