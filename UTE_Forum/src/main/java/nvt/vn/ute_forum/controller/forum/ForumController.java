@@ -69,6 +69,8 @@ public class ForumController {
         return "student/forumView";
     }
 
+
+
     @GetMapping("/{id}")
     public String showPostDetail(@PathVariable String id,
                                  Model model,
