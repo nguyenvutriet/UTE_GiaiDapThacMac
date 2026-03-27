@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class Notification {
     private Boolean isRead;
 
     @Column(name = "createat", nullable = false)
-    private LocalDate createAt;
+    private LocalDateTime createAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "userreceivenotification", joinColumns = {@JoinColumn(name = "notificationid", referencedColumnName = "id")},
@@ -39,7 +40,7 @@ public class Notification {
     public Notification() {
     }
 
-    public Notification(String id, String content, String notificationType, String title, Boolean isRead, LocalDate createAt) {
+    public Notification(String id, String content, String notificationType, String title, Boolean isRead, LocalDateTime createAt) {
         this.id = id;
         this.content = content;
         this.notificationType = notificationType;
@@ -48,7 +49,7 @@ public class Notification {
         this.createAt = createAt;
     }
 
-    public Notification(String id, String content, String notificationType, String title, Boolean isRead, LocalDate createAt, List<Users> users) {
+    public Notification(String id, String content, String notificationType, String title, Boolean isRead, LocalDateTime createAt, List<Users> users) {
         this.id = id;
         this.content = content;
         this.notificationType = notificationType;
@@ -98,11 +99,11 @@ public class Notification {
         isRead = read;
     }
 
-    public LocalDate getCreateAt() {
+    public LocalDateTime getCreateAt() {
         return createAt;
     }
 
-    public void setCreateAt(LocalDate createAt) {
+    public void setCreateAt(LocalDateTime createAt) {
         this.createAt = createAt;
     }
 

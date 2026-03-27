@@ -1,24 +1,18 @@
 package nvt.vn.ute_forum.service;
 
+import nvt.vn.ute_forum.dto.CommentDTO;
 import nvt.vn.ute_forum.model.Request;
 import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.model.*;
-import nvt.vn.ute_forum.repository.CommentRepo;
-import nvt.vn.ute_forum.repository.RequestRepo;
-import nvt.vn.ute_forum.repository.UsersRepo;
-import nvt.vn.ute_forum.repository.VoteRepo;
+import nvt.vn.ute_forum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -32,6 +26,9 @@ public class RequestService {
 
     @Autowired
     private CommentRepo commentRepo;
+
+    @Autowired
+    private VoteCommentRepo voteCommentRepo;
 
     @Autowired
     private VoteRepo voteRepo;
@@ -191,6 +188,65 @@ public class RequestService {
                         dto.setReactionTypeLower(v.getType().name().toLowerCase());
                     });
         }
+        // Giả sử bà đã lấy được thông tin User hiện tại để check quyền xóa
+// String currentUserId = ... (lấy từ SecurityContext)
+
+        // 1. Lấy danh sách comment theo Request ID
+        List<CommentDTO> commentList = commentRepo.findByRequestId(r.getId()).stream()
+                .filter(Objects::nonNull)
+                .map(c -> {
+                    CommentDTO commentDto = new CommentDTO();
+                    commentDto.setId(c.getId());
+                    commentDto.setContent(c.getContent());
+                    commentDto.setUserName(c.getUser() != null ? c.getUser().getFullName() : "Ẩn danh");
+                    commentDto.setDate(c.getDate());
+
+                    // --- 1. XỬ LÝ TÍCH XANH (ROLE) ---
+                    if (c.getUser() != null && c.getUser().getRole() != null) {
+                        // Vì getRole() trả về String (như ADMIN, GV...)
+                        commentDto.setUserRole(c.getUser().getRole());
+                    } else {
+                        commentDto.setUserRole("ROLE_STUDENT");
+                    }
+
+                    // --- 2. QUYỀN XÓA ---
+                    boolean canDelete = (currentUserId != null && c.getUser() != null && currentUserId.equals(c.getUser().getId()));
+                    commentDto.setCanDelete(canDelete);
+
+                    // --- 3. ĐẾM REACTION DỰA TRÊN VOTE_COMMENT ---
+                    // Lấy danh sách tất cả vote của comment này từ repository của bà
+                    List<VoteComment> vList = voteCommentRepo.findAllByComment_Id(c.getId());
+
+                    Map<String, Long> cmtReactions = new HashMap<>();
+                    if (vList != null && !vList.isEmpty()) {
+                        // Đếm từng loại dựa trên Enum ReactionType (LIKE, LOVE, HAHA, WOW, SAD, ANGRY)
+                        for (ReactionType type : ReactionType.values()) {
+                            long count = vList.stream()
+                                    .filter(v -> v.getType() == type)
+                                    .count();
+                            if (count > 0) {
+                                cmtReactions.put(type.name(), count);
+                            }
+                        }
+
+                        // --- 4. CHECK USER HIỆN TẠI ĐÃ THẢ REACTION CHƯA ---
+                        if (currentUserId != null) {
+                            vList.stream()
+                                    .filter(v -> v.getUser().getId().equals(currentUserId))
+                                    .findFirst()
+                                    .ifPresent(v -> commentDto.setReactionType(v.getType().name()));
+                        }
+                    }
+
+                    // Nếu không có reaction nào hoặc vList null thì Map sẽ rỗng (JS sẽ tự ẩn count)
+                    commentDto.setReactions(cmtReactions);
+
+                    return commentDto;
+                })
+                .collect(Collectors.toList());
+
+// Cuối cùng gán vào DTO chính
+        dto.setComments(commentList);
 
         return dto;
     }
@@ -228,6 +284,14 @@ public class RequestService {
 
     public Request saveOrUpdate(Request request) {
         return requestRepo.save(request);
+    }
+
+    @Transactional
+    public void deleteRequest(String requestId, String userId) {
+        requestRepo.findByIdAndUser_Id(requestId, userId).ifPresent(r -> {
+            r.getCategories().clear();
+            requestRepo.delete(r);
+        });
     }
 
     public List<ForumPostDTO> searchPosts(String keyword) {
@@ -308,6 +372,13 @@ public class RequestService {
         }
 
         return Page.empty();
+    }
+
+    // Thêm vào sau hàm getPublicPosts hoặc cuối file đều được bà nhé
+    public ForumPostDTO getPostDetail(String postId, String currentUserId) {
+        return requestRepo.findById(postId)
+                .map(r -> convertToFullDTO(r, currentUserId)) // Tận dụng hàm xịn bà đã có ở dòng 122
+                .orElse(null);
     }
 
 }

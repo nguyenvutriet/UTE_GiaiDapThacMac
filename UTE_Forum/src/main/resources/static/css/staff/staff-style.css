@@ -243,27 +243,34 @@ body {
     font-weight: 500;
 }
 
-/* Đã xử lý */
+/* 🟢 Đã xử lý */
 .status-tag.success {
-    background: #d1f5e0;
-    color: #1e9e5a;
+    background: #dcfce7;
+    color: #166534;
 }
 
-/* Đang xử lý */
+/* 🟡 Đang chờ tiếp nhận */
 .status-tag.pending {
-    background: #e0ecff;
-    color: #2f6fed;
+    background: #fff7cc;
+    color: #a16207;
 }
 
-/* Chuyển tiếp */
+/* 🔵 Đang xử lý */
+.status-tag.processing {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* 🟣 Chuyển tiếp */
 .status-tag.forwarding {
-    background: #ede0ff;
-    color: #7b3fe4;
+    background: #f3e8ff;
+    color: #7c3aed;
 }
 
+/* 🔴 Từ chối */
 .status-tag.rejected {
-    background: #fde2e2;
-    color: #dc2626;
+    background: #fee2e2;
+    color: #b91c1c;
 }
 /* ===== PAGINATION ===== */
 .pagination {
@@ -380,6 +387,168 @@ body {
     color: #054e96;
 }
 
+/*CSS cho lịch sử trạng tháu*/
+/* ===== BADGE BASE ===== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 3px 10px;
+    border-radius: 7px;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 🟡 ĐANG CHỜ TIẾP NHẬN */
+.badge.pending {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+/* 🔵 ĐANG XỬ LÝ */
+.badge.processing {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* 🟣 CHUYỂN TIẾP */
+.badge.forwarding {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+/* 🟢 ĐÃ XỬ LÝ */
+.badge.success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* 🔴 TỪ CHỐI */
+.badge.rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/*Thanh time line*/
+.timeline {
+    position: relative;
+    padding-left: 50px;
+    margin-top: 20px;
+}
+
+/* LINE */
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+    background: #3b82f6;
+}
+
+/* ITEM */
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -38px;
+    top: 0px;
+
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #e5e7eb;
+}
+
+/* vòng trắng */
+.timeline-dot::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+
+    transform: translate(-50%, -50%);
+}
+
+/* chấm xanh */
+.timeline-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+
+    transform: translate(-50%, -50%);
+}
+
+.timeline-item:hover .timeline-dot::before {
+    background: #3b82f6; /* trắng → xanh */
+}
+
+.timeline-item:hover .timeline-dot::after {
+    background: #ffffff; /* xanh → trắng */
+}
+
+.timeline-dot::before,
+.timeline-dot::after {
+    transition: 0.3s;
+}
+
+.timeline-item:hover .timeline-content {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+}
+
+/* CARD */
+.timeline-content {
+    background: #f9fafb;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    max-width: 483px;
+    line-height: 1.5;
+    font-size: 14px;
+    text-align: justify;
+    text-justify: inter-word;
+    text-align-last: left;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;  /* 🔥 đẩy 2 bên */
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.time {
+    font-size: 12.5px;      /* 🔥 nhỏ lại */
+    color: #6b7280;       /* 🔥 xám nhẹ đẹp */
+}
+
+/*Hiệu ứng cho header*/
+.badge {
+    transition: 0.2s;
+}
+
+.badge:hover {
+    filter: brightness(0.9);
+}
+
 /*Chia 2 cột*/
 /* ===== 2 COLUMN ===== */
 .detail-grid {
@@ -396,49 +565,6 @@ body {
     }
 }
 
-/*Time line*/
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    width: 2px;
-    height: 100%;
-    background: #3b82f6;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.timeline-dot {
-    position: absolute;
-    left: -1px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    background: #3b82f6;
-    border-radius: 50%;
-}
-
-.timeline-content {
-    background: #f9fafb;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-}
-
-.time {
-    font-size: 12px;
-    color: #6b7280;
-    margin-left: 10px;
-}
 
 /*Comment box*/
 .comment-box {

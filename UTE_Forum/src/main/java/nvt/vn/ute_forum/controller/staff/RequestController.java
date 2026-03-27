@@ -82,6 +82,7 @@ public class RequestController {
         model.addAttribute("conversation", conversation);
         model.addAttribute("feedback", request);
         model.addAttribute("currentUser", user);
+        model.addAttribute("forwardLogs", request.getForwardingLogs());
 
         return "staff/feedback-detail";
     }

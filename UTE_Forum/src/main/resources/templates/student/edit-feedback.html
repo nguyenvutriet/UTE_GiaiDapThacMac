@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gửi góp ý</title>
+  <title>Sửa góp ý</title>
   <link rel="stylesheet" th:href="@{/css/student/submit_feedback.css}">
 </head>
 <body>
@@ -22,8 +22,8 @@
     </div>
 
     <nav class="sidebar-nav">
-      <a class="nav-item " th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
-      <a class="nav-item active" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+      <a class="nav-item active" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+      <a class="nav-item " th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
       <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
       <a class="nav-item" th:href="@{/api/notifications}">
         <span class="nav-icon">&#128276;</span>
@@ -43,24 +43,25 @@
                 <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
             </div>
             <div class="main-header-bottom">
-                <h1 class="page-tab">GỬI GÓP Ý</h1>
+                <h1 class="page-tab">SỬA GÓP Ý</h1>
             </div>
         </header>
 
 
       <div class="form-alert" th:if="${error}" th:text="${error}">Có lỗi xảy ra</div>
 
-      <form class="send-grid" th:action="@{/feedback/send}" method="post" enctype="multipart/form-data">
+      <form class="send-grid" th:action="@{/api/update-request}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="request_id" th:value="${request != null ? request.id : ''}">
         <article class="panel panel-large">
           <h2><span class="panel-icon">&#128196;</span>Chi tiết góp ý</h2>
 
           <label for="subject">Tiêu đề góp ý <span class="required">*</span></label>
-          <input id="subject" name="subject" type="text" placeholder="Mô tả ngắn gọn tiêu đề bạn muốn góp ý" required>
+          <input id="subject" name="subject" type="text" placeholder="Mô tả ngắn gọn tiêu đề bạn muốn góp ý" required th:value="${request != null ? request.subject : ''}">
 
           <label for="description">Mô tả chi tiết <span class="required">*</span></label>
-          <textarea id="description" name="description" rows="12" placeholder="Nội dung góp ý chi tiết..." required></textarea>
+          <textarea id="description" name="description" rows="12" placeholder="Nội dung góp ý chi tiết..." required th:text="${request != null ? request.description : ''}"></textarea>
 
-          <label for="attachments">Tệp đính kèm</label>
+          <label for="attachments">Tệp đính kèm (Lưu ý: Tệp đính kèm mới sẽ thay thế tệp đính kèm cũ)</label>
           <div class="upload-box" id="attachment-box">
             <p>Chọn tệp hoặc kéo thả vào đây để tải lên</p>
             <small>Tối đa 20MB mỗi tệp, tổng 40MB</small>
@@ -77,13 +78,13 @@
             <label for="category">Danh mục <span class="required">*</span></label>
             <select id="category" name="category">
               <option value="">Chọn danh mục</option>
-              <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.subject}">Danh mục</option>
+              <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.subject}" th:selected="${request != null and not #lists.isEmpty(request.categories) and request.categories[0].id == cat.id}">Danh mục</option>
             </select>
 
             <label for="department">Phòng ban <span class="required">*</span></label>
             <select id="department" name="department">
               <option value="">Chọn phòng ban</option>
-              <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}">Phòng ban</option>
+              <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}" th:selected="${request != null and request.department != null and request.department.id == dept.id}">Phòng ban</option>
             </select>
 
             <label for="location">Địa điểm (nếu có)</label>
@@ -106,14 +107,14 @@
                 <p class="switch-title">Công khai</p>
                 <small>Đăng lên diễn đàn</small>
               </div>
-              <input type="checkbox" name="public_post" value="true">
+              <input type="checkbox" name="public_post" value="true" th:checked="${request != null and request.postStatus == 'PUBLIC'}">
             </div>
           </article>
         </div>
 
         <div class="action-row">
-          <button type="reset" class="btn-secondary">Làm mới</button>
-          <button type="submit" class="btn-primary">Gửi góp ý</button>
+          <a th:href="@{/api/history}" class="btn-secondary" style="display:inline-block; padding:8px 16px; border-radius:4px; text-decoration:none; text-align:center; box-sizing:border-box;">Hủy</a>
+          <button type="submit" class="btn-primary">Sửa góp ý</button>
         </div>
       </form>
     </section>
@@ -172,4 +173,3 @@
 </script>
 </body>
 </html>
-

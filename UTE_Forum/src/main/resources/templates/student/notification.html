@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thông báo</title>
-    <link rel="stylesheet" th:href="@{/css/student/notification.css}">
+    <title>Thông báo hệ thống</title>
+    <link rel="stylesheet" href="../../css/student/announcementDetail.css" th:href="@{/css/student/announcementDetail.css}">
+    <link rel="stylesheet" href="../../css/student/notification.css" th:href="@{/css/student/notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 <div class="page-layout">
@@ -12,35 +14,30 @@
         <div class="brand-block">
             <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
             <div class="student-info">
-                <img th:src="@{/images/st_avt.png}" alt="avatar" class="avatar">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
                 <div>
                     <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
-                    <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
-                    <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
                 </div>
             </div>
         </div>
-
         <nav class="sidebar-nav">
             <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
             <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
             <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
-            <a class="nav-item active" th:href="@{/api/notifications}">
-                <span class="nav-icon">&#128276;</span>
-                <span>Thông báo</span>
-                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
-            </a>
-            <a class="nav-item" th:href="@{/change-password}"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+            <a class="nav-item  active" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
-
-        <a class="logout-btn" th:href="@{/logout}">Đăng xuất</a>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
     </aside>
 
     <main class="main-content">
         <header class="main-header">
-            <div class="main-header-top">
-                <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
-            </div>
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+
+            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
+
             <div class="tab-row">
                 <a class="top-tab"
                    th:classappend="${activeTab == 'all'} ? ' active'"

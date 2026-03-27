@@ -3,106 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn – Admin</title>
-    <link rel="stylesheet" th:href="@{/css/student/forumView.css}">
+    <title>Chi tiết bài viết</title>
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <style>
-        /* ── Deep-link highlight ── */
-        @keyframes commentPulse {
-            0%   { background: #fff3cd; box-shadow: 0 0 0 3px #f59e0b; }
-            65%  { background: #fff3cd; box-shadow: 0 0 0 3px #f59e0b; }
-            100% { background: transparent; box-shadow: none; }
-        }
-        .comment-highlight {
-            animation: commentPulse 3s ease forwards;
-            border-radius: 14px;
-        }
-
-        /* ── Admin badge trên comment ── */
-        .admin-comment-actions {
-            display: inline-flex;
-            gap: 10px;
-            margin-top: 6px;
-            padding-top: 5px;
-            border-top: 1px solid #eee;
-        }
-
-        .btn-admin-hide {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #e11d48;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            transition: opacity 0.15s;
-        }
-        .btn-admin-hide:hover { opacity: 0.75; }
-
-        .comment-hidden-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            color: #94a3b8;
-            font-style: italic;
-        }
-
-        /* ── Toast thông báo ── */
-        #adminToast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            background: #1e293b;
-            color: #fff;
-            padding: 11px 20px;
-            border-radius: 10px;
-            font-size: 0.88rem;
-            font-weight: 500;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            z-index: 99999;
-            opacity: 0;
-            transform: translateY(12px);
-            transition: opacity 0.25s, transform 0.25s;
-            pointer-events: none;
-        }
-        #adminToast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
 </head>
-
 <body>
 <div class="page-layout">
-
-    <!-- ══ ADMIN SIDEBAR ══════════════════════════════════════════════ -->
     <aside class="sidebar">
         <div class="brand-block">
             <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
-            <div class="admin-info">
-                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
                 <div>
-                    <p class="admin-name" th:text="${user.fullName}">Tên Admin</p>
-                    <p class="admin-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
-                    <p class="admin-role">Quản trị viên hệ thống</p>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
                 </div>
             </div>
         </div>
-
         <nav class="sidebar-nav">
-            <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span></a>
-            <a class="nav-item" href="/admin/reports"><span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span></a>
-            <a class="nav-item" href="/admin/category"><span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span></a>
-            <a class="nav-item active" href="/admin/forum/view"><span class="nav-icon">&#128172;</span><span>Diễn đàn</span></a>
-            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" th:href="@{/api/notifications}">
+                <span class="nav-icon">&#128276;</span>
+                <span>Thông báo</span>
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
-
         <a class="logout-btn" href="/logout">Đăng xuất</a>
     </aside>
 
@@ -118,26 +47,13 @@
 
         <section class="forum-container">
             <div class="post-list">
-                <div class="quick-search-container">
-                    <div class="quick-search-box">
-                        <i class="fas fa-search search-icon"></i>
-                        <input id="globalSearchInput"
-                               type="text"
-                               placeholder="Tìm bài viết..."
-                               autocomplete="off">
-                    </div>
-
-                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>
-                </div>
-
-                <article class="post-card" th:each="post : ${requests}">
-                    <div th:onclick="openPostModal([[${post}]])" style="cursor: pointer;">
+                <article class="post-card" th:if="${post != null}">
+                    <div>
                         <div class="post-header">
                             <div class="user-meta">
                                 <img th:src="@{/images/student.png}" class="post-avatar">
                                 <div class="user-info">
                                     <b class="user-name" th:text="${post.userName}">Tên</b>
-                                    <!--                                    <time class="post-date" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>-->
                                     <time class="post-date display-date-text" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>
                                 </div>
                             </div>
@@ -148,100 +64,48 @@
                         </div>
 
                         <div class="post-attachments" th:if="${not #lists.isEmpty(post.attachments)}">
-
                             <div class="post-image-grid">
-                                <a class="post-image-link"
-                                   th:each="file : ${post.attachments}"
-                                   th:if="${(file.fileType != null and #strings.startsWith(file.fileType, 'image/'))
-                                            or (file.fileName != null and (
-                                                #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpeg')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.png')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.webp')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.gif')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileName), '.bmp')
-                                            ))
-                                            or (file.fileUrl != null and (
-                                                #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpg')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpeg')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.png')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.webp')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.gif')
-                                                or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.bmp')
-                                            ))}"
-                                   th:href="${file.fileUrl}"
-                                   target="_blank"
-                                   rel="noopener noreferrer"
-                                   onclick="event.stopPropagation()">
-                                    <img class="post-image-item"
-                                         th:src="${file.fileUrl}"
-                                         th:alt="${file.fileName}"
-                                         onclick="event.stopPropagation()" />
+                                <a class="post-image-link" th:each="file : ${post.attachments}"
+                                   th:if="${(file.fileType != null and #strings.startsWith(file.fileType, 'image/')) or (file.fileName != null and #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg'))}"
+                                   th:href="${file.fileUrl}" target="_blank">
+                                    <img class="post-image-item" th:src="${file.fileUrl}" th:alt="${file.fileName}" />
                                 </a>
                             </div>
-
                             <ul class="post-file-list">
-                                <li th:each="file : ${post.attachments}"
-                                    th:if="${not ((file.fileType != null and #strings.startsWith(file.fileType, 'image/'))
-                                                or (file.fileName != null and (
-                                                    #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpeg')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.png')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.webp')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.gif')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileName), '.bmp')
-                                                ))
-                                                or (file.fileUrl != null and (
-                                                    #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpg')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.jpeg')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.png')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.webp')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.gif')
-                                                    or #strings.endsWith(#strings.toLowerCase(file.fileUrl), '.bmp')
-                                                )))}">
-                                    <a th:href="${file.fileUrl}"
-                                       th:text="${file.fileName}"
-                                       target="_blank"
-                                       rel="noopener noreferrer"
-                                       onclick="event.stopPropagation()">attachment</a>
-                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>
+                                <li th:each="file : ${post.attachments}" th:if="${file.fileType != null and !#strings.startsWith(file.fileType, 'image/')}">
+                                    <a th:href="${file.fileUrl}" th:text="${file.fileName}" target="_blank">attachment</a>
                                 </li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="post-tags">
-                        <span class="tag dept-tag" th:text="${post.departmentName}">Phòng Đào tạo</span>
-                        <span class="tag cat-tag" th:each="cat : ${post.categories}" th:text="${'#' + cat}">#Học tập</span>
+                        <span class="tag dept-tag" th:text="${post.departmentName}">Phòng ban</span>
+                        <span class="tag cat-tag" th:each="cat : ${post.categories}" th:text="${'#' + cat}">#Tag</span>
                     </div>
 
                     <div class="post-actions">
                         <div class="post-reaction-bar">
-                            <button class="post-main-reaction-btn"
-                                    th:data-id="${post.id}"
-                                    th:data-current-reaction="${post.reactionType}"
-                                    th:data-total-reactions="${post.totalReactions}">
-
-        <span class="reaction-content">
-            <span th:switch="${post.reactionType}">
-                <th:block th:case="'LIKE'">👍 Thích</th:block>
-                <th:block th:case="'LOVE'">❤️ Yêu thích</th:block>
-                <th:block th:case="'HAHA'">😆 Haha</th:block>
-                <th:block th:case="'WOW'">😮 Wow</th:block>
-                <th:block th:case="'SAD'">😢 Buồn</th:block>
-                <th:block th:case="'ANGRY'">😡 Phẫn nộ</th:block>
-                <th:block th:case="*">👍 Thích</th:block>
-            </span>
-        </span>
+                            <button class="post-main-reaction-btn" th:data-id="${post.id}" th:data-current-reaction="${post.reactionType}">
+                        <span class="reaction-content">
+                            <span th:switch="${post.reactionType}">
+                                <th:block th:case="'LIKE'">👍 Thích</th:block>
+                                <th:block th:case="'LOVE'">❤️ Yêu thích</th:block>
+                                <th:block th:case="'HAHA'">😆 Haha</th:block>
+                                <th:block th:case="'WOW'">😮 Wow</th:block>
+                                <th:block th:case="'SAD'">😢 Buồn</th:block>
+                                <th:block th:case="'ANGRY'">😡 Phẫn nộ</th:block>
+                                <th:block th:case="*">👍 Thích</th:block>
+                            </span>
+                        </span>
                             </button>
-
                             <div class="post-reaction-box">
-                                <button class="post-reaction-btn like" data-type="LIKE">👍</button>
-                                <button class="post-reaction-btn love" data-type="LOVE">❤️</button>
-                                <button class="post-reaction-btn haha" data-type="HAHA">😆</button>
-                                <button class="post-reaction-btn wow" data-type="WOW">😮</button>
-                                <button class="post-reaction-btn sad" data-type="SAD">😢</button>
-                                <button class="post-reaction-btn angry" data-type="ANGRY">😡</button>
+                                <button class="post-reaction-btn" data-type="LIKE">👍</button>
+                                <button class="post-reaction-btn" data-type="LOVE">❤️</button>
+                                <button class="post-reaction-btn" data-type="HAHA">😆</button>
+                                <button class="post-reaction-btn" data-type="WOW">😮</button>
+                                <button class="post-reaction-btn" data-type="SAD">😢</button>
+                                <button class="post-reaction-btn" data-type="ANGRY">😡</button>
                             </div>
                         </div>
 
@@ -249,131 +113,85 @@
                             <div class="reaction-icons-stack">
                                 <span th:each="icon : ${post.topReactionIcons}" class="mini-icon" th:text="${icon}"></span>
                             </div>
-
-                            <span class="reaction-count js-reaction-count"
-                                  th:text="${post.totalReactions > 0 ? post.totalReactions : ''}"></span>
+                            <span class="reaction-count js-reaction-count" th:text="${post.totalReactions > 0 ? post.totalReactions : ''}"></span>
                         </button>
 
-                        <button class="action-btn" th:data-id="${post.id}" onclick="toggleComments(this.getAttribute('data-id'))">
-                            💬 <span class="js-comment-count" th:id="'cmt-count-' + ${post.id}"
-                                    th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
+                        <button class="action-btn">
+                            💬 <span th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
                         </button>
-                        <button class="action-btn">🔗 <span>Chia sẻ</span></button>
                     </div>
 
-                    <div th:id="'comment-box-' + ${post.id}" class="comment-container" >
-                        <div th:id="'comment-list-' + ${post.id}" class="comment-list"></div>
-                        <div class="comment-input-area" style="display: flex; gap: 10px; margin-top: 10px;">
-                            <img th:src="@{/images/student.png}" class="mini-avatar" style="width:30px; height:30px; border-radius:50%;">
-                            <div style="flex:1; display:flex; background:#fff; border:1px solid #ddd; border-radius:20px; padding: 5px 15px;">
-                                <input type="text" th:id="'input-cmt-' + ${post.id}" placeholder="Viết bình luận..." style="flex:1; border:none; outline:none;">
-                                <button th:onclick="sendComment([[${post.id}]])" style="border:none; background:none; color:#00558b; cursor:pointer;">
-                                    <i class="fas fa-paper-plane"></i>
+                    <div class="comment-section-wrapper" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <h4 style="font-size: 1.1rem; margin-bottom: 15px;">
+                            Bình luận (<span th:id="|cmt-count-${post.id}|" th:text="${post.commentCount}">0</span>)
+                        </h4>
+
+                        <div th:id="|comment-list-${post.id}|" class="comment-list-container">
+                        </div>
+
+                        <div class="comment-input-area" style="display: flex; gap: 10px; margin-top: 20px;">
+                            <img th:src="@{/images/student.png}" class="mini-avatar" style="width:35px; height:35px; border-radius:50%;">
+                            <div style="flex:1; display:flex; background:#f0f2f5; border-radius:25px; padding: 5px 15px; align-items: center;">
+                                <input type="text" th:id="|input-cmt-${post.id}|" placeholder="Viết bình luận công khai..." style="flex:1; border:none; background:transparent; outline:none;">
+                                <button type="button" th:data-post-id="${post.id}" onclick="sendComment(this.getAttribute('data-post-id'))" style="border:none; background:none; color:#00558b; cursor:pointer; padding: 5px;">
+                                    <i class="fas fa-paper-plane" style="font-size: 1.2rem;"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
+
+
                 </article>
-
-
-                <div class="pagination" th:if="${totalPages > 0}">
-                    <a th:href="@{/api/forum/view(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> Trước </a>
-                    <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}"></span>
-                    <a th:href="@{/api/forum/view(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> Sau </a>
-                </div>
             </div>
-
-            <aside class="forum-sidebar">
-                <div class="sidebar-widget">
-                    <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
-                </div>
-
-                <div class="sidebar-widget">
-                    <h3>⏳ Bộ lọc</h3>
-                    <div class="filter-stack">
-                        <select id="filterCategory">
-                            <option value="">Tất cả danh mục</option> <th:block th:each="cat : ${allCategories}">
-                            <option th:value="${cat.id}" th:text="${cat.subject}"></option>
-                        </th:block>
-                        </select>
-
-                        <select id="filterDepartment">
-                            <option value="">Tất cả phòng ban</option> <th:block th:each="dept : ${allDepartments}">
-                            <option th:value="${dept.id}" th:text="${dept.name}"></option>
-                        </th:block>
-                        </select>
-
-                        <select id="filterSort">
-                            <option value="newest">Mới nhất</option>
-                            <option value="oldest">Cũ nhất</option>
-                        </select>
-                    </div>
-                    <button class="btn-apply" onclick="applyFilter()">Áp dụng lọc</button>
-                </div>
-
-                <div class="sidebar-widget">
-                    <h3>📈 Xu hướng</h3>
-                    <ul class="trending-list">
-                        <li>#DangKyHocPhan</li>
-                        <li>#TuyenSinh2026</li>
-                        <li>#GopYGiangDuong</li>
-                    </ul>
-                </div>
-            </aside>
         </section>
     </main>
 </div>
 
-<div id="postModal" class="modal-overlay" onclick="closeModalOutside(event)">
-    <div class="modal-container">
-        <div class="modal-main-content">
-            <div class="modal-header">
-                <h2 id="modal-header-text">Bài viết</h2>
-                <button class="modal-close-btn" onclick="closePostModal()">&times;</button>
-            </div>
-            <div class="modal-scrollable-body">
-                <div class="modal-post-info">
-                    <div class="user-meta" style="display: flex; gap: 10px;">
-                        <img th:src="@{/images/student.png}" class="post-avatar">
-                        <div class="user-info">
-                            <b id="detail-user-name" style="display: block;"></b>
-                            <time id="detail-post-date" class="post-date" style="font-size: 13px; color: gray;"></time>
-                        </div>
-                    </div>
-                    <div class="modal-post-text">
-                        <h3 id="detail-subject"></h3>
-                        <p id="detail-description"></p>
-                        <div id="detail-attachments"></div>
-                    </div>
-                </div>
-                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-                <div class="modal-comments-area">
-                    <h4 style="margin-bottom: 15px;">
-                        Tất cả bình luận (<span id="modal-total-count">0</span>)
-                    </h4>
-                    <div id="modal-comment-list"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="comment-input-area" style="display: flex; gap: 10px;">
-                    <img th:src="@{/images/student.png}" class="mini-avatar" style="width:35px; height:35px; border-radius:50%;">
-                    <div style="flex:1; display:flex; background:#f0f2f5; border-radius:20px; padding: 8px 15px;">
-                        <input type="text" id="modal-comment-input"
-                               onkeypress="if(event.key === 'Enter') sendModalComment()"
-                               placeholder="Viết câu trả lời..."
-                               style="flex:1; border:none; background:none; outline:none;">
-                        <button onclick="sendModalComment()" style="border:none; background:none; color:#00558b; cursor:pointer;">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script th:inline="javascript">
+    // Lấy dữ liệu bình luận từ Server gửi sang qua Thymeleaf biến thành biến JS
+    function formatDirectDate(dateSource) {
+        if (!dateSource) return "Vừa xong";
+
+        // Tạo đối tượng ngày tháng từ dữ liệu server gửi về
+        const d = new Date(dateSource);
+
+        // Kiểm tra nếu ngày tháng không hợp lệ
+        if (isNaN(d.getTime())) return "Vừa xong";
+
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - d) / 1000);
+
+        // Nếu mới bình luận trong vòng 1 phút
+        if (diffInSeconds < 60) return "Vừa xong";
+
+        // Nếu trong ngày hôm nay thì hiện giờ : phút
+        if (d.toDateString() === now.toDateString()) {
+            return d.getHours().toString().padStart(2, '0') + ":" +
+                d.getMinutes().toString().padStart(2, '0');
+        }
+
+        // Nếu khác ngày thì hiện Ngày/Tháng
+        return d.getDate().toString().padStart(2, '0') + "/" +
+            (d.getMonth() + 1).toString().padStart(2, '0');
+    }
+    const initialComments = /*[[${post.comments}]]*/ [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Lấy danh sách comment từ Model Java thông qua Thymeleaf
+        const comments = /*[[${post.comments}]]*/ [];
+        const postId = [[${post.id}]];
+        const container = document.getElementById(`comment-list-${postId}`);
+
+        if (comments && container) {
+            container.innerHTML = ''; // Xóa trắng trước khi nạp
+            comments.forEach(cmt => {
+                if(cmt) {
+                    container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+                }
+            });
+        }
+    });
     let activePostId = null;
 
     function renderCommentHTML(cmt) {
@@ -1376,33 +1194,6 @@
     }
 
 
-
-    function applyFilter() {
-        const categoryId = document.getElementById("filterCategory").value;
-        const departmentId = document.getElementById("filterDepartment").value;
-        const sortBy = document.getElementById("filterSort").value;
-
-        const postList = document.querySelector(".post-list");
-        postList.style.opacity = "0.5";
-
-        fetch(`/api/forum/filter?categoryId=${categoryId}&departmentId=${departmentId}&sortBy=${sortBy}`)
-            .then(response => response.text())
-            .then(html => {
-                // 1. Đổ HTML mới vào (HTML này đã có sẵn các Fragment từ Thymeleaf)
-                postList.innerHTML = html;
-                postList.style.opacity = "1";
-
-                // 2. 🔥 QUAN TRỌNG: Đánh thức các nút bấm vừa mới load về
-                initReactionEvents();
-
-                console.log("Lọc xong và đã kích hoạt lại các sự kiện Reaction!");
-            })
-            .catch(error => {
-                console.error("Lỗi:", error);
-                postList.style.opacity = "1";
-            });
-    }
-
     // Khi vừa load trang lần đầu cũng phải gọi nó
     document.addEventListener('DOMContentLoaded', initReactionEvents);
     function initReactionEvents() {
@@ -1448,64 +1239,6 @@
 
 </script>
 
-<script>
-    let typingTimer;
-    const input = document.getElementById("globalSearchInput");
-    const suggestionBox = document.getElementById("searchSuggestions");
 
-    input.addEventListener("keyup", function() {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(function() {
-            let keyword = input.value.trim();
-            if (keyword.length === 0) {
-                suggestionBox.style.display = "none";
-                suggestionBox.innerHTML = "";
-                return;
-            }
-            fetchSuggestions(keyword);
-        }, 200);
-    });
-
-    input.addEventListener("keydown", function() {
-        clearTimeout(typingTimer);
-    });
-
-    // Call API
-    function fetchSuggestions(keyword) {
-        fetch(`/api/forum/search?keyword=${encodeURIComponent(keyword)}`)
-            .then(res => res.json())
-            .then(data => renderSuggestions(data))
-            .catch(err => console.error(err));
-    }
-
-    function renderSuggestions(list) {
-        if (!list || list.length === 0) {
-            suggestionBox.style.display = "none";
-            return;
-        }
-
-        suggestionBox.innerHTML = "";
-
-        list.forEach(post => {
-            let li = document.createElement("li");
-            li.className = "search-suggestion-item";
-            li.innerHTML = `
-            <div class="search-title">${post.subject}</div>
-            <div class="search-desc">${post.userName} • ${post.departmentName}</div>
-        `;
-            li.onclick = () => window.location.href = `/api/forum/view?requestId=${post.id}`;
-            suggestionBox.appendChild(li);
-        });
-
-        suggestionBox.style.display = "block";
-    }
-
-    // Ẩn khi click ra ngoài
-    document.addEventListener("click", function (e) {
-        if (!document.querySelector(".quick-search-container").contains(e.target)) {
-            suggestionBox.style.display = "none";
-        }
-    });
-</script>
 </body>
 </html>
