@@ -63,4 +63,29 @@ public class AnnouncementController {
 
         return ResponseEntity.ok(responsePage);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchQuick(
+            @RequestParam String keyword,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // 1. Kiểm tra xem bà/ông nào đang gọi API
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body("Chưa đăng nhập là không cho tìm kiếm đâu nhé! 😂");
+        }
+
+        // 2. Giới hạn số lượng kết quả gợi ý (Top 7)
+        // Lưu ý: PageRequest.of(0, 7) để lấy trang đầu tiên với 7 bản ghi
+        Pageable topSeven = PageRequest.of(0, 7);
+
+        // 3. Gọi Repo với keyword đã xử lý lỗi CAST @Lob lúc nãy
+        List<Announcement> results = announcementRepository.searchByKeyword(keyword, topSeven);
+
+        // 4. Map sang DTO để trả về đúng format JSON
+        List<AnnouncementResponse> dtoList = results.stream()
+                .map(announcementService::mapToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtoList);
+    }
 }
