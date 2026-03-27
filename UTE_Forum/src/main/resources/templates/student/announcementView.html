@@ -42,7 +42,21 @@
         </header>
 
         <section class="annoucement-container">
+
             <div class="announcement-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div class="quick-search-container">
+                    <div class="quick-search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input id="globalSearchInput"
+                               type="text"
+                               placeholder="Tìm thông báo..."
+                               autocomplete="off">
+                    </div>
+
+<!--                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>-->
+                    <ul id="searchResultList" class="list-group mt-2 shadow-sm">
+                    </ul>
+                </div>
                 <div id="announcement-list" class="announcement">
                     <div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>
                 </div>
@@ -50,13 +64,10 @@
             </div>
 
             <aside class="forum-sidebar">
-                <div class="sidebar-widget">
-                    <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" id="annSearch" class="search-input-alt" placeholder="Tìm bài viết..." onkeyup="if(event.key==='Enter') loadAnnouncements(0)">
-                </div>
+
 
                 <div class="sidebar-widget">
-                    <h3>⏳ Bộ lọc</h3>
+                    <h3>Bộ lọc</h3>
                     <form id="filterForm" class="filter-stack" onsubmit="event.preventDefault(); loadAnnouncements(0);">
 
 
@@ -193,6 +204,180 @@
         if (!fileName) return false;
         const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
         return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+    }
+
+    // const searchInput = document.getElementById('globalSearchInput');
+    // const suggestionsList = document.getElementById('searchSuggestions');
+    // let debounceTimer;
+    //
+    // searchInput.addEventListener('input', function() {
+    //     clearTimeout(debounceTimer);
+    //     const keyword = this.value.trim();
+    //
+    //     if (keyword.length < 2) {
+    //         suggestionsList.style.display = 'none';
+    //         return;
+    //     }
+    //
+    //     debounceTimer = setTimeout(() => {
+    //         fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`)
+    //             .then(res => res.json())
+    //             .then(data => {
+    //                 renderSuggestions(data);
+    //             });
+    //     }, 300); // Đợi 0.3s sau khi ngừng gõ
+    // });
+    //
+    // function renderSuggestions(data) {
+    //     if (data.length === 0) {
+    //         suggestionsList.innerHTML = '<li><a href="#">Không tìm thấy thông báo nào ❌</a></li>';
+    //     } else {
+    //         suggestionsList.innerHTML = data.map(ann => `
+    //         <li>
+    //             <a href="/announcement/detail/${ann.id}">
+    //                 <div class="suggest-item">
+    //                     <strong class="suggest-title">${ann.title}</strong>
+    //                     <span class="suggest-dept">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
+    //                 </div>
+    //             </a>
+    //         </li>
+    //     `).join('');
+    //     }
+    //     suggestionsList.style.display = 'block';
+    // }
+    //
+    // // Click ra ngoài thì ẩn danh sách gợi ý
+    // document.addEventListener('click', (e) => {
+    //     if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+    //         suggestionsList.style.display = 'none';
+    //     }
+    // });
+    // 1. Lấy đúng ID từ HTML của bà nè
+    const searchInput = document.getElementById('globalSearchInput');
+    const suggestionsList = document.getElementById('searchResultList'); // Cái bảng nhỏ bay lơ lửng
+    const mainContentList = document.getElementById('announcement-list'); // Vùng nội dung chính
+    const paginationBox = document.getElementById('pagination-container');
+
+    let debounceTimer;
+
+    if (searchInput) {
+        // --- 1. XỬ LÝ KHI GÕ (GỢI Ý NHƯ GOOGLE) ---
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const keyword = this.value.trim();
+
+            if (keyword.length < 2) {
+                suggestionsList.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        renderFloatingSuggestions(data);
+                    });
+            }, 300);
+        });
+
+        // --- 2. XỬ LÝ KHI NHẤN ENTER (XEM TẤT CẢ) ---
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = this.value.trim();
+                if (keyword) {
+                    suggestionsList.style.display = 'none'; // Ẩn cái bảng nhỏ đi
+                    fetchFullResults(keyword); // Đổ dữ liệu vào vùng chính
+                }
+            }
+        });
+    }
+
+    function renderFloatingSuggestions(results) {
+        suggestionsList.innerHTML = '';
+
+        if (results.length === 0) {
+            suggestionsList.innerHTML = '<div class="p-3 text-muted">Không thấy gì hết trơn bà ơi... ❌</div>';
+        } else {
+            results.forEach(ann => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item list-group-item-action suggest-item'; // Nhớ thêm class này nhé bà
+
+                // --- ĐÂY LÀ ĐOẠN SỬA ---
+                item.innerHTML = `
+                <strong class="suggest-title">${ann.title}</strong>
+                <span class="suggest-tag">
+                    <i class="fas fa-building" style="font-size:0.9em; margin-right:3px;"></i>
+                    ${ann.creatorName || 'Phòng ban'}
+                </span>
+            `;
+                // --- KẾT THÚC ĐOẠN SỬA ---
+
+                // Bấm vào phát là bay sang trang chi tiết luôn
+                item.onclick = () => window.location.href = `/announcement/detail/${ann.id}`;
+                suggestionsList.appendChild(item);
+            });
+        }
+        suggestionsList.style.display = 'block';
+    }
+
+    // Hàm xử lý khi nhấn Enter (Giống hàm render cũ của bà)
+    async function fetchFullResults(keyword) {
+        mainContentList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tìm kiếm...</p></div>';
+        paginationBox.style.display = 'none';
+
+        try {
+            const res = await fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`);
+            const data = await res.json();
+
+            // --- ĐOẠN NÀY ĐÃ XOÁ ICON VÀ THÊM SỐ LƯỢNG ---
+            const resultCount = data.length;
+            // Thêm nút "Quay lại" ở đây nè bà
+            mainContentList.innerHTML = `
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95em;">
+                <span>Kết quả cho từ khóa: <b>"${keyword}"</b> (${resultCount} kết quả)</span>
+                <button onclick="resetSearch()" style="background: none; border: none; color: #007bff; cursor: pointer; text-decoration: underline; padding: 0;">
+                    Quay về danh sách chính
+                </button>
+            </div>
+        `;
+
+            if (resultCount === 0) {
+                mainContentList.innerHTML += '<p style="text-align:center; padding: 30px;">Không tìm thấy thông báo nào phù hợp. 💨</p>';
+                return;
+            }
+
+            data.forEach(ann => {
+                const card = `
+                <div class="announcement-card">
+                    <div class="ann-header">
+                        <span class="dept-name">🏢 ${ann.creatorName || 'Phòng Ban'}</span>
+                        <span class="ann-date">${ann.date}</span>
+                    </div>
+                    <div class="ann-body">
+                        <h3 class="ann-title">${ann.title}</h3>
+                        <p class="ann-content">${ann.content.substring(0, 150)}...</p>
+                    </div>
+                    <div class="ann-footer">
+                        <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết</a>
+                    </div>
+                </div>`;
+                mainContentList.insertAdjacentHTML('beforeend', card);
+            });
+        } catch (err) {
+            mainContentList.innerHTML = '<p>Lỗi tìm kiếm!</p>';
+        }
+    }
+
+    // Click ra ngoài thì ẩn bảng gợi ý
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) suggestionsList.style.display = 'none';
+    });
+
+    // Hàm reset search để dùng cho nút "Quay về"
+    function resetSearch() {
+        searchInput.value = ''; // Xoá chữ trong ô tìm kiếm
+        paginationBox.style.display = 'flex'; // Hiện lại phân trang
+        loadAnnouncements(0); // Gọi lại hàm load gốc của bà (trang 0)
     }
 </script>
 </body>
