@@ -1054,10 +1054,30 @@
     letter-spacing: 0.3px;
 }
 
+/* 1. Xóa sạch khoảng trắng mặc định của trình duyệt */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* 2. Ép thanh header lên đỉnh */
 .main-header-top {
     background: #00558b;
     border-top: 3px solid #0c79b4;
-    padding: 5px 32px;
+    padding: 2px 32px 5px 32px; /* Giảm padding trên xuống còn 2px cho chữ nó sát lên */
+
+    margin-top: 0 !important; /* Ép không cho có khoảng cách trên */
+    position: relative;
+    top: 0;
+    width: 100%;
+}
+
+/* 3. Nếu dòng chữ TRƯỜNG... vẫn còn cách xa mép trên */
+.main-header-top h4,
+.main-header-top div {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    line-height: 1.2; /* Thu hẹp khoảng cách dòng của chữ */
 }
 
 .main-header-bottom {

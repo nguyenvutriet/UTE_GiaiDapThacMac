@@ -19,6 +19,11 @@ public class ForumPostDTO {
     private Map<String, Long> reactions;
     private long totalReactions;
     private List<AttachmentDTO> attachments;
+    // Thêm vào trong class ForumPostDTO
+    // THÀNH DÒNG NÀY:
+    private List<CommentDTO> comments;
+    // Tạo thêm một class con bên trong hoặc file riêng để chứa thông tin comment
+
 
     public static class AttachmentDTO {
         private String fileName;
@@ -107,4 +112,7 @@ public class ForumPostDTO {
         return reactions.values().stream().mapToLong(Long::longValue).sum();
     }
     public void setTotalReactions(long totalReactions) { this.totalReactions = totalReactions; }
+    // ĐỔI LUÔN GETTER/SETTER TƯƠNG ỨNG:
+    public List<CommentDTO> getComments() { return comments; }
+    public void setComments(List<CommentDTO> comments) { this.comments = comments; }
 }

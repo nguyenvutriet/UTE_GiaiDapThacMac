@@ -39,7 +39,7 @@
 
     <main class="main-content">
         <header class="page-head">
-            <h1>Thong bao phong ban</h1>
+            <h1>Thông báo phòng ban</h1>
             <form method="get" th:action="@{/staff/notifications}" class="filter-form">
                 <input type="hidden" name="tab" th:value="${activeTab}">
                 <label class="sr-only" for="staff-filter">Loc theo trang thai doc</label>
@@ -66,7 +66,18 @@
                 <div class="item-content">
                     <div class="item-head">
                         <h3 th:text="${item.title}">Thong bao</h3>
-                        <span th:text="${item.timeLabel}">hom nay</span>
+                        <div class="item-actions">
+                            <span th:text="${item.timeLabel}">hom nay</span>
+                            <form method="post" th:action="@{/staff/notifications/delete}" class="delete-form"
+                                  onsubmit="return confirm('Ban co chac muon xoa thong bao nay?');">
+                                <input type="hidden" name="notificationId" th:value="${item.id}">
+                                <input type="hidden" name="tab" th:value="${activeTab}">
+                                <input type="hidden" name="filter" th:value="${activeFilter}">
+                                <button type="submit" class="delete-noti-btn" title="Xoa thong bao">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                     <p th:text="${item.content}">Noi dung thong bao</p>
                 </div>

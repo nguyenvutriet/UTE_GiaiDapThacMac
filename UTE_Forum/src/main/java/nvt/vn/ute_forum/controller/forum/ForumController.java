@@ -69,6 +69,35 @@ public class ForumController {
         return "student/forumView";
     }
 
+
+
+    @GetMapping("/{id}")
+    public String showPostDetail(@PathVariable String id,
+                                 Model model,
+                                 @AuthenticationPrincipal UserDetails userDetails) {
+        // 1. Lấy user hiện tại để check reaction
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+            if (currentUser != null) {
+                currentUserId = currentUser.getId();
+                model.addAttribute("user", currentUser);
+            }
+        }
+
+        // 2. Gọi hàm convertToFullDTO thần thánh của bà
+        ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
+
+        if (post == null) {
+            return "redirect:/forum/view"; // Không thấy bài thì cho về vườn
+        }
+
+        // 3. Đẩy dữ liệu ra trang chi tiết
+        model.addAttribute("post", post);
+
+        return "student/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+    }
+
     @PostMapping("/react")
     @ResponseBody
     public ResponseEntity<?> reactPost( // Đổi sang ResponseEntity cho chuyên nghiệp má ơi
