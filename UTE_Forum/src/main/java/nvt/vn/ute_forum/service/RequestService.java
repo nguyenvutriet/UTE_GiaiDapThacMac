@@ -237,5 +237,78 @@ public class RequestService {
                 .map(r -> convertToFullDTO(r, null))
                 .collect(Collectors.toList());
     }
+
+    public Page<Request> getAllFeedbacks(Pageable pageable, Users user) {
+
+        String role = user.getRole();
+
+        if (role.equals("ROLE_ADMIN")) {
+            return requestRepo.findAll(pageable);
+        }
+
+        if (role.equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByDepartment_Id(
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        // 🔥 fallback (bắt buộc phải có)
+        return Page.empty();
+    }
+
+    @Transactional
+    public Request getFeedbackDetail(String id, Users currentUser) {
+
+        Request request = requestRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Feedback not found"));
+
+        String role = currentUser.getRole();
+
+        // 👨‍🎓 STUDENT
+        if (role.equals("ROLE_STUDENT") &&
+                !request.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Không có quyền xem");
+        }
+
+        // 👨‍💼 DEPARTMENT (STAFF)
+        if (role.equals("ROLE_DEPARTMENT") &&
+                !request.getDepartment().getId()
+                        .equals(currentUser.getDepartment().getId())) {
+            throw new RuntimeException("Không cùng phòng ban");
+        }
+
+        // 👑 ADMIN → xem tất cả
+
+        // load lazy
+        request.getUser().getFullName();
+        request.getCategories().size();
+        request.getComments().size();
+        request.getFileAttachments().size();
+
+        return request;
+    }
+
+    public Page<Request> searchFeedbacks(String keyword, Pageable pageable, Users user) {
+
+        String role = user.getRole();
+
+        // ADMIN → search tất cả
+        if (role.equals("ROLE_ADMIN")) {
+            return requestRepo.findByContentContaining(keyword, pageable);
+        }
+
+        //  DEPARTMENT → chỉ search trong phòng ban
+        if (role.equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByContentContainingAndDepartment_Id(
+                    keyword,
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        return Page.empty();
+    }
+
 }
 

@@ -269,6 +269,7 @@ body {
 .pagination {
     display: flex;
     justify-content: center;
+    align-items: center; /* 🔥 thêm dòng này */
     margin-top: 30px;
     gap: 12px;
 }
@@ -306,3 +307,17 @@ body {
     color: #4f46e5;
 }
 
+.search-wrapper {
+    width: 350px;
+    border: 1px solid #ddd;
+    transition: 0.2s;
+}
+
+.search-wrapper:focus-within {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 2px rgba(108,92,231,0.1);
+}
+
+.search-wrapper input {
+    outline: none;   /* ❌ bỏ khung xanh */
+}

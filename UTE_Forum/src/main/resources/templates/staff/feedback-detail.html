@@ -1,0 +1,13 @@
+<h2 th:text="${feedback.subject}"></h2>
+
+<p th:text="${feedback.description}"></p>
+
+<p>
+    Người gửi:
+    <span th:text="${feedback.user.fullName}"></span>
+</p>
+
+<p>
+    Trạng thái:
+    <span th:text="${feedback.currentStatus}"></span>
+</p>

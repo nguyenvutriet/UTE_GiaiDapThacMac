@@ -11,6 +11,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import java.util.List;
+
 @Repository
 public interface RequestRepo extends JpaRepository<Request, String> {
     List<Request> findByUser_IdOrderByTimeCreateDesc(String userId);
@@ -52,5 +54,22 @@ public interface RequestRepo extends JpaRepository<Request, String> {
         """)
     List<Request> searchByKeyword(@Param("keyword") String keyword);
 
+    /*Chỉ lấy của phòng ban đang đăng nhập*/
+    Page<Request> findByDepartment_Id(String departmentId, Pageable pageable);
+
+    /*Tìm kiếm feedback theo key*/
+    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Request> findByContentContaining(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    /*Cho department*/
+    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%')) AND r.department.id = :departmentId")
+    Page<Request> findByContentContainingAndDepartment_Id(
+            @Param("keyword") String keyword,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
 
 }
