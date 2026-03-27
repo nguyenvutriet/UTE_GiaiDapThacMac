@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClarificationConversationRepo extends JpaRepository<ClarificationConversation, String> {
+
+    ClarificationConversation findByRequestId(String requestId);
 }

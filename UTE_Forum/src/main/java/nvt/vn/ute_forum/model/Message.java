@@ -28,7 +28,7 @@ public class Message {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviever_id", nullable = false)
-    private Users reviever;
+    private Users receiver;
 
     public Message() {
     }
@@ -45,7 +45,7 @@ public class Message {
         this.createAt = createAt;
         this.clarificationConversation = clarificationConversation;
         this.sender = sender;
-        this.reviever = reviever;
+        this.receiver = reviever;
     }
 
     public String getId() {
@@ -88,11 +88,13 @@ public class Message {
         this.sender = sender;
     }
 
-    public Users getReviever() {
-        return reviever;
+    public Users getReceiver() {
+        return receiver;
     }
 
-    public void setReviever(Users reviever) {
-        this.reviever = reviever;
+    public void setReceiver(Users receiver) {
+        this.receiver = receiver;
     }
+
+    
 }
