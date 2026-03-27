@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết bài viết</title>
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
+                    <p class="student-id" th:text="'MSSV: ' + ${user.id}">MSSV: U_STU_10</p>
+                    <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                </div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
+            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
+            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" th:href="@{/api/notifications}">
+                <span class="nav-icon">&#128276;</span>
+                <span>Thông báo</span>
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item active">Diễn đàn</button>
+                <button class="tab-item" onclick="location.href='/announcement'">Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">DIỄN ĐÀN</h1></div>
+        </header>
+
+        <section class="forum-container">
+            <div class="post-list">
+                <article class="post-card" th:if="${post != null}">
+                    <div>
+                        <div class="post-header">
+                            <div class="user-meta">
+                                <img th:src="@{/images/student.png}" class="post-avatar">
+                                <div class="user-info">
+                                    <b class="user-name" th:text="${post.userName}">Tên</b>
+                                    <time class="post-date display-date-text" th:text="${#temporals.format(post.date, 'dd/MM/yyyy HH:mm')}">Ngày</time>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">
+                            <h3 class="post-title" th:text="${post.subject}">Tiêu đề</h3>
+                            <p class="post-text" th:text="${post.description}">Nội dung...</p>
+                        </div>
+
+                        <div class="post-attachments" th:if="${not #lists.isEmpty(post.attachments)}">
+                            <div class="post-image-grid">
+                                <a class="post-image-link" th:each="file : ${post.attachments}"
+                                   th:if="${(file.fileType != null and #strings.startsWith(file.fileType, 'image/')) or (file.fileName != null and #strings.endsWith(#strings.toLowerCase(file.fileName), '.jpg'))}"
+                                   th:href="${file.fileUrl}" target="_blank">
+                                    <img class="post-image-item" th:src="${file.fileUrl}" th:alt="${file.fileName}" />
+                                </a>
+                            </div>
+                            <ul class="post-file-list">
+                                <li th:each="file : ${post.attachments}" th:if="${file.fileType != null and !#strings.startsWith(file.fileType, 'image/')}">
+                                    <a th:href="${file.fileUrl}" th:text="${file.fileName}" target="_blank">attachment</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="post-tags">
+                        <span class="tag dept-tag" th:text="${post.departmentName}">Phòng ban</span>
+                        <span class="tag cat-tag" th:each="cat : ${post.categories}" th:text="${'#' + cat}">#Tag</span>
+                    </div>
+
+                    <div class="post-actions">
+                        <div class="post-reaction-bar">
+                            <button class="post-main-reaction-btn" th:data-id="${post.id}" th:data-current-reaction="${post.reactionType}">
+                        <span class="reaction-content">
+                            <span th:switch="${post.reactionType}">
+                                <th:block th:case="'LIKE'">👍 Thích</th:block>
+                                <th:block th:case="'LOVE'">❤️ Yêu thích</th:block>
+                                <th:block th:case="'HAHA'">😆 Haha</th:block>
+                                <th:block th:case="'WOW'">😮 Wow</th:block>
+                                <th:block th:case="'SAD'">😢 Buồn</th:block>
+                                <th:block th:case="'ANGRY'">😡 Phẫn nộ</th:block>
+                                <th:block th:case="*">👍 Thích</th:block>
+                            </span>
+                        </span>
+                            </button>
+                            <div class="post-reaction-box">
+                                <button class="post-reaction-btn" data-type="LIKE">👍</button>
+                                <button class="post-reaction-btn" data-type="LOVE">❤️</button>
+                                <button class="post-reaction-btn" data-type="HAHA">😆</button>
+                                <button class="post-reaction-btn" data-type="WOW">😮</button>
+                                <button class="post-reaction-btn" data-type="SAD">😢</button>
+                                <button class="post-reaction-btn" data-type="ANGRY">😡</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="post-main-reaction-btnn btn-show-reactions" th:data-post-id="${post.id}">
+                            <div class="reaction-icons-stack">
+                                <span th:each="icon : ${post.topReactionIcons}" class="mini-icon" th:text="${icon}"></span>
+                            </div>
+                            <span class="reaction-count js-reaction-count" th:text="${post.totalReactions > 0 ? post.totalReactions : ''}"></span>
+                        </button>
+
+                        <button class="action-btn">
+                            💬 <span th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
+                        </button>
+                    </div>
+
+                    <div class="comment-section-wrapper" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <h4 style="font-size: 1.1rem; margin-bottom: 15px;">
+                            Bình luận (<span th:id="|cmt-count-${post.id}|" th:text="${post.commentCount}">0</span>)
+                        </h4>
+
+                        <div th:id="|comment-list-${post.id}|" class="comment-list-container">
+                        </div>
+
+                        <div class="comment-input-area" style="display: flex; gap: 10px; margin-top: 20px;">
+                            <img th:src="@{/images/student.png}" class="mini-avatar" style="width:35px; height:35px; border-radius:50%;">
+                            <div style="flex:1; display:flex; background:#f0f2f5; border-radius:25px; padding: 5px 15px; align-items: center;">
+                                <input type="text" th:id="|input-cmt-${post.id}|" placeholder="Viết bình luận công khai..." style="flex:1; border:none; background:transparent; outline:none;">
+                                <button type="button" th:data-post-id="${post.id}" onclick="sendComment(this.getAttribute('data-post-id'))" style="border:none; background:none; color:#00558b; cursor:pointer; padding: 5px;">
+                                    <i class="fas fa-paper-plane" style="font-size: 1.2rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+
+
+<script th:inline="javascript">
+    // Lấy dữ liệu bình luận từ Server gửi sang qua Thymeleaf biến thành biến JS
+    function formatDirectDate(dateSource) {
+        if (!dateSource) return "Vừa xong";
+
+        // Tạo đối tượng ngày tháng từ dữ liệu server gửi về
+        const d = new Date(dateSource);
+
+        // Kiểm tra nếu ngày tháng không hợp lệ
+        if (isNaN(d.getTime())) return "Vừa xong";
+
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - d) / 1000);
+
+        // Nếu mới bình luận trong vòng 1 phút
+        if (diffInSeconds < 60) return "Vừa xong";
+
+        // Nếu trong ngày hôm nay thì hiện giờ : phút
+        if (d.toDateString() === now.toDateString()) {
+            return d.getHours().toString().padStart(2, '0') + ":" +
+                d.getMinutes().toString().padStart(2, '0');
+        }
+
+        // Nếu khác ngày thì hiện Ngày/Tháng
+        return d.getDate().toString().padStart(2, '0') + "/" +
+            (d.getMonth() + 1).toString().padStart(2, '0');
+    }
+    const initialComments = /*[[${post.comments}]]*/ [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Lấy danh sách comment từ Model Java thông qua Thymeleaf
+        const comments = /*[[${post.comments}]]*/ [];
+        const postId = [[${post.id}]];
+        const container = document.getElementById(`comment-list-${postId}`);
+
+        if (comments && container) {
+            container.innerHTML = ''; // Xóa trắng trước khi nạp
+            comments.forEach(cmt => {
+                if(cmt) {
+                    container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+                }
+            });
+        }
+    });
+    let activePostId = null;
+
+    function renderCommentHTML(cmt) {
+
+        const reactionData = {
+            'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
+            'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
+            'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
+            'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
+            'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
+            'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
+        };
+
+
+        const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
+
+        // 🔥 TEXT CỦA USER
+        const reactConfig = reactionData[cmt.reactionType] || {
+            text: "Thích",
+            color: "#65676b",
+            icon: ""
+        };
+
+        // 🔥 BUILD ICON + COUNT
+        let iconsHTML = "";
+        let totalCount = 0;
+
+        if (cmt.reactions) {
+            Object.entries(cmt.reactions).forEach(([key, value]) => {
+                if (value > 0) {
+                    iconsHTML += reactionData[key].icon + " ";
+                    totalCount += value;
+                }
+            });
+        }
+
+        return `
+    <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
+        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+        <div style="max-width: 85%; flex: 1;">
+            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
+                <b style="font-size:13px; color: #050505; line-height: 1;">${cmt.userName}</b>
+
+                ${isVerified ? `
+                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0; margin-top: 1px;">
+                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                    </svg>
+                ` : ''}
+                <span style="font-size:14px;">${cmt.content}</span>
+
+                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
+                    ${cmt.canDelete ? `
+                        <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
+                            <i class="fas fa-trash-alt"></i> Xóa
+                        </span>
+                    ` : ''}
+
+                    ${!cmt.canDelete ? `
+                        <span class="report-btn" data-comment-id="${cmt.id}"
+                              onclick="reportComment('${cmt.id}')"
+                              style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
+                            <i class="fas fa-flag"></i> Báo cáo
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+
+            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
+                <small style="color:#65676b; font-size:11px;">
+                    ${formatDirectDate(cmt.date)}
+                </small>
+
+                <!-- REACTION -->
+                <div class="reaction-container">
+                    <div class="reaction-box">
+                        <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
+                        <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
+                        <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
+                        <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
+                        <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
+                        <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
+                    </div>
+
+                    <small id="react-text-${cmt.id}"
+                        style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
+                        onclick="sendReaction('${cmt.id}', 'LIKE')">
+                        ${reactConfig.text}
+                    </small>
+                </div>
+
+                <!-- COUNT -->
+                <div id="reaction-count-container-${cmt.id}"
+     onclick="showReactionDetail('${cmt.id}')"
+     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+
+                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
+                        ${iconsHTML}
+                    </span>
+
+                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
+                        ${totalCount}
+                    </small>
+                </div>
+
+
+            </div>
+        </div>
+    </div>`;
+    }
+
+    // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
+    function toggleComments(requestId) {
+        const commentBox = document.getElementById('comment-box-' + requestId);
+        const commentList = document.getElementById('comment-list-' + requestId);
+        if (!commentBox) return;
+
+        const isOpening = !commentBox.classList.contains('show');
+        if (isOpening) {
+            commentBox.classList.add('show');
+            commentList.innerHTML = '<p style="font-size:12px; color:gray; text-align:center; padding:10px;">Đang tải...</p>';
+
+            fetch('/api/comments/' + requestId)
+                .then(res => res.json())
+                .then(data => {
+                    commentList.innerHTML = '';
+                    if (data.length === 0) {
+                        commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';
+                    } else {
+                        data.forEach(cmt => {
+                            commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
+                        });
+                        restoreReportedState(); // ← thêm vào đây
+                    }
+                })
+                .catch(err => commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải.</p>');
+        } else {
+            commentBox.classList.remove('show');
+        }
+    }
+
+    function isImageAttachment(file) {
+        if (!file) return false;
+
+        const type = (file.fileType || '').toLowerCase();
+        if (type.startsWith('image/')) return true;
+
+        const fileName = (file.fileName || '').toLowerCase();
+        const fileUrl = (file.fileUrl || '').toLowerCase();
+        const imageExt = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+
+        return imageExt.some(ext => fileName.endsWith(ext) || fileUrl.endsWith(ext));
+    }
+
+    function renderModalAttachments(attachments) {
+        if (!attachments || attachments.length === 0) {
+            return '';
+        }
+
+        const imageLinks = [];
+        const fileLinks = [];
+
+        attachments.forEach(file => {
+            if (!file || !file.fileUrl) return;
+
+            const safeUrl = String(file.fileUrl).replace(/"/g, '%22').replace(/'/g, '%27');
+            const safeName = String(file.fileName || 'attachment')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            const safeType = String(file.fileType || 'application/octet-stream')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            if (isImageAttachment(file)) {
+                imageLinks.push(
+                    `<a class="post-image-link" href="${safeUrl}" target="_blank" rel="noopener noreferrer">` +
+                    `<img class="post-image-item" src="${safeUrl}" alt="${safeName}" />` +
+                    `</a>`
+                );
+            } else {
+                fileLinks.push(
+                    `<li><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` +
+                    `<span> (${safeType})</span></li>`
+                );
+            }
+        });
+
+        if (imageLinks.length === 0 && fileLinks.length === 0) {
+            return '';
+        }
+
+        return `<div class="post-attachments modal-attachments">` +
+            (imageLinks.length ? `<div class="post-image-grid modal-image-grid">${imageLinks.join('')}</div>` : '') +
+            (fileLinks.length ? `<ul class="post-file-list modal-file-list">${fileLinks.join('')}</ul>` : '') +
+            `</div>`;
+    }
+
+    // 2. TÍNH NĂNG MỞ MODAL
+    function openPostModal(post) {
+        // 🔥 SỬA LỖI 1: Gán ID để các hàm sau nhận diện được bài viết đang mở
+        activePostId = post.id;
+
+        document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;
+        document.getElementById('detail-user-name').innerText = post.userName;
+
+        // Lấy ngày tháng an toàn
+        const postCard = event.currentTarget;
+        const dateText = postCard ? postCard.querySelector('.display-date-text').innerText : "";
+        document.getElementById('detail-post-date').innerText = dateText;
+        document.getElementById('detail-subject').innerText = post.subject;
+        document.getElementById('detail-description').innerText = post.description;
+
+        const attachmentBox = document.getElementById('detail-attachments');
+        if (attachmentBox) {
+            attachmentBox.innerHTML = renderModalAttachments(post.attachments || []);
+        }
+
+        const commentList = document.getElementById('modal-comment-list');
+        commentList.innerHTML = '<p style="text-align:center; color:gray;">Đang tải...</p>';
+
+        fetch('/api/comments/' + post.id)
+            .then(res => res.json())
+            .then(data => {
+                commentList.innerHTML = '';
+                // Khởi tạo thẻ span để hàm update số lượng tìm thấy được
+                const countHeader = document.querySelector('.modal-comments-area h4');
+                if (countHeader) {
+                    countHeader.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${data.length}</span>)`;
+                }
+
+                if (data.length === 0) {
+                    commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
+                } else {
+                    commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt)).join('');
+                    restoreReportedState(); // ← thêm vào đây
+                }
+            });
+
+        document.getElementById('postModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    // 3. HÀM GỬI BÌNH LUẬN DÙNG CHUNG (FIXED LOGIC)
+    function executeSendComment(requestId, content, listElement, inputElement) {
+        const payload = { requestId: String(requestId), content: content };
+
+        fetch('/api/comments/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => {
+                // Nếu Server trả về 401 (Chưa đăng nhập) hoặc 403 (Cấm)
+                if (res.status === 401 || res.status === 403) {
+                    alert("Bạn cần đăng nhập để thực hiện chức năng này!");
+                    window.location.href = "/login";
+                    return;
+                }
+                if (!res.ok) throw new Error("Gửi bình luận thất bại");
+                return res.json();
+            })
+            .then(newCmt => {
+                if (!newCmt) return;
+
+                // Xóa thông báo "Chưa có bình luận" (Dùng class sẽ chuẩn hơn includes text)
+                const emptyMsg = listElement.querySelector('.no-comment-message') ||
+                    (listElement.innerText.includes("Chưa có bình luận") ? listElement : null);
+                if (emptyMsg && emptyMsg === listElement) listElement.innerHTML = '';
+                else if (emptyMsg) emptyMsg.remove();
+
+                // Chèn comment mới vào danh sách hiện tại
+                listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                restoreReportedState(); // ← thêm vào đây
+                inputElement.value = '';
+
+                // Cập nhật số lượng hiển thị ở bài viết ngoài danh sách chính
+                updateCommentCountUI(requestId);
+
+                // 🔥 Cập nhật đồng bộ giữa Modal và ngoài danh sách
+                if (typeof activePostId !== 'undefined' && activePostId == requestId) {
+                    updateModalCommentCountUI(); // Tăng số lượng trong Modal
+
+                    // Nếu đang gửi ở danh sách ngoài mà Modal đang mở, chèn cmt vào Modal luôn
+                    const modalList = document.getElementById('modal-comment-list');
+                    if (modalList && listElement.id !== 'modal-comment-list') {
+                        if (modalList.innerText.includes("Chưa có bình luận")) modalList.innerHTML = '';
+                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                    }
+                }
+
+                // Tự động cuộn xuống cuối nếu đang ở trong Modal
+                if (listElement.id === 'modal-comment-list') {
+                    const scrollBody = document.querySelector('.modal-scrollable-body');
+                    if (scrollBody) scrollBody.scrollTop = scrollBody.scrollHeight;
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi gửi bình luận:", err);
+                alert("Có lỗi xảy ra, vui lòng thử lại sau.");
+            });
+    }
+
+    function updateModalCommentCountUI() {
+        // 1. Tìm cái span chứa số (nơi hiển thị con số thuần túy)
+        let modalCountSpan = document.getElementById('modal-total-count');
+        const modalHeaderH4 = document.querySelector('.modal-comments-area h4');
+
+        if (modalCountSpan) {
+            // Lấy con số hiện tại, ép kiểu về số nguyên
+            let currentCount = parseInt(modalCountSpan.innerText.match(/\d+/)) || 0;
+            // Ghi đè con số mới (Cộng dồn chuẩn)
+            modalCountSpan.innerText = currentCount + 1;
+        }
+        // 2. Trường hợp chưa có span (có thể là lần đầu hoặc HTML bị render lại)
+        else if (modalHeaderH4) {
+            let countMatch = modalHeaderH4.innerText.match(/\d+/);
+            let newCount = countMatch ? (parseInt(countMatch[0]) + 1) : 1;
+
+            // Vẽ lại tiêu đề và đặt ID cho lần sau tìm dễ hơn
+            modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
+        }
+    }
+
+    function sendComment(requestId) {
+        const input = document.getElementById('input-cmt-' + requestId);
+        const list = document.getElementById('comment-list-' + requestId);
+        if (input.value.trim()) executeSendComment(requestId, input.value.trim(), list, input);
+    }
+
+    function sendModalComment() {
+        const input = document.getElementById('modal-comment-input');
+        const list = document.getElementById('modal-comment-list');
+        if (input.value.trim() && activePostId) executeSendComment(activePostId, input.value.trim(), list, input);
+    }
+
+
+    function updateCommentCountUI(requestId) {
+        // 1. Tìm đúng cái thẻ span chứa số bình luận ở ngoài trang chủ
+        // Lưu ý: ID này phải khớp với th:id="'cmt-count-' + ${post.id}" trong HTML
+        const countSpan = document.getElementById(`cmt-count-${requestId}`);
+
+        if (countSpan) {
+            // Tách lấy con số từ chuỗi (Ví dụ "1 Bình luận" -> lấy số 1)
+            let currentText = countSpan.innerText;
+            let currentCount = parseInt(currentText.match(/\d+/)) || 0;
+
+            currentCount++; // Cộng dồn thêm 1
+
+            // Ghi đè toàn bộ bằng dấu "=" (Tuyệt đối không dùng +=)
+            countSpan.innerText = currentCount + " Bình luận";
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (confirm("Bạn muốn xoá bình luận này?")) {
+            // 1. Tìm thông tin bài viết (requestId) trước khi xóa
+            const commentElement = document.getElementById(`cmt-${commentId}`);
+            const parentList = commentElement ? commentElement.closest('.comment-list') : null;
+
+            // Ưu tiên lấy requestId từ Modal nếu đang mở, nếu không thì lấy từ ID của list ngoài
+            let requestId = (typeof activePostId !== 'undefined' && activePostId) ? activePostId : null;
+            if (!requestId && parentList) {
+                requestId = parentList.id.replace('comment-list-', '');
+            }
+
+            // 2. Gửi lệnh xóa lên Server
+            fetch('/api/comments/delete/' + commentId, { method: 'DELETE' })
+                .then(res => {
+                    if (res.status === 401) { alert("Chưa đăng nhập nha má!"); window.location.href = "/login"; return; }
+                    if (res.status === 403) { alert("Hông phải cmt của má, đừng xóa bậy!"); return; }
+                    if (!res.ok) throw new Error("Lỗi server");
+                    return res.text();
+                })
+                .then(msg => {
+                    if (!msg) return;
+
+                    // 🔥 BƯỚC 3: XÓA PHẦN TỬ TRÊN GIAO DIỆN (CẢ NGOÀI LẪN TRONG MODAL)
+                    // Tìm tất cả các thẻ có ID này (vì cmt có thể xuất hiện ở 2 nơi cùng lúc)
+                    const targets = document.querySelectorAll(`#cmt-${commentId}`);
+                    targets.forEach(el => {
+                        el.style.transition = 'all 0.3s ease';
+                        el.style.transform = 'translateX(20px)'; // Hiệu ứng trượt nhẹ khi biến mất
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 300);
+                    });
+
+                    // 🔥 BƯỚC 4: GỌI HÀM GIẢM SỐ LƯỢNG (CỦA MÁ ĐÃ CÓ)
+                    if (requestId) {
+                        // Đợi hiệu ứng xóa mờ dần một chút rồi mới giảm số cho đẹp
+                        setTimeout(() => {
+                            decreaseCommentCountUI(requestId);
+
+                            // 🔥 KIỂM TRA TRẠNG THÁI DANH SÁCH TRỐNG (TRONG MODAL)
+                            if (typeof activePostId !== 'undefined' && activePostId == requestId) {
+                                const modalList = document.getElementById('modal-comment-list');
+                                // Nếu sau khi xóa mà không còn con (children) nào, hiện thông báo trống
+                                if (modalList && modalList.children.length === 0) {
+                                    modalList.innerHTML = '<p class="text-center no-comment-message">Chưa có bình luận nào.</p>';
+                                }
+                            }
+                        }, 350);
+                    }
+                })
+                .catch(err => {
+                    console.error("Lỗi:", err);
+                    alert("Lỗi kết nối server rồi má ơi!");
+                });
+        }
+    }
+
+    function decreaseCommentCountUI(requestId) {
+        if (!requestId) return;
+
+        // 1. Giảm số ngoài danh sách (Đoạn này bạn nói đã chạy rồi)
+        const listSpan = document.getElementById(`cmt-count-${requestId}`);
+        if (listSpan) {
+            let count = parseInt(listSpan.innerText.match(/\d+/)) || 0;
+            if (count > 0) listSpan.innerText = (count - 1) + " Bình luận";
+        }
+
+        // 2. Giảm số TRONG MODAL
+        // Dùng dấu == để so sánh tương đối (chuỗi và số đều được)
+        if (typeof activePostId !== 'undefined' && activePostId == requestId) {
+
+            // Cách an toàn nhất: Tìm trực tiếp cái span chứa số trong Modal
+            const modalTotalSpan = document.getElementById('modal-total-count');
+
+            if (modalTotalSpan) {
+                let count = parseInt(modalTotalSpan.innerText) || 0;
+                let newCount = count > 0 ? count - 1 : 0;
+
+                // Cập nhật con số ở tất cả những nơi hiện số lượng trong Modal
+                modalTotalSpan.innerText = newCount;
+
+                // Cập nhật lại cái tiêu đề H4
+                const modalHeaderH4 = document.querySelector('.modal-total-count h4');
+                if (modalHeaderH4) {
+                    // PHẢI dùng dấu huyền ` và PHẢI ghi lại thẻ span để lần sau còn tìm thấy nó
+                    modalHeaderH4.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${newCount}</span>)`;
+                }
+            }
+        }
+    }
+
+
+    // function reportComment(commentId) {
+    //     const reason = prompt("Lý do báo cáo:");
+    //     if (reason) alert("Đã báo cáo bình luận " + commentId);
+    // }
+
+    function reportComment(commentId) {
+        // Xóa modal cũ nếu còn tồn tại
+        const existing = document.getElementById('report-modal-overlay');
+        if (existing) existing.remove();
+
+        const reasons = [
+            'Ngôn ngữ thô tục, xúc phạm',
+            'Thông tin sai lệch, bịa đặt',
+            'Quấy rối hoặc đe dọa',
+            'Spam hoặc quảng cáo',
+            'Khác'
+        ];
+
+        const reasonItems = reasons.map((r, i) => `
+        <label style="display:flex; align-items:center; gap:10px; padding:10px 12px;
+            border-radius:8px; border:0.5px solid #ddd; cursor:pointer; font-size:14px; margin-bottom:8px;">
+            <input type="radio" name="report-reason" value="${r}" style="accent-color:#d32f2f;"> ${r}
+        </label>
+    `).join('');
+
+        const html = `
+    <div id="report-modal-overlay"
+        style="position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999;
+               display:flex; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:12px; width:380px; max-width:95%;
+                    overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+
+            <div style="padding:16px 20px; border-bottom:1px solid #f0f0f0;
+                        display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:16px; font-weight:500;">Báo cáo bình luận</span>
+                <button onclick="document.getElementById('report-modal-overlay').remove()"
+                    style="background:none; border:none; cursor:pointer; font-size:20px;
+                           color:#888; width:28px; height:28px; border-radius:50%;">&times;</button>
+            </div>
+
+            <div style="padding:16px 20px;">
+                <p style="font-size:13px; color:#888; margin:0 0 14px;">Chọn lý do vi phạm:</p>
+                <div id="report-reason-list">${reasonItems}</div>
+                <div id="extra-reason-wrap" style="display:none; margin-top:8px;">
+                    <textarea id="extra-reason-text" placeholder="Mô tả thêm lý do..." rows="3"
+                        style="width:100%; box-sizing:border-box; border:1px solid #ddd;
+                               border-radius:8px; padding:8px 12px; font-size:13px;
+                               resize:none; outline:none;"></textarea>
+                </div>
+            </div>
+
+            <div style="padding:12px 20px 16px; display:flex; gap:10px;
+                        justify-content:flex-end; border-top:1px solid #f0f0f0;">
+                <button onclick="document.getElementById('report-modal-overlay').remove()"
+                    style="padding:8px 18px; border-radius:8px; border:1px solid #ddd;
+                           background:none; cursor:pointer; font-size:13px; color:#666;">Hủy</button>
+                <button onclick="submitReport('${commentId}')"
+                    style="padding:8px 18px; border-radius:8px; border:none;
+                           background:#d32f2f; color:#fff; font-size:13px;
+                           font-weight:500; cursor:pointer;">Gửi báo cáo</button>
+            </div>
+        </div>
+    </div>`;
+
+        document.body.insertAdjacentHTML('beforeend', html);
+
+        // Hiện textarea khi chọn "Khác"
+        document.querySelectorAll('input[name="report-reason"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                document.querySelectorAll('#report-reason-list label').forEach(l => l.style.background = '');
+                this.closest('label').style.background = '#fff0f0';
+                document.getElementById('extra-reason-wrap').style.display =
+                    this.value === 'Khác' ? 'block' : 'none';
+            });
+        });
+
+        // Đóng khi click nền
+        document.getElementById('report-modal-overlay').addEventListener('click', function(e) {
+            if (e.target === this) this.remove();
+        });
+    }
+
+    function submitReport(commentId) {
+        const selected = document.querySelector('input[name="report-reason"]:checked');
+        if (!selected) {
+            alert('Vui lòng chọn lý do báo cáo!');
+            return;
+        }
+
+        let reason = selected.value;
+        if (reason === 'Khác') {
+            const extra = document.getElementById('extra-reason-text').value.trim();
+            if (!extra) { alert('Vui lòng mô tả lý do!'); return; }
+            reason = extra;
+        }
+
+        fetch('/api/comments/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ commentId: commentId, reason: reason })
+        })
+            .then(async res => {
+                document.getElementById('report-modal-overlay').remove();
+                if (res.ok) {
+                    markAsReported(commentId);
+                    alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
+                } else {
+                    let errorMsg = `Lỗi ${res.status}`;
+                    try {
+                        const body = await res.json();
+                        errorMsg = body.message || body.error || errorMsg;
+                    } catch {
+                        try {
+                            const text = await res.text();
+                            if (text) errorMsg = text;
+                        } catch {}
+                    }
+                    alert('Báo cáo thất bại: ' + errorMsg);
+                }
+            })
+            .catch(err => alert('Lỗi kết nối: ' + err.message));
+    }
+
+    function markAsReported(commentId) {
+        // Lưu vào localStorage để giữ trạng thái qua reload
+        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
+        if (!reported.includes(String(commentId))) {
+            reported.push(String(commentId));
+            localStorage.setItem('reportedComments', JSON.stringify(reported));
+        }
+        applyReportedStyle(commentId);
+    }
+
+    function applyReportedStyle(commentId) {
+        document.querySelectorAll(`.report-btn[data-comment-id="${commentId}"]`).forEach(el => {
+            el.style.color = '#d32f2f';
+            el.style.opacity = '0.7';
+            el.style.cursor = 'default';
+            el.title = 'Đã báo cáo';
+            el.onclick = null;
+        });
+    }
+
+    // Gọi sau mỗi lần render comment để khôi phục trạng thái đã báo cáo
+    function restoreReportedState() {
+        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
+        reported.forEach(commentId => applyReportedStyle(commentId));
+    }
+
+    function formatDirectDate(dateParam) {
+        if (!dateParam) return "Vừa xong";
+        if (typeof dateParam === 'object' && dateParam.year) {
+            return `${String(dateParam.dayOfMonth).padStart(2, '0')}/${String(dateParam.monthValue).padStart(2, '0')}/${dateParam.year} ${String(dateParam.hour).padStart(2, '0')}:${String(dateParam.minute).padStart(2, '0')}`;
+        }
+        const date = new Date(dateParam);
+        return isNaN(date) ? dateParam : date.toLocaleString('vi-VN');
+    }
+
+    function closePostModal() {
+        const closedId = activePostId;
+        const modalList = document.getElementById('modal-comment-list');
+        const targetToggleList = document.getElementById('comment-list-' + closedId);
+        if (modalList && targetToggleList) targetToggleList.innerHTML = modalList.innerHTML;
+        document.getElementById('postModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        activePostId = null;
+    }
+
+
+    function closeModalOutside(event) {
+        if (event.target.id === 'postModal') closePostModal();
+    }
+
+    const reactionData = {
+        'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
+        'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
+        'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
+        'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
+        'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
+        'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
+    };
+
+    async function sendReaction(commentId, type) {
+        try {
+            const res = await fetch(`/api/vote-comment/${commentId}?type=${type}`);
+
+            // 🔥 BẢO MẬT: Kiểm tra nếu chưa đăng nhập
+            if (res.status === 401) {
+                alert("Đăng nhập đi má ơi, hông login sao mà thả tim được!");
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!res.ok) throw new Error("Lỗi hệ thống");
+
+            const data = await res.json();
+            console.log("REACTION:", data); // debug
+
+            const updateAll = (selector, cb) => {
+                document.querySelectorAll(selector).forEach(cb);
+            };
+
+            // --- GIỮ NGUYÊN LOGIC UI CỦA MÁ TỪ ĐÂY XUỐNG ---
+            if (data.voted && data.type && reactionData[data.type]) {
+                const config = reactionData[data.type];
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = config.text;
+                    el.style.color = config.color;
+                });
+            } else {
+                updateAll(`#react-text-${commentId}`, el => {
+                    el.innerText = "Thích";
+                    el.style.color = "#65676b";
+                });
+            }
+
+            updateAll(`#reaction-icons-${commentId}`, el => {
+                if (data.voted && data.type && reactionData[data.type]) {
+                    el.innerText = reactionData[data.type].icon;
+                } else { el.innerText = ""; }
+            });
+
+            updateAll(`#reaction-count-${commentId}`, el => {
+                el.innerText = data.voteCount || 0;
+            });
+
+            updateAll(`#reaction-count-container-${commentId}`, el => {
+                el.style.display = data.voteCount > 0 ? "flex" : "none";
+            });
+            // --- KẾT THÚC LOGIC UI ---
+
+        } catch (err) {
+            console.error("Lỗi reaction:", err);
+        }
+    }
+
+    async function showReactionDetail(commentId) {
+        try {
+            // Má kiểm tra kỹ cái URL này có đúng với cái @RequestMapping trên Controller ko nha
+            const res = await fetch(`/api/vote-comment/detail/${commentId}`);
+
+            if (!res.ok) {
+                // Nếu lỗi 401, 403, 404... nó sẽ hiện ở đây
+                const errorText = await res.text();
+                console.error("Lỗi từ server:", errorText);
+                alert("Lỗi nè má: " + res.status);
+                return;
+            }
+
+            const data = await res.json();
+            console.log("Dữ liệu người thả tim:", data); // Má F12 lên xem nó có ra mảng ko nha
+
+            if (data && data.length > 0) {
+                renderReactionModal(data);
+            } else {
+                alert("Hông có ai thả tim hết má ơi!");
+            }
+
+        } catch (err) {
+            // Cái alert trong hình của má là từ đây nè
+            console.error("Lỗi Fetch:", err);
+            alert("Lỗi kết nối hoặc URL sai rồi má ơi!");
+        }
+    }
+
+
+    function renderReactionModal(list) {
+
+        const reactionData = {
+            LIKE: '👍',
+            LOVE: '❤️',
+            HAHA: '😆',
+            WOW: '😮',
+            SAD: '😢',
+            ANGRY: '😡'
+        };
+
+        let html = `
+    <div class="reaction-modal-overlay" onclick="closeReactionModal(event)">
+        <div class="reaction-modal">
+<h3 class="reaction-title">Người bày tỏ cảm xúc</h3>
+            <div class="reaction-list">
+    `;
+
+        list.forEach(u => {
+            const isVerified = u.userRole && u.userRole !== 'ROLE_STUDENT';
+            html += `
+        <div class="reaction-user">
+            <span>${reactionData[u.type]}</span>
+                <b style="font-size: 14px; color: #050505;">${u.userName}</b>
+                ${isVerified ? `
+                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0;">
+                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                    </svg>
+                ` : ''}
+                <small style="color:gray;">(${u.userId})</small>
+        </div>
+        `;
+        });
+
+        html += `
+            </div>
+        </div>
+    </div>
+    `;
+
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+
+    function closeReactionModal(e) {
+        if (e.target.classList.contains("reaction-modal-overlay")) {
+            e.target.remove();
+        }
+    }
+
+
+
+    // 1. Định nghĩa bảng màu và chữ (Nhớ để ngoài hàm)
+    const reactions = {
+        LIKE:  { text: 'Thích', color: '#0566ff' },
+        LOVE:  { text: 'Yêu thích', color: '#ed4956' },
+        HAHA:  { text: 'Haha', color: '#f7b125' },
+        WOW:   { text: 'Wow', color: '#f7b125' },
+        SAD:   { text: 'Buồn', color: '#f7b125' },
+        ANGRY: { text: 'Phẫn nộ', color: '#e9710f' }
+    };
+
+    // 2. Hàm gửi Reaction
+    async function sendPostReaction(postId, type) {
+        try {
+            const res = await fetch(`/api/forum/react?postId=${postId}&type=${type}`, {
+                method: 'POST'
+            });
+
+            if (res.status === 401) { alert("Đăng nhập đi má ơi!"); return; }
+            if (!res.ok) {
+                const errorData = await res.json();
+                console.error("Lỗi từ server:", errorData);
+                return;
+            }
+
+            const data = await res.json(); // Nhận { counts: {...}, currentType: "..." }
+            const apiData = data.counts;
+            const currentActive = data.currentType;
+
+            const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+
+            // Cập nhật UI nút chính và cụm icon
+            updateReactionUI(postId, currentActive, total);
+            updateReactionUII(postId, apiData);
+
+        } catch (err) {
+            console.error('Lỗi kết nối:', err);
+        }
+    }
+
+    // 3. Hàm cập nhật chữ và màu nút chính
+    function updateReactionUI(postId, activeType, totalCount) {
+        const btn = document.querySelector(`.post-main-reaction-btn[data-id='${postId}']`);
+        if (!btn) return;
+
+        const typeKey = (activeType && activeType !== "") ? activeType.toUpperCase() : "";
+        const config = reactions[typeKey] || { text: 'Thích', color: '#65676b' };
+
+        // Đổi chữ - Dùng innerHTML để dọn sạch th:switch của Thymeleaf
+        const reactionContent = btn.querySelector('.reaction-content');
+        if (reactionContent) {
+            reactionContent.innerHTML = config.text;
+        }
+
+        // Đổi màu
+        btn.style.setProperty('color', config.color, 'important');
+
+        // Lưu lại trạng thái vào attribute
+        btn.setAttribute('data-current-reaction', typeKey);
+    }
+
+    // 4. Hàm cập nhật cụm icon chồng nhau
+    function updateReactionUII(postId, apiData) {
+        const emojiMap = { LIKE: '👍', LOVE: '❤️', HAHA: '😆', WOW: '😮', SAD: '😢', ANGRY: '😡' };
+        const sorted = Object.entries(apiData)
+            .filter(([_, count]) => count > 0)
+            .sort((a, b) => b[1] - a[1]);
+
+        const topIcons = sorted.slice(0, 3).map(([type]) => emojiMap[type.toUpperCase()]);
+        const total = Object.values(apiData).reduce((a, b) => a + b, 0);
+
+        const btn = document.querySelector(`.btn-show-reactions[data-post-id="${postId}"]`);
+        if (btn) {
+            const stackDiv = btn.querySelector('.reaction-icons-stack');
+            if (stackDiv) {
+                stackDiv.innerHTML = topIcons.map(icon => `<span class="mini-icon">${icon}</span>`).join('');
+            }
+            const countSpan = btn.querySelector('.js-reaction-count');
+            if (countSpan) {
+                countSpan.textContent = total > 0 ? total : '';
+            }
+        }
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.post-reaction-bar').forEach(bar => {
+            const mainBtn = bar.querySelector('.post-main-reaction-btn');
+            const box = bar.querySelector('.post-reaction-box');
+            let timeoutId;
+
+            // --- BƯỚC QUAN TRỌNG: KHỞI TẠO MÀU SẮC KHI LOAD TRANG ---
+            const postId = mainBtn.getAttribute('data-id');
+            const currentType = mainBtn.getAttribute('data-current-reaction');
+            // Gọi hàm update ngay lập tức để áp dụng màu từ Thymeleaf
+            updateReactionUI(postId, currentType);
+            // ------------------------------------------------------
+
+            // Hiện/Ẩn Box
+            const show = () => { clearTimeout(timeoutId); box.classList.add('show'); };
+            const hide = () => { timeoutId = setTimeout(() => box.classList.remove('show'), 300); };
+            mainBtn.addEventListener('mouseenter', show);
+            mainBtn.addEventListener('mouseleave', hide);
+            box.addEventListener('mouseenter', () => clearTimeout(timeoutId));
+            box.addEventListener('mouseleave', hide);
+
+            // Click icon trong box
+            box.querySelectorAll('.post-reaction-btn').forEach(iconBtn => {
+                iconBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const newType = iconBtn.getAttribute('data-type');
+                    sendPostReaction(postId, newType);
+                    box.classList.remove('show');
+                });
+            });
+
+            // Click nút chính
+            mainBtn.addEventListener('click', (e) => {
+                if (box.classList.contains('show')) return;
+                const cType = mainBtn.getAttribute('data-current-reaction');
+                const typeToSend = (cType && cType !== "") ? cType : 'LIKE';
+                sendPostReaction(postId, typeToSend);
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Lắng nghe sự kiện click trên toàn bộ document (Event Delegation)
+        // Cách này giúp code chạy được cả với các bài post load thêm bằng AJAX
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-show-reactions');
+            if (btn) {
+                const postId = btn.getAttribute('data-post-id');
+                if (postId) {
+                    showPostReactionDetail(postId);
+                }
+            }
+        });
+    });
+
+    async function showPostReactionDetail(postId) {
+        if (!postId) return; // Chặn sớm nếu hông có ID
+
+        try {
+            const res = await fetch(`/api/forum/reactors/details?postId=${postId}`);
+
+            // 🔥 BẢO MẬT: Nếu server báo chưa login
+            if (res.status === 401) {
+                alert("Má phải đăng nhập mới coi được chi tiết nha!");
+                window.location.href = "/login";
+                return;
+            }
+
+            if (!res.ok) throw new Error("Lỗi fetch dữ liệu");
+
+            const data = await res.json();
+
+            // Kiểm tra xem có ai thả tim hông trước khi map dữ liệu
+            if (!data || data.length === 0) {
+                console.log("Bài này hông có ai thả tim hết.");
+                return;
+            }
+
+            // 🔥 GIỮ NGUYÊN LOGIC FORMAT DỮ LIỆU CỦA MÁ
+            const formattedData = data.map(u => ({
+                type: u.type,
+                userName: u.fullName,
+                userId: u.userId,
+                userRole: u.userRole
+            }));
+
+            // Gọi hàm render của má (nhớ check tên hàm renderReactionModall coi có dư chữ 'l' hông nha)
+            renderReactionModall(formattedData);
+
+        } catch (err) {
+            console.error("Lỗi showPostReactionDetail:", err);
+            alert("Hệ thống đang bận, má thử lại sau nha!");
+        }
+    }
+
+    function renderReactionModall(list) {
+        const reactionData = {
+            LIKE: '👍',
+            LOVE: '❤️',
+            HAHA: '😆',
+            WOW: '😮',
+            SAD: '😢',
+            ANGRY: '😡'
+        };
+
+        // Đã cập nhật class: reaction-modal -> post-reaction-modal để khớp CSS tránh ghi đè
+        let html = `
+    <div class="reaction-modal-overlay" onclick="closeReactionModal(event)">
+        <div class="post-reaction-modal">
+            <h3 class="reaction-title">Người bày tỏ cảm xúc</h3>
+            <div class="reaction-list">
+    `;
+
+        if (list.length === 0) {
+            html += `<div style="padding: 30px; text-align: center; color: #65676b;">Chưa có cảm xúc nào.</div>`;
+        }
+
+        list.forEach(u => {
+            const isVerified = u.userRole && u.userRole !== 'ROLE_STUDENT';
+            html += `
+        <div class="reaction-user" style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 4px 8px;">
+        <span style="font-size: 20px; min-width: 24px;">${reactionData[u.type] || '👍'}</span>
+
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <b style="font-size: 14px; color: #050505;">${u.userName}</b>
+
+            ${isVerified ? `
+                <svg viewBox="0 0 16 16" width="14" height="14" style="flex-shrink: 0;">
+                    <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                </svg>` : ''}
+
+            <small style="color: #65676b; font-size: 13px; margin-left: 2px;">@${u.userId}</small>
+        </div>
+    </div>
+        `;
+        });
+
+        html += `
+            </div>
+        </div>
+    </div>
+    `;
+
+        // Chèn modal vào cuối body
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+
+    function closeReactionModal(e) {
+        // Chỉ đóng khi click vào lớp nền overlay (bên ngoài khung trắng)
+        if (e.target.classList.contains("reaction-modal-overlay")) {
+            e.target.remove();
+        }
+    }
+
+
+    // Khi vừa load trang lần đầu cũng phải gọi nó
+    document.addEventListener('DOMContentLoaded', initReactionEvents);
+    function initReactionEvents() {
+        document.querySelectorAll('.post-reaction-bar').forEach(bar => {
+            const mainBtn = bar.querySelector('.post-main-reaction-btn');
+            const box = bar.querySelector('.post-reaction-box');
+            if (!mainBtn || !box) return;
+
+            let timeoutId;
+            const postId = mainBtn.getAttribute('data-id');
+            const currentType = mainBtn.getAttribute('data-current-reaction');
+
+            // Áp dụng màu sắc ngay lập tức (Để hiện màu Vàng cho Wow, Đỏ cho Love...)
+            updateReactionUI(postId, currentType);
+
+            // Hiện/Ẩn Box 6 icon
+            const show = () => { clearTimeout(timeoutId); box.classList.add('show'); };
+            const hide = () => { timeoutId = setTimeout(() => box.classList.remove('show'), 300); };
+
+            mainBtn.addEventListener('mouseenter', show);
+            mainBtn.addEventListener('mouseleave', hide);
+            box.addEventListener('mouseenter', () => clearTimeout(timeoutId));
+            box.addEventListener('mouseleave', hide);
+
+            // Sự kiện click icon trong box
+            box.querySelectorAll('.post-reaction-btn').forEach(iconBtn => {
+                iconBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    sendPostReaction(postId, iconBtn.getAttribute('data-type'));
+                    box.classList.remove('show');
+                };
+            });
+
+            // Sự kiện click nút chính (Like/Unlike)
+            mainBtn.onclick = (e) => {
+                if (box.classList.contains('show')) return;
+                const cType = mainBtn.getAttribute('data-current-reaction');
+                sendPostReaction(postId, (cType && cType !== "") ? cType : 'LIKE');
+            };
+        });
+    }
+
+
+</script>
+
+
+</body>
+</html>
