@@ -25,7 +25,7 @@
         <nav class="sidebar-nav">
             <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
             <a href="#" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
-            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
+            <a th:href="@{/staff/announcement-management}" class="nav-item"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
             <a th:href="@{/staff/notifications}" class="nav-item active">
                 <i class="fas fa-bell"></i> Thong bao
                 <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>

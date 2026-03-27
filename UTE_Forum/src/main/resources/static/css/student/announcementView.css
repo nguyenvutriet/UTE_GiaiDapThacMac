@@ -622,3 +622,297 @@ select:focus {
 .btn-reset:hover {
     color: #1438c3;
 }
+/* Khung chứa ảnh */
+.ann-image-preview {
+    width: 100%;            /* Chiều ngang chiếm hết thẻ cha */
+    max-width: 600px;       /* Giới hạn chiều ngang tối đa (tùy bà chỉnh) */
+    margin: 15px 0;         /* Khoảng cách trên dưới */
+    border-radius: 8px;     /* Bo góc nhẹ cho hiện đại */
+    overflow: hidden;       /* Cắt bớt phần ảnh thừa nếu có */
+    border: 1px solid #eee; /* Viền mờ cho chuyên nghiệp */
+    background-color: #f9f9f9;
+}
+
+/* Định dạng chính cho tấm ảnh */
+.ann-posted-image {
+    width: 100%;            /* Ảnh luôn rộng bằng khung chứa */
+    height: auto;           /* Tự động tính chiều cao để không bị méo */
+    display: block;         /* Loại bỏ khoảng hở dưới chân ảnh */
+    object-fit: cover;      /* Nếu bà cố định chiều cao thì cái này giúp ảnh không bị lùn/mập */
+    transition: transform 0.3s ease; /* Hiệu ứng nhẹ khi rê chuột vào */
+}
+
+/* Hiệu ứng khi user rê chuột vào ảnh (Optional) */
+.ann-posted-image:hover {
+    transform: scale(1.02); /* Phóng to nhẹ một chút */
+    cursor: pointer;
+}
+.ann-image-preview {
+    display: none; /* Ẩn hoàn toàn, không chiếm diện tích */
+}
+
+.quick-search-container {
+    position: relative;
+    width: 100%;
+    /* Giảm padding-top xuống để nó sát lên trên */
+    padding: 0 0 15px 0;
+    margin-top: -10px; /* Dùng margin âm nếu bà muốn nó "leo" lên cao nữa */
+    z-index: 10; /* Đảm bảo nó không bị các card ở dưới đè lên */
+}
+
+.quick-search-box {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 8px 15px;
+    /* Thêm đổ bóng nhẹ cho giống Google */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+/* Khi click vào ô search thì nó nổi bật lên */
+.quick-search-box:focus-within {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+/* Style cho cái dòng "Kết quả cho..." cũng phải đẩy sát lên */
+#announcement-list > div:first-child {
+    margin-top: 5px;
+    padding-left: 10px;
+}
+
+.quick-search-box input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: none;
+    font-size: 14px;
+}
+
+.search-icon {
+    margin-right: 10px;
+    color: #888;
+}
+
+.search-suggestion-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    list-style: none;
+    padding: 0;
+    margin-top: 5px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    z-index: 999;
+}
+
+.search-suggestion-item {
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.search-suggestion-item:hover {
+    background: #eef7ff;
+}
+
+.search-title {
+    font-weight: bold;
+}
+
+.search-desc {
+    font-size: 13px;
+    color: #555;
+}
+
+
+.search-suggestion-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.search-suggestion-list li a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.search-suggestion-list li a:hover {
+    background-color: #f0f7ff;
+}
+
+.suggest-title {
+    display: block;
+    font-size: 14px;
+    color: #007bff;
+    margin-bottom: 3px;
+}
+
+.suggest-dept {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#searchResultList {
+    position: absolute;
+    top: 105%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: none;
+    animation: slideDown 0.2s ease-out; /* Hiệu ứng phập phồng nè */
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+/* Tút lại giao diện suggest-item */
+.suggest-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+    /* Dùng flex để đưa tên phòng ban sang bên phải */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggest-item:hover {
+    background: #f8f9fa;
+}
+
+/* Biến tên tiêu đề */
+.suggest-item strong {
+    color: #333;
+    font-size: 14px;
+    margin-right: 15px; /* Khoảng cách với tag */
+}
+
+/* Định dạng Tag phòng ban màu xanh */
+.suggest-tag {
+    font-size: 11px; /* Nhỏ nhỏ xinh xinh */
+    font-weight: 500;
+    color: white; /* Chữ trắng */
+    background-color: #007bff; /* Màu xanh dương (tùy bà chỉnh) */
+    padding: 4px 10px; /* Bo viền cho tag */
+    border-radius: 12px; /* Bo góc tròn hẳn */
+    white-space: nowrap; /* Không cho nó xuống dòng */
+}
+
+/* 1. Widget cha - Làm tàng hình để phá lồng */
+.department-info-section {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* 2. Select - Thanh thoát và hiện đại */
+#infoDeptSelect {
+    width: 100%;
+    height: 38px; /* Giảm chiều cao */
+    padding: 0 12px;
+    border: 2px solid #eef2f7;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.9rem;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 10px;
+}
+
+#infoDeptSelect:hover { border-color: #007bff; }
+
+/* 3. Card thông tin - Gọn gàng, không bị lồng */
+.info-card-container {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 12px 18px !important; /* Thu hẹp padding */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    border-left: 6px solid #007bff !important;
+    margin-top: 5px;
+}
+
+/* 4. Ép dãn dòng các hàng thông tin */
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 0 !important; /* Dãn dòng cực thấp */
+    border-bottom: 1px solid #f8f9fa; /* Gạch chân mờ giữa các hàng */
+}
+
+.info-row:last-of-type { border-bottom: none; }
+
+.info-row i {
+    width: 22px;
+    font-size: 0.85rem;
+    color: #007bff;
+    margin-right: 8px;
+    text-align: center;
+}
+
+.info-row strong {
+    font-size: 0.85rem;
+    color: #2d3748;
+    flex: 0 0 80px; /* Độ rộng tiêu đề vừa khít */
+}
+
+.info-row span {
+    font-size: 0.85rem;
+    color: #4a5568;
+}
+
+/* 5. Hộp mô tả ngắn gọn */
+.description-box {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f8fbff;
+    border-radius: 10px;
+    border: 1px dashed #d0e3ff;
+}
+
+.desc-title {
+    margin: 0;
+    font-weight: bold;
+    font-size: 0.8rem;
+    color: #444;
+}
+
+#info-desc {
+    margin: 2px 0 0 0;
+    font-style: italic;
+    color: #718096;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}

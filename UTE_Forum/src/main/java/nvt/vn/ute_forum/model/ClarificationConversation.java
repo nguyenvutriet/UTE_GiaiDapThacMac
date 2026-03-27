@@ -17,6 +17,9 @@ public class ClarificationConversation {
     @Column(name = "isopen", nullable = false)
     private Boolean isOpen;
 
+    @Column(name = "subject", nullable = false)
+    private String subject;
+
     @Column(name = "createat", nullable = false)
     private LocalDate createAt;
 
@@ -39,6 +42,15 @@ public class ClarificationConversation {
     public ClarificationConversation(String id, Boolean isOpen, LocalDate createAt, Request request, List<Message> messages) {
         this.id = id;
         this.isOpen = isOpen;
+        this.createAt = createAt;
+        this.request = request;
+        this.messages = messages;
+    }
+
+    public ClarificationConversation(String id, Boolean isOpen, String subject, LocalDate createAt, Request request, List<Message> messages) {
+        this.id = id;
+        this.isOpen = isOpen;
+        this.subject = subject;
         this.createAt = createAt;
         this.request = request;
         this.messages = messages;
@@ -83,4 +95,14 @@ public class ClarificationConversation {
     public void setMessages(List<Message> messages) {
         this.messages = messages;
     }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+
 }

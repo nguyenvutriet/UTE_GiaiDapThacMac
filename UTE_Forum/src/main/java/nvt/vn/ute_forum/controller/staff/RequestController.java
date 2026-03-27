@@ -1,7 +1,9 @@
 package nvt.vn.ute_forum.controller.staff;
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
+import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Request;
+import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.UsersRepo;
@@ -27,6 +29,9 @@ public class RequestController {
 
     @Autowired
     private UsersRepo usersRepo;
+
+    @Autowired
+    private ClarificationConversationService clarificationConversationService;
 
     @GetMapping("/list-feedbacks")
     public String getAllFeedbacks(
@@ -72,6 +77,9 @@ public class RequestController {
         // 🔥 truyền user vào service
         Request request = requestService.getFeedbackDetail(id, user);
 
+        ClarificationConversation conversation = clarificationConversationService.getClarificationConversation(request.getId());
+
+        model.addAttribute("conversation", conversation);
         model.addAttribute("feedback", request);
         model.addAttribute("currentUser", user);
         model.addAttribute("forwardLogs", request.getForwardingLogs());

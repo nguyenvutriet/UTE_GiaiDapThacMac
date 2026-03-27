@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn</title>
+    <title>Thông báo</title>
     <link rel="stylesheet" href="../../css/student/announcementView.css" th:href="@{/css/student/announcementView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -77,13 +77,10 @@
             </div>
 
             <aside class="forum-sidebar">
-                <div class="sidebar-widget">
-                    <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
-                </div>
+
 
                 <div class="sidebar-widget">
-                    <h3>⏳ Bộ lọc</h3>
+                    <h3>Bộ lọc</h3>
                     <form th:action="@{/filter}" method="get" class="filter-stack">
 
 

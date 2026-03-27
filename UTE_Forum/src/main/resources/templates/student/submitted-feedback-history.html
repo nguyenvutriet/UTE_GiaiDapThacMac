@@ -114,8 +114,24 @@
       </div>
 
       <section class="request-detail" th:if="${selectedRequest != null}">
-        <div class="detail-header">
+        <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center;">
           <a class="back-link" th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">&larr; Quay lại danh sách</a>
+          <div th:if="${selectedRequest.currentStatus == 'PENDING'}">
+
+            <a class="btn-action btn-edit"
+               th:href="@{/api/edit-request(id=${selectedRequest.id})}">
+              🖊️ Sửa
+            </a>
+
+            <form th:action="@{/api/delete-request}" method="post" style="display:inline;">
+              <input type="hidden" name="id" th:value="${selectedRequest.id}" />
+              <button type="submit" class="btn-action btn-delete"
+                      onclick="return confirm('Bạn có chắc chắn muốn xóa góp ý này?');">
+                🗑️ Xóa
+              </button>
+            </form>
+
+          </div>
         </div>
 
         <article class="detail-top-card">
@@ -164,11 +180,50 @@
 
           <div class="detail-panel">
             <h3>Trao đổi</h3>
-            <div class="chat-empty">
-              <p>Chưa có cuộc trao đổi nào.</p>
+            <div class="chat-empty" th:if="${#lists.isEmpty(openConversations)}">
+              <p>Chưa có cuộc hội thoại mở.</p>
+            </div>
+
+            <div class="conversation-list" id="chat-root" th:if="${not #lists.isEmpty(openConversations)}" th:attr="data-current-user-id=${user.id}">
+              <button type="button"
+                      class="conversation-item"
+                      th:each="conversation : ${openConversations}"
+                      th:attr="data-conversation-id=${conversation.conversationId},data-request-id=${conversation.requestId},data-subject=${conversation.subject}">
+                <span class="conversation-item-icon">🏢</span>
+                <div class="conversation-item-main">
+                  <h4 th:text="${conversation.subject}">Mong sớm có phòng lab chuyên sâu về AI & IoT</h4>
+                  <p th:text="${conversation.preview}">Nhấn để xem chi tiết cuộc trao đổi...</p>
+                  <span class="conversation-open-pill" th:text="${conversation.statusLabel}">Đang mở</span>
+                </div>
+                <time th:text="${conversation.dateLabel}">27/03/2026</time>
+              </button>
             </div>
           </div>
         </div>
+
+        <div class="chat-drawer-backdrop" id="chat-drawer-backdrop" hidden></div>
+        <aside class="chat-drawer" id="chat-drawer" aria-hidden="true">
+          <header class="chat-drawer-header">
+            <div>
+              <h3 id="chat-drawer-title">Trao đổi</h3>
+              <p>Trạng thái: <span class="conversation-open-pill">Đang mở</span></p>
+            </div>
+            <button type="button" class="chat-drawer-close" id="close-chat-drawer-btn">&times;</button>
+          </header>
+
+          <div id="chat-message-list" class="chat-drawer-message-list">
+            <div class="chat-empty compact">
+              <p>Chọn một cuộc hội thoại để xem tin nhắn.</p>
+            </div>
+          </div>
+
+          <form id="chat-send-form" class="chat-drawer-compose" autocomplete="off">
+            <label class="chat-attach-btn" for="chat-file-input" title="Chọn tệp đính kèm">📎</label>
+            <input id="chat-file-input" type="file" multiple hidden>
+            <input id="chat-message-input" type="text" placeholder="Nhập tin nhắn...">
+            <button id="chat-send-btn" type="submit" class="chat-send-btn">➤</button>
+          </form>
+        </aside>
       </section>
 
       <div class="pagination" th:if="${selectedRequest == null}">
@@ -179,5 +234,8 @@
     </section>
   </main>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script th:src="@{/js/student/submitted-feedback-history-chat.js}"></script>
 </body>
 </html>

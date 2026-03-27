@@ -1,0 +1,120 @@
+/* ===== NO CHAT ===== */
+.no-chat {
+    text-align: center;
+    padding: 20px;
+}
+
+.open-chat-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ===== POPUP ===== */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+}
+
+.popup-box input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.popup-actions .primary {
+    background: #3b82f6;
+    color: white;
+}
+
+/* ===== CHAT BOX ===== */
+.chat-box {
+    position: fixed;
+    right: -400px;
+    top: 0;
+    width: 350px;
+    height: 100%;
+    background: white;
+    transition: 0.3s;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box.active {
+    right: 0;
+}
+
+.chat-header {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.chat-body {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.msg {
+    margin: 10px 0;
+}
+
+.msg.right {
+    text-align: right;
+}
+
+.msg .bubble {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #e5e7eb;
+}
+
+.msg.right .bubble {
+    background: #3b82f6;
+    color: white;
+}
+
+.chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 8px;
+}
+
+.chat-input button {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0 15px;
+}
