@@ -48,6 +48,8 @@ public class StaffAnnouncementController {
         }
 
         model.addAttribute("user", currentUser);
+        model.addAttribute("departments", departmentRepo.findAll());
+        model.addAttribute("currentDepartmentId", currentUser.getDepartment() != null ? currentUser.getDepartment().getId() : null);
         return "staff/staff-announcement-create";
     }
 

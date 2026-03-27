@@ -6,11 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface UsersRepo extends JpaRepository<Users, String> {
 
     Users findByEmail(String email);
     Optional<Users> findOptionalByEmail(String email);
-    List<Users> findByRoleAndDepartment_Id(String role, String departmentId);
-}
+    List<Users> findByRole(String role);
+    List<Users> findByRoleAndDepartment_IdIn(String role, Collection<String> departmentIds);

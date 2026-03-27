@@ -52,6 +52,41 @@
     min-height: 220px;
 }
 
+.recipient-box {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.recipient-all-row {
+    margin-top: 8px;
+}
+
+.recipient-grid {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+}
+
+.recipient-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #334155;
+}
+
+.recipient-checkbox input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+}
+
 .upload-zone {
     min-height: 130px;
     border: 1px dashed #cbd5e1;
