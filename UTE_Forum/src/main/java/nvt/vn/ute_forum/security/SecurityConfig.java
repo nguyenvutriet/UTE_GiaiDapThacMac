@@ -70,7 +70,8 @@ public class SecurityConfig {
                                 "/api/forum/view",
                                 "/staff/list-feedbacks",
                                 "/feedback/send",
-                                "/api/forum/staff"
+                                "/api/forum/staff",
+                                "/apoi/department/**"
                         ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(
