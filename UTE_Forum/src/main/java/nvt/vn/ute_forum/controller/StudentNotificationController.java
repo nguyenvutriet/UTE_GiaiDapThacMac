@@ -12,7 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
@@ -115,12 +115,12 @@ public class StudentNotificationController {
         return type == null ? "" : type.trim().toUpperCase(Locale.ROOT);
     }
 
-    private String humanTime(LocalDate createdDate) {
-        if (createdDate == null) {
+    private String humanTime(LocalDateTime createdAt) {
+        if (createdAt == null) {
             return "vừa xong";
         }
 
-        long days = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
+        long days = ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
         if (days <= 0) {
             return "hôm nay";
         }

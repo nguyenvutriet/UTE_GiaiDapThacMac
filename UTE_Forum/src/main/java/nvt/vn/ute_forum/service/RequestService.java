@@ -286,6 +286,14 @@ public class RequestService {
         return requestRepo.save(request);
     }
 
+    @Transactional
+    public void deleteRequest(String requestId, String userId) {
+        requestRepo.findByIdAndUser_Id(requestId, userId).ifPresent(r -> {
+            r.getCategories().clear();
+            requestRepo.delete(r);
+        });
+    }
+
     public List<ForumPostDTO> searchPosts(String keyword) {
         List<Request> list = requestRepo.searchByKeyword(keyword.trim());
 
