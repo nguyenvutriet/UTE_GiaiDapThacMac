@@ -1,6 +1,7 @@
 package nvt.vn.ute_forum.service;
 
 import nvt.vn.ute_forum.model.ClarificationConversation;
+import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +58,23 @@ public class ClarificationConversationService {
 
     public ClarificationConversation getClarificationConversation(String requestId){
         return clarificationConversationRepo.findByRequestId(requestId);
+    }
+
+    public Optional<ClarificationConversation> findOpenByRequestForParticipant(String requestId, Users participant) {
+        if (requestId == null || requestId.isBlank() || participant == null || participant.getId() == null) {
+            return Optional.empty();
+        }
+
+        String role = participant.getRole() == null ? "" : participant.getRole().trim();
+        if ("ROLE_STUDENT".equalsIgnoreCase(role)) {
+            return clarificationConversationRepo.findOpenByRequestIdAndStudentId(requestId, participant.getId());
+        }
+
+        if ("ROLE_DEPARTMENT".equalsIgnoreCase(role)) {
+            return clarificationConversationRepo.findOpenByRequestIdAndDepartmentStaffId(requestId, participant.getId());
+        }
+
+        return Optional.empty();
     }
 
     public String createClarificationConversationId(){

@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
@@ -62,6 +63,20 @@ public class StudentNotificationController {
         return "student/notification";
     }
 
+    @PostMapping("/api/notifications/delete")
+    public String deleteNotification(@RequestParam("notificationId") String notificationId,
+                                     @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                     @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                     Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        notificationService.deleteForUser(notificationId, user.getId());
+        return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+    }
+
     private NotificationItem toItem(Notification notification) {
         String tabKey = tabByType(notification.getNotificationType());
         String icon = iconByType(notification.getNotificationType());
@@ -72,7 +87,7 @@ public class StudentNotificationController {
         String content = notification.getContent() == null ? "" : notification.getContent();
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        return new NotificationItem(title, content, timeLabel, icon, iconClass, tabKey, isRead);
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
     }
 
     private String tabByType(String type) {
@@ -201,7 +216,8 @@ public class StudentNotificationController {
         return usersService.getByEmail(email.trim());
     }
 
-    private record NotificationItem(String title,
+    private record NotificationItem(String id,
+                                    String title,
                                     String content,
                                     String timeLabel,
                                     String icon,

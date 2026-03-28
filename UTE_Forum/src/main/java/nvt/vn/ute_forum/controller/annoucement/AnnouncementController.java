@@ -3,8 +3,10 @@ package nvt.vn.ute_forum.controller.annoucement;
 
 import nvt.vn.ute_forum.dto.AnnouncementResponse;
 import nvt.vn.ute_forum.model.Announcement;
+import nvt.vn.ute_forum.model.Notification;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.AnnouncementRepo;
+import nvt.vn.ute_forum.repository.NotificationRepo;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.AnnoucementService;
 import nvt.vn.ute_forum.service.FileAttachmentService;
@@ -22,10 +24,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,6 +50,9 @@ public class AnnouncementController {
 
     @Autowired
     private FileAttachmentService fileAttachmentService;
+
+    @Autowired
+    private NotificationRepo notificationRepo;
 
     @GetMapping
     public ResponseEntity<?> getAllAnnouncements(
@@ -111,6 +120,8 @@ public class AnnouncementController {
                 payload.getOrDefault("title", ""),
                 payload.getOrDefault("content", ""),
                 null,
+                null,
+                false,
                 userDetails
         );
     }
@@ -120,15 +131,19 @@ public class AnnouncementController {
             @RequestParam String title,
             @RequestParam String content,
             @RequestParam(value = "attachments", required = false) MultipartFile[] attachments,
+            @RequestParam(value = "recipientDepartmentIds", required = false) List<String> recipientDepartmentIds,
+            @RequestParam(value = "allDepartments", defaultValue = "false") boolean allDepartments,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        return createAnnouncementInternal(title, content, attachments, userDetails);
+        return createAnnouncementInternal(title, content, attachments, recipientDepartmentIds, allDepartments, userDetails);
     }
 
     private ResponseEntity<?> createAnnouncementInternal(
             String titleRaw,
             String contentRaw,
             MultipartFile[] attachments,
+            List<String> recipientDepartmentIds,
+            boolean allDepartments,
             UserDetails userDetails) {
 
         if (userDetails == null) {
@@ -172,6 +187,7 @@ public class AnnouncementController {
 
         try {
             fileAttachmentService.saveAnnouncementAttachments(saved, attachments);
+            createAnnouncementNotification(saved, currentUser, recipientDepartmentIds, allDepartments);
         } catch (IOException e) {
             announcementRepository.deleteById(saved.getId());
             return ResponseEntity.status(500).body("Khong the luu tep dinh kem.");
@@ -179,6 +195,54 @@ public class AnnouncementController {
 
         Announcement finalSaved = announcementRepository.findById(saved.getId()).orElse(saved);
         return ResponseEntity.ok(announcementService.mapToDTO(finalSaved));
+    }
+
+    private void createAnnouncementNotification(Announcement announcement,
+                                                Users creator,
+                                                List<String> recipientDepartmentIds,
+                                                boolean allDepartments) {
+        List<Users> recipients = resolveStudentRecipients(creator, recipientDepartmentIds, allDepartments);
+        if (recipients.isEmpty()) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setId("NOTI_" + UUID.randomUUID().toString().replace("-", ""));
+        notification.setTitle("Thong bao moi");
+        notification.setContent(announcement.getTitle());
+        notification.setNotificationType("SYSTEM_ANNOUNCEMENT_NOTIFICATION");
+        notification.setRead(false);
+        notification.setCreateAt(LocalDateTime.now());
+        notification.setUsers(recipients);
+        notificationRepo.save(notification);
+    }
+
+    private List<Users> resolveStudentRecipients(Users creator,
+                                                 List<String> recipientDepartmentIds,
+                                                 boolean allDepartments) {
+        if (allDepartments) {
+            return usersRepo.findByRole("ROLE_STUDENT");
+        }
+
+        Set<String> normalizedIds = new HashSet<>();
+        if (recipientDepartmentIds != null) {
+            normalizedIds.addAll(recipientDepartmentIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(value -> !value.isEmpty())
+                    .collect(Collectors.toSet()));
+        }
+
+        // Default to creator department when no department is selected.
+        if (normalizedIds.isEmpty() && creator.getDepartment() != null && creator.getDepartment().getId() != null) {
+            normalizedIds.add(creator.getDepartment().getId());
+        }
+
+        if (normalizedIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return usersRepo.findByRoleAndDepartment_IdIn("ROLE_STUDENT", normalizedIds);
     }
 
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)

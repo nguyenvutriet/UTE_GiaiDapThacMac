@@ -224,6 +224,30 @@ body {
     gap: 10px;
 }
 
+.item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-form {
+    margin: 0;
+}
+
+.delete-noti-btn {
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+.delete-noti-btn:hover {
+    background: #fecaca;
+}
+
 .item-head h3 {
     margin: 0;
     font-size: 16px;

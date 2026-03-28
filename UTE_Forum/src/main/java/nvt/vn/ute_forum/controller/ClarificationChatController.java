@@ -87,7 +87,7 @@ public class ClarificationChatController {
             }
 
             Optional<ClarificationConversation> conversationOptional = clarificationConversationService
-                    .findOpenByRequestForStudent(payload.requestId(), user.getId());
+                    .findOpenByRequestForParticipant(payload.requestId(), user);
 
             if (conversationOptional.isEmpty()) {
                 return;
@@ -121,7 +121,7 @@ public class ClarificationChatController {
         }
 
         Optional<ClarificationConversation> conversationOptional = clarificationConversationService
-                .findOpenByRequestForStudent(requestId, user.getId());
+                .findOpenByRequestForParticipant(requestId, user);
 
         if (conversationOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

@@ -79,7 +79,18 @@
                     <div class="item-content">
                         <div class="item-title-row">
                             <h3 th:text="${item.title}">Tiêu đề thông báo</h3>
-                            <span class="item-time" th:text="${item.timeLabel}">2 giờ</span>
+                            <div class="item-actions">
+                                <span class="item-time" th:text="${item.timeLabel}">2 giờ</span>
+                                <form method="post" th:action="@{/api/notifications/delete}" class="delete-form"
+                                      onsubmit="return confirm('Bạn có chắc muốn xoá thông báo này?');">
+                                    <input type="hidden" name="notificationId" th:value="${item.id}">
+                                    <input type="hidden" name="tab" th:value="${activeTab}">
+                                    <input type="hidden" name="filter" th:value="${activeFilter}">
+                                    <button type="submit" class="delete-noti-btn" title="Xoá thông báo">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                         <p th:text="${item.content}">Nội dung thông báo</p>
                     </div>
