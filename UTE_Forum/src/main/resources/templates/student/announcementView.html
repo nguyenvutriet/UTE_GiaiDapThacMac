@@ -203,7 +203,7 @@
                 }
 
                 const card = `
-                <div class="announcement-card">
+                <div class="announcement-card" onclick="window.location.href='/announcement/detail/${ann.id}'" style="cursor: pointer;">
                     <div class="ann-header">
                         <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
                         <span class="ann-date">${ann.date}</span>
@@ -214,7 +214,7 @@
                         ${attachmentsHtml}
                     </div>
                     <div class="ann-footer">
-                        <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+                        <a href="/announcement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>`;
                 announcementList.insertAdjacentHTML('beforeend', card);
@@ -350,7 +350,7 @@
 
             data.forEach(ann => {
                 const card = `
-                <div class="announcement-card">
+                <div class="announcement-card" onclick="window.location.href='/announcement/detail/${ann.id}'" style="cursor: pointer;">
                     <div class="ann-header">
                         <span class="dept-name">🏢 ${ann.creatorName || 'Phòng Ban'}</span>
                         <span class="ann-date">${ann.date}</span>
@@ -360,7 +360,7 @@
                         <p class="ann-content">${ann.content.substring(0, 150)}...</p>
                     </div>
                     <div class="ann-footer">
-                        <a href="/announcement/detail/${ann.id}" class="btn-detail">Xem chi tiết</a>
+                        <a href="/announcement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết</a>
                     </div>
                 </div>`;
                 mainContentList.insertAdjacentHTML('beforeend', card);
