@@ -1,33 +1,53 @@
 package nvt.vn.ute_forum.controller;
 
-import nvt.vn.ute_forum.model.ClarificationConversation;
-import nvt.vn.ute_forum.model.UserPrincipal;
-import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.model.*;
+import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.MessageService;
+import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.UsersService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Controller
 public class ClarificationChatController {
+
+    @Autowired
+    private RequestService requestService;
+
+    @Autowired
+    private ClarificationConversationService clarificationService;
+
+    @Autowired
+    private SimpMessagingTemplate messTemplate;
+
+    @Autowired
+    private UsersService userService;
+
+    @Autowired
+    private MessageService messService;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClarificationChatController.class);
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -147,6 +167,55 @@ public class ClarificationChatController {
                                   String content,
                                   List<MessageService.ChatAttachment> attachments) {
     }
+
+    @PostMapping("/staff/create-conversation")
+    @ResponseBody
+    public Map<String, String> createClarificationConversation(
+            @RequestBody Map<String, String> req,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        Request request = requestService.getRequestById(req.get("requestId"));
+
+        if (request == null) {
+            throw new RuntimeException("Request not found");
+        }
+
+        ClarificationConversation conversation = new ClarificationConversation();
+        conversation.setId(clarificationService.createClarificationConversationId());
+        conversation.setRequest(request);
+        conversation.setOpen(true);
+        conversation.setSubject(req.get("subject"));
+        conversation.setCreateAt(LocalDate.now());
+
+        clarificationConversationService.save(conversation);
+
+        return Map.of("id", conversation.getId()); // 🔥 QUAN TRỌNG
+    }
+
+    @MessageMapping("/chat.send/{conversationId}")
+    public void sendMessage(@DestinationVariable String conversationId,
+                            Message message,
+                            Principal principal) {
+
+        ClarificationConversation c =
+                clarificationService.getConversationById(conversationId);
+
+        Users sender = userService.getByEmail(principal.getName());
+
+        message.setId(UUID.randomUUID().toString());
+        message.setCreateAt(LocalDateTime.now());
+        message.setClarificationConversation(c);
+        message.setSender(sender);
+        message.setReceiver(c.getRequest().getUser());
+
+        messService.save(message);
+
+        messTemplate.convertAndSend(
+                "/topic/conversation/" + conversationId,
+                message
+        );
+    }
+
 }
 
 

@@ -236,8 +236,11 @@
             </div>
 
             <!-- RIGHT -->
+            <!-- ===== TRAO ĐỔI ===== -->
             <div class="table-card">
                 <h3><i class="fas fa-comments"></i> Trao đổi</h3>
+
+                <input type="hidden" id="requestId" th:value="${feedback.id}">
 
                 <!-- CHƯA CÓ -->
                 <div th:if="${conversation == null}" class="no-chat">
@@ -252,6 +255,53 @@
                     <b th:text="${conversation.subject}"></b>
                     <p>Nhấn để mở trao đổi</p>
                 </div>
+            </div>
+
+            <!-- ===== POPUP ===== -->
+            <div id="createPopup" class="popup-overlay">
+                <div class="popup-box">
+                    <h3>Tạo cuộc trao đổi</h3>
+
+                    <input type="text" id="subjectInput" placeholder="Nhập tiêu đề...">
+
+                    <div class="popup-actions">
+                        <button onclick="closePopup()">Hủy</button>
+                        <button class="primary" onclick="submitConversation()">Bắt đầu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== CHAT BOX ===== -->
+            <div id="chatBox" class="chat-box"
+                 th:data-id="${conversation != null ? conversation.id : ''}">
+
+                <div class="chat-header">
+                    <h3 th:text="${conversation != null ? conversation.subject : ''}"></h3>
+                    <button onclick="closeChat()">✖</button>
+                </div>
+
+                <div class="chat-body">
+
+                    <div th:each="msg : ${conversation != null ? conversation.messages : T(java.util.Collections).emptyList()}">
+
+                        <div class="msg right" th:if="${msg.sender.id == currentUser.id}">
+                            <div class="bubble" th:text="${msg.content}"></div>
+                        </div>
+
+                        <div class="msg left" th:if="${msg.sender.id != currentUser.id}">
+                            <div class="bubble" th:text="${msg.content}"></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="chat-input">
+                    <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
+                    <button onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
 
             </div>
 
@@ -260,5 +310,190 @@
     </main>
 
 </div>
+
+<!-- ===== LIB WEBSOCKET ===== -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs"></script>
+
+<script>
+    /* ================= GLOBAL ================= */
+    let stompClient = null;
+    let currentConversationId = null;
+
+    // lấy requestId (SỬA BUG)
+    let requestInput = document.getElementById("requestId");
+    let requestId = requestInput ? requestInput.value : null;
+
+
+    /* ================= POPUP ================= */
+    function openCreatePopup() {
+        document.getElementById("createPopup").style.display = "flex";
+    }
+
+    function closePopup() {
+        document.getElementById("createPopup").style.display = "none";
+    }
+
+
+    /* ================= CHAT BOX ================= */
+    function openChatBox() {
+        let chatBox = document.getElementById("chatBox");
+        chatBox.classList.add("active");
+
+        let id = chatBox.dataset.id;
+
+        if (id && !stompClient) {
+            currentConversationId = id;
+            connectSocket(id);
+        }
+
+        scrollToBottom();
+    }
+
+    function closeChat() {
+        document.getElementById("chatBox").classList.remove("active");
+    }
+
+
+    /* ================= CREATE CONVERSATION ================= */
+    function submitConversation() {
+        let subject = document.getElementById("subjectInput").value;
+
+        if (!subject.trim()) {
+            alert("Vui lòng nhập tiêu đề!");
+            return;
+        }
+
+        fetch('/staff/create-conversation', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                subject: subject,
+                requestId: requestId
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+
+                // lấy conversationId
+                currentConversationId = data.id;
+
+                // mở chat
+                openChatBox();
+
+                // kết nối websocket
+                connectSocket(currentConversationId);
+
+                closePopup();
+            })
+            .catch(err => console.error("Create conversation error:", err));
+    }
+
+
+    /* ================= CONNECT WEBSOCKET ================= */
+    function connectSocket(conversationId) {
+
+        let socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function () {
+
+            console.log("Connected WebSocket");
+
+            // subscribe theo conversation
+            stompClient.subscribe('/topic/conversation/' + conversationId, function (msg) {
+
+                let message = JSON.parse(msg.body);
+                renderMessage(message);
+
+            });
+
+        }, function (error) {
+            console.error("WebSocket error:", error);
+        });
+    }
+
+
+    /* ================= SEND MESSAGE ================= */
+    function sendMessage() {
+        let input = document.getElementById("messageInput");
+        let content = input.value;
+
+        if (!content.trim()) return;
+
+        if (!stompClient) {
+            alert("Chưa kết nối chat!");
+            return;
+        }
+
+        stompClient.send(
+            "/app/chat.send/" + currentConversationId,
+            {},
+            JSON.stringify({
+                content: content
+            })
+        );
+
+        input.value = "";
+    }
+
+
+    /* ================= ENTER SEND ================= */
+    document.addEventListener("DOMContentLoaded", () => {
+        let input = document.getElementById("messageInput");
+
+        if (input) {
+            input.addEventListener("keypress", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+    });
+
+
+    /* ================= RENDER MESSAGE ================= */
+    function renderMessage(msg) {
+
+        let chatBody = document.querySelector(".chat-body");
+
+        // check sender (nếu có currentUserId)
+        let isMe = false;
+        if (window.currentUserId && msg.sender && msg.sender.id) {
+            isMe = msg.sender.id === window.currentUserId;
+        }
+
+        let html = `
+        <div class="msg ${isMe ? 'right' : 'left'}">
+            <div class="bubble">${msg.content}</div>
+            <span class="time">${formatTime(msg.createAt)}</span>
+        </div>
+    `;
+
+        chatBody.innerHTML += html;
+
+        scrollToBottom();
+    }
+
+
+    /* ================= FORMAT TIME ================= */
+    function formatTime(dateTime) {
+        if (!dateTime) return "";
+
+        let date = new Date(dateTime);
+        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+
+    /* ================= AUTO SCROLL ================= */
+    function scrollToBottom() {
+        let chatBody = document.querySelector(".chat-body");
+        if (chatBody) {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    }
+</script>
+
 </body>
 </html>

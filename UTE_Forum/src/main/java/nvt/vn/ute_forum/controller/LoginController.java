@@ -95,7 +95,7 @@ public class LoginController {
     }
 
     @PostMapping("/change-password")
-    public String changePasword(@RequestParam String currentpassword, @RequestParam String newpassword, @RequestParam String confirmnewpassword, @AuthenticationPrincipal UserPrincipal userPrincipal, RedirectAttributes redirectAttributes){
+    public String changePasword(@RequestParam String currentpassword, @RequestParam String newpassword, @RequestParam String comfirmnewpassword, @AuthenticationPrincipal UserPrincipal userPrincipal, RedirectAttributes redirectAttributes){
 
         if(!usersService.overLapByPassword(currentpassword, userPrincipal.getUsername())){
             redirectAttributes.addFlashAttribute("error", "Mật khẩu hiện tại không đúng, vui lòng thử lại");
@@ -107,7 +107,7 @@ public class LoginController {
             return "redirect:/change-password";
         }
 
-        if(!newpassword.equals(confirmnewpassword)){
+        if(!newpassword.equals(comfirmnewpassword)){
             redirectAttributes.addFlashAttribute("error", "Mật khẩu xác nhận không khớp, vui lòng thử lại");
             return "redirect:/change-password";
         }

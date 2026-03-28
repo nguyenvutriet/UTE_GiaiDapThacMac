@@ -59,4 +59,25 @@ public class ClarificationConversationService {
         return clarificationConversationRepo.findByRequestId(requestId);
     }
 
+    public String createClarificationConversationId(){
+        String id = "CC" + System.currentTimeMillis();
+        while (clarificationConversationRepo.existsById(id)) {
+            id = "CC" + System.currentTimeMillis();
+        }
+        return id;
+    }
+
+    public void save(ClarificationConversation conversation) {
+        if (conversation != null) {
+            clarificationConversationRepo.save(conversation);
+        }
+    }
+
+
+    public ClarificationConversation getConversationById(String conversationId) {
+        if (conversationId == null || conversationId.isBlank()) {
+            return null;
+        }
+        return clarificationConversationRepo.findById(conversationId).orElse(null);
+    }
 }

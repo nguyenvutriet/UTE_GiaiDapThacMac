@@ -29,11 +29,6 @@ public class Message {
     @NotFound(action = NotFoundAction.IGNORE)
     private Users sender;
 
-    // Keep backward compatibility with DB schema where message.user_id is NOT NULL.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @NotFound(action = NotFoundAction.IGNORE)
-    private Users user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviever_id", nullable = false)
@@ -103,13 +98,6 @@ public class Message {
         this.sender = sender;
     }
 
-    public Users getUser() {
-        return user;
-    }
-
-    public void setUser(Users user) {
-        this.user = user;
-    }
 
     public Users getReceiver() {
         return receiver;

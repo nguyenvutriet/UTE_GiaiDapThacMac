@@ -381,5 +381,10 @@ public class RequestService {
                 .orElse(null);
     }
 
+    public Request getRequestById(String requestId) {
+        return requestRepo.findById(requestId).orElse(null);
+    }
+
+
 }
 

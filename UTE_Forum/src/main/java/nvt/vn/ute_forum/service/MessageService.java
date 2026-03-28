@@ -71,7 +71,7 @@ public class MessageService {
         message.setId(idGeneratorService.nextMessageId());
         message.setClarificationConversation(conversation);
         message.setSender(sender);
-        message.setUser(sender);
+//        message.setUser(sender);
         message.setReceiver(resolveReceiver(requestId, sender));
         message.setCreateAt(LocalDateTime.now());
         message.setContent(serializePayload(text, attachments));
@@ -368,6 +368,12 @@ public class MessageService {
 
     private String nullSafe(String value) {
         return value == null ? "" : value;
+    }
+
+    public void save(Message message) {
+        if (message != null) {
+            messageRepo.save(message);
+        }
     }
 
     public record ChatAttachment(String name, String url, String type) {
