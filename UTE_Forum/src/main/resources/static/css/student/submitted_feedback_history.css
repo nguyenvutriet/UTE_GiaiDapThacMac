@@ -521,6 +521,33 @@ body {
   flex-wrap: wrap;
 }
 
+.detail-meta-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.forum-post-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.forum-post-btn:hover {
+  background: #dbeafe;
+}
+
 .meta-chip {
   display: inline-flex;
   align-items: center;
@@ -531,6 +558,34 @@ body {
   color: #475569;
   font-size: 11px;
   font-weight: 600;
+}
+
+.meta-chip.mode-chip {
+  font-weight: 700;
+}
+
+.meta-chip.mode-public {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.meta-chip.mode-department {
+  color: #0f766e;
+  background: #ecfeff;
+  border-color: #67e8f9;
+}
+
+.meta-chip.time-chip {
+  color: #334155;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.meta-chip.dept-chip {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
 }
 
 .detail-description {
@@ -544,6 +599,10 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.detail-bottom-grid.single-panel {
+  grid-template-columns: 1fr;
 }
 
 .detail-panel {
@@ -907,7 +966,11 @@ body {
   color: #64748b;
   background: #fff;
   cursor: pointer;
-    font-size: 12px;
+  font-size: 12px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
 }
 

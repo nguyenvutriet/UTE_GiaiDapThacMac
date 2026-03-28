@@ -378,21 +378,185 @@ textarea {
   font-size: 14px;
 }
 
+.selected-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.selected-file-remove {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.selected-file-remove:hover {
+  color: #dc2626;
+}
+
+.category-combobox {
+  position: relative;
+  margin-top: 4px;
+}
+
+.category-combobox-toggle {
+  width: 100%;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14px;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.category-combobox-toggle::after {
+  content: "▾";
+  float: right;
+  color: #64748b;
+}
+
+.category-combobox-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #d7dee8;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  z-index: 30;
+  padding: 6px;
+}
+
+.category-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.category-option:hover {
+  background: #f1f5f9;
+}
+
+.category-option-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+.category-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #1e3a8a;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.category-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-chip-remove {
+  border: 0;
+  background: transparent;
+  color: #1e3a8a;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.category-chip-remove:hover {
+  color: #dc2626;
+}
+
 .right-column {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
+.right-column .panel {
+  min-height: 360px;
+}
+
+/* Tiêu đề */
+.panel h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+/* Row radio */
 .switch-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+/* Text bên trái */
+.switch-row > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.switch-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.switch-row small {
+    color: #777;
+}
+
+/* Radio to + đẹp */
+.switch-row input[type="radio"] {
+    width: 22px;
+    height: 22px;
+    accent-color: #4CAF50; /* màu khi chọn */
+    cursor: pointer;
+}
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 12px;
 }
 
 .switch-title {
@@ -469,4 +633,3 @@ textarea {
     font-size: 18px;
   }
 }
-

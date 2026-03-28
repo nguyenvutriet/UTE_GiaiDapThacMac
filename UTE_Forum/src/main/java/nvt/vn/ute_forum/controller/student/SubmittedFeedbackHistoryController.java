@@ -1,4 +1,4 @@
-package nvt.vn.ute_forum.controller;
+package nvt.vn.ute_forum.controller.student;
 
 
 import nvt.vn.ute_forum.model.ForwardingLog;
@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 @Controller
 public class SubmittedFeedbackHistoryController {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final int HISTORY_PAGE_SIZE = 9;
 
     enum RequestStatusEnum {
         PENDING("Đang chờ tiếp nhận", "pending", "Đang chờ tiếp nhận"),
@@ -94,6 +95,7 @@ public class SubmittedFeedbackHistoryController {
                        @RequestParam(value = "departmentId", required = false) String departmentId,
                        @RequestParam(value = "status", required = false) String status,
                        @RequestParam(value = "categoryId", required = false) String categoryId,
+                       @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
                        Authentication authentication,
                        Model model) {
         Users user = resolveAuthenticatedUser(authentication);
@@ -102,22 +104,40 @@ public class SubmittedFeedbackHistoryController {
         }
 
         List<Request> allRequests = requestService.getRequestsByUserId(user.getId());
-        List<Request> requests = applyFilters(allRequests, keyword, departmentId, status, categoryId);
+        List<Request> filteredRequests = applyFilters(allRequests, keyword, departmentId, status, categoryId);
         Request selectedRequest = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
+        int totalItems = filteredRequests.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / HISTORY_PAGE_SIZE));
+        int currentPage = page == null ? 1 : page;
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+
+        List<Request> requests = filteredRequests;
+        if (selectedRequest == null) {
+            int fromIndex = (currentPage - 1) * HISTORY_PAGE_SIZE;
+            int toIndex = Math.min(fromIndex + HISTORY_PAGE_SIZE, totalItems);
+            requests = filteredRequests.subList(fromIndex, toIndex);
+        }
         List<ForwardingLog> forwardingLogs = selectedRequest == null
                 ? new ArrayList<>()
                 : forwardingLogService.getByRequestId(selectedRequest.getId());
         List<RequestStatusHistory> statusHistories = selectedRequest == null
                 ? new ArrayList<>()
                 : requestStatusHistoryService.getByRequestId(selectedRequest.getId());
-        ClarificationConversation selectedConversation = selectedRequest == null
-                ? null
-                : clarificationConversationService.findByRequestId(selectedRequest.getId()).orElse(null);
-        boolean chatEnabled = selectedConversation != null && Boolean.TRUE.equals(selectedConversation.getOpen());
-        List<MessageService.ChatMessageView> conversationMessages = chatEnabled
+        List<OpenConversationItem> openConversations = selectedRequest == null
+                ? new ArrayList<>()
+                : buildOpenConversations(user.getId(), selectedRequest.getId());
+        boolean chatEnabled = !openConversations.isEmpty();
+        ClarificationConversation selectedConversation = chatEnabled
+                ? clarificationConversationService.findOpenByRequestForStudent(selectedRequest.getId(), user.getId()).orElse(null)
+                : null;
+        List<MessageService.ChatMessageView> conversationMessages = (chatEnabled && selectedConversation != null)
                 ? messageService.getConversationMessages(selectedConversation.getId(), user.getId())
                 : new ArrayList<>();
-        List<OpenConversationItem> openConversations = buildOpenConversations(user.getId());
 
         model.addAttribute("user", user);
         model.addAttribute("roleLabel", "Sinh vien");
@@ -126,13 +146,17 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("selectedTimeline", buildTimeline(selectedRequest, statusHistories, forwardingLogs));
         model.addAttribute("currentHandlingDepartment", resolveCurrentDepartment(selectedRequest, forwardingLogs));
         model.addAttribute("chatEnabled", chatEnabled);
-        model.addAttribute("chatConversationId", chatEnabled ? selectedConversation.getId() : "");
+        model.addAttribute("chatConversationId", (chatEnabled && selectedConversation != null) ? selectedConversation.getId() : "");
         model.addAttribute("chatMessages", conversationMessages);
         model.addAttribute("openConversations", openConversations);
         model.addAttribute("keyword", safeValue(keyword));
         model.addAttribute("departmentId", safeValue(departmentId));
         model.addAttribute("status", safeValue(status));
         model.addAttribute("categoryId", safeValue(categoryId));
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("hasPrevious", currentPage > 1);
+        model.addAttribute("hasNext", currentPage < totalPages);
         model.addAttribute("departmentOptions", buildDepartmentOptions(allRequests));
         model.addAttribute("categoryOptions", buildCategoryOptions(allRequests));
         model.addAttribute("statusOptions", buildStatusOptions(allRequests));
@@ -160,7 +184,13 @@ public class SubmittedFeedbackHistoryController {
 
         ClarificationConversation conversation = conversationOptional.get();
         String requestId = conversation.getRequest() == null ? "" : safeValue(conversation.getRequest().getId());
-        String subject = conversation.getRequest() == null ? "Trao đổi" : safeValue(conversation.getRequest().getSubject());
+        String subject = safeValue(conversation.getSubject());
+        if (subject.isBlank() && conversation.getRequest() != null) {
+            subject = safeValue(conversation.getRequest().getSubject());
+        }
+        if (subject.isBlank()) {
+            subject = "Trao đổi";
+        }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("conversationId", conversation.getId());
@@ -170,40 +200,55 @@ public class SubmittedFeedbackHistoryController {
         return ResponseEntity.ok(response);
     }
 
-    private List<OpenConversationItem> buildOpenConversations(String userId) {
-        return clarificationConversationService.getOpenConversationsByStudentId(userId)
-                .stream()
-                .filter(Objects::nonNull)
-                .map(conversation -> {
-                    Request request = conversation.getRequest();
-                    String subject = request == null ? "Trao đổi" : safeValue(request.getSubject());
-                    String requestId = request == null ? "" : safeValue(request.getId());
-                    String dateLabel = conversation.getCreateAt() == null
-                            ? ""
-                            : conversation.getCreateAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    private List<OpenConversationItem> buildOpenConversations(String userId, String requestId) {
+        if (requestId == null || requestId.isBlank()) {
+            return new ArrayList<>();
+        }
 
-                    String preview = messageService.getConversationMessages(conversation.getId(), userId)
-                            .stream()
-                            .reduce((first, second) -> second)
-                            .map(last -> {
-                                String text = safeValue(last.text()).trim();
-                                if (!text.isBlank()) {
-                                    return text;
-                                }
-                                return "Nhấn để xem chi tiết cuộc trao đổi...";
-                            })
-                            .orElse("Nhấn để xem chi tiết cuộc trao đổi...");
+        Optional<ClarificationConversation> conversationOptional = clarificationConversationService
+                .findOpenByRequestForStudent(requestId, userId);
 
-                    return new OpenConversationItem(
-                            safeValue(conversation.getId()),
-                            requestId,
-                            subject,
-                            dateLabel,
-                            preview,
-                            "Đang mở"
-                    );
+        if (conversationOptional.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        ClarificationConversation conversation = conversationOptional.get();
+        Request request = conversation.getRequest();
+        String subject = safeValue(conversation.getSubject());
+        if (subject.isBlank() && request != null) {
+            subject = safeValue(request.getSubject());
+        }
+        if (subject.isBlank()) {
+            subject = "Trao đổi";
+        }
+        String resolvedRequestId = request == null ? "" : safeValue(request.getId());
+        String dateLabel = conversation.getCreateAt() == null
+                ? ""
+                : conversation.getCreateAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        List<MessageService.ChatMessageView> messages = messageService.getConversationMessages(conversation.getId(), userId);
+
+        String preview = messages.stream()
+                .reduce((first, second) -> second)
+                .map(last -> {
+                    String text = safeValue(last.text()).trim();
+                    if (!text.isBlank()) {
+                        return text;
+                    }
+                    return "Nhấn để xem chi tiết cuộc trao đổi...";
                 })
-                .collect(Collectors.toList());
+                .orElse("Nhấn để xem chi tiết cuộc trao đổi...");
+
+        OpenConversationItem item = new OpenConversationItem(
+                safeValue(conversation.getId()),
+                resolvedRequestId,
+                subject,
+                dateLabel,
+                preview,
+                "Đang mở"
+        );
+
+        return new ArrayList<>(Collections.singletonList(item));
     }
 
     private List<Request> applyFilters(List<Request> source,

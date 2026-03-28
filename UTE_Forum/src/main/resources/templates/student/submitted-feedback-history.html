@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lịch sử góp ý</title>
+  <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
   <link rel="stylesheet" th:href="@{/css/student/submitted_feedback_history.css}">
 </head>
 <body>
@@ -103,7 +104,7 @@
           </div>
           <div class="card-footer">
             <time class="request-date" th:text="${req.timeCreate != null ? #temporals.format(req.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</time>
-            <a class="detail-btn" th:href="@{/api/history(requestId=${req.id}, keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">Xem chi tiết</a>
+            <a class="detail-btn" th:href="@{/api/history(requestId=${req.id}, keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId}, page=${currentPage})}">Xem chi tiết</a>
           </div>
         </article>
 
@@ -115,7 +116,7 @@
 
       <section class="request-detail" th:if="${selectedRequest != null}">
         <div class="detail-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <a class="back-link" th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId})}">&larr; Quay lại danh sách</a>
+          <a class="back-link" th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId}, page=${currentPage})}">&larr; Quay lại danh sách</a>
           <div th:if="${selectedRequest.currentStatus == 'PENDING'}">
 
             <a class="btn-action btn-edit"
@@ -136,12 +137,20 @@
 
         <article class="detail-top-card">
           <h2 th:text="${selectedRequest.subject}">Tiêu đề góp ý</h2>
-          <div class="detail-meta">
-            <span class="status-pill"
-                  th:classappend="${selectedRequest.currentStatus == 'PENDING' ? ' pending' : selectedRequest.currentStatus == 'FORWARDING' ? ' forwarding' : selectedRequest.currentStatus == 'APPROVED' ? ' approved' : selectedRequest.currentStatus == 'RESOLVED' ? ' done' : selectedRequest.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
-                  th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
-            <span class="meta-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
-            <span class="meta-chip" th:text="${'Phòng ban tiếp nhận: ' + (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+          <div class="detail-meta-row">
+            <div class="detail-meta">
+              <span class="status-pill"
+                    th:classappend="${selectedRequest.currentStatus == 'PENDING' ? ' pending' : selectedRequest.currentStatus == 'FORWARDING' ? ' forwarding' : selectedRequest.currentStatus == 'APPROVED' ? ' approved' : selectedRequest.currentStatus == 'RESOLVED' ? ' done' : selectedRequest.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
+                    th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
+              <span class="meta-chip mode-chip"
+                    th:classappend="${selectedRequest.postStatus == 'PUBLIC'} ? ' mode-public' : ' mode-department'"
+                    th:text="${selectedRequest.postStatus == 'PUBLIC' ? 'Công khai' : 'Gửi đến phòng ban'}">Chế độ gửi: Gửi đến phòng ban</span>
+              <span class="meta-chip time-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
+              <span class="meta-chip dept-chip" th:text="${ (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+            </div>
+            <a class="forum-post-btn"
+               th:if="${selectedRequest.postStatus == 'PUBLIC'}"
+               th:href="@{'/api/forum/' + ${selectedRequest.id}}">Xem bài đăng</a>
           </div>
           <h3>Nội dung:</h3>
           <p class="detail-description" th:text="${selectedRequest.description}">Mô tả góp ý...</p>
@@ -151,7 +160,7 @@
           <ul th:if="${not #lists.isEmpty(selectedRequest.fileAttachments)}">
             <li th:each="file : ${selectedRequest.fileAttachments}">
               <a th:href="${file.fileUrl}" th:text="${file.fileName}" target="_blank">attachment</a>
-              <span th:text="${' (' + file.fileType + ')'}">(application/pdf)</span>
+<!--              <span th:text="${' (' + file.fileType + ')'}"> </span>-->
             </li>
           </ul>
         </article>
@@ -181,7 +190,7 @@
           <div class="detail-panel">
             <h3>Trao đổi</h3>
             <div class="chat-empty" th:if="${#lists.isEmpty(openConversations)}">
-              <p>Chưa có cuộc hội thoại mở.</p>
+              <p>Chưa có cuộc trò chuyện nào.</p>
             </div>
 
             <div class="conversation-list" id="chat-root" th:if="${not #lists.isEmpty(openConversations)}" th:attr="data-current-user-id=${user.id}">
@@ -201,8 +210,8 @@
           </div>
         </div>
 
-        <div class="chat-drawer-backdrop" id="chat-drawer-backdrop" hidden></div>
-        <aside class="chat-drawer" id="chat-drawer" aria-hidden="true">
+        <div class="chat-drawer-backdrop" id="chat-drawer-backdrop" hidden th:if="${chatEnabled}"></div>
+        <aside class="chat-drawer" id="chat-drawer" aria-hidden="true" th:if="${chatEnabled}">
           <header class="chat-drawer-header">
             <div>
               <h3 id="chat-drawer-title">Trao đổi</h3>
@@ -226,10 +235,16 @@
         </aside>
       </section>
 
-      <div class="pagination" th:if="${selectedRequest == null}">
-        <button type="button" class="page-btn" disabled>&lt;</button>
-        <span>Trang 1 / 1</span>
-        <button type="button" class="page-btn" disabled>&gt;</button>
+      <div class="pagination" th:if="${selectedRequest == null and totalPages > 1}">
+        <a class="page-btn"
+           th:if="${hasPrevious}"
+           th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId}, page=${currentPage - 1})}">&lt;</a>
+        <button type="button" class="page-btn" th:if="${not hasPrevious}" disabled>&lt;</button>
+        <span th:text="${'Trang ' + currentPage + ' / ' + totalPages}">Trang 1 / 1</span>
+        <a class="page-btn"
+           th:if="${hasNext}"
+           th:href="@{/api/history(keyword=${keyword}, departmentId=${departmentId}, status=${status}, categoryId=${categoryId}, page=${currentPage + 1})}">&gt;</a>
+        <button type="button" class="page-btn" th:if="${not hasNext}" disabled>&gt;</button>
       </div>
     </section>
   </main>
@@ -239,3 +254,4 @@
 <script th:src="@{/js/student/submitted-feedback-history-chat.js}"></script>
 </body>
 </html>
+
