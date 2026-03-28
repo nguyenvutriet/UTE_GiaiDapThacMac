@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +104,9 @@ public class ClarificationChatController {
                     user.getId()
             );
 
+            // Broadcast đến CẢ HAI topic: sinh viên (/topic/clarification/) và staff (/topic/conversation/)
             messagingTemplate.convertAndSend("/topic/clarification/" + conversation.getId(), savedMessage);
+            messagingTemplate.convertAndSend("/topic/conversation/" + conversation.getId(), savedMessage);
         } catch (Exception ex) {
             LOGGER.error("Cannot send clarification message", ex);
         }
@@ -180,14 +183,29 @@ public class ClarificationChatController {
             throw new RuntimeException("Request not found");
         }
 
+        String mess = req.get("initialMessage");
+        Message message = new Message();
+        message.setId(UUID.randomUUID().toString());
+        message.setContent(mess);
+        message.setCreateAt(LocalDateTime.now());
+        message.setReceiver(request.getUser());
+        message.setSender(userPrincipal.getUser());
+        messService.save(message);
+
+        List<Message> messages = new ArrayList<>();
+        messages.add(message);
+
         ClarificationConversation conversation = new ClarificationConversation();
         conversation.setId(clarificationService.createClarificationConversationId());
         conversation.setRequest(request);
         conversation.setOpen(true);
         conversation.setSubject(req.get("subject"));
         conversation.setCreateAt(LocalDate.now());
+        conversation.setMessages(messages);
 
         clarificationConversationService.save(conversation);
+        message.setClarificationConversation(conversation);
+        messService.save(message);
 
         return Map.of("id", conversation.getId()); // 🔥 QUAN TRỌNG
     }
@@ -196,6 +214,8 @@ public class ClarificationChatController {
     public void sendMessage(@DestinationVariable String conversationId,
                             Message message,
                             Principal principal) {
+
+        System.out.println("Received message for conversation " + conversationId + ": " + message.getContent());
 
         ClarificationConversation c =
                 clarificationService.getConversationById(conversationId);
@@ -207,13 +227,40 @@ public class ClarificationChatController {
         message.setClarificationConversation(c);
         message.setSender(sender);
         message.setReceiver(c.getRequest().getUser());
-
         messService.save(message);
 
-        messTemplate.convertAndSend(
-                "/topic/conversation/" + conversationId,
-                message
+        c.getMessages().add(message);
+        clarificationService.save(c);
+        message.setClarificationConversation(c);
+        messService.save(message);
+
+        // Broadcast DTO để tránh lỗi Jackson serialize lazy entity
+        MessageDTO dto = new MessageDTO(
+                message.getId(),
+                message.getContent(),
+                message.getCreateAt() != null ? message.getCreateAt().toString() : null,
+                new SenderDTO(sender.getId(), sender.getFullName())
         );
+
+        // Broadcast đến CẢ HAI topic: staff (/topic/conversation/) và sinh viên (/topic/clarification/)
+        messTemplate.convertAndSend("/topic/conversation/" + conversationId, dto);
+        messTemplate.convertAndSend("/topic/clarification/" + conversationId, dto);
+    }
+
+    public record SenderDTO(String id, String fullName) {}
+
+    public record MessageDTO(String id, String content, String createAt, SenderDTO sender) {}
+
+    @PostMapping("/staff/close-conversation/{id}")
+    @ResponseBody
+    public ResponseEntity<?> closeConversation(@PathVariable String id) {
+        ClarificationConversation c = clarificationService.getConversationById(id);
+        if (c != null) {
+            c.setOpen(false);
+            clarificationService.save(c);
+            return ResponseEntity.ok(Map.of("message", "Closed successfully"));
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }

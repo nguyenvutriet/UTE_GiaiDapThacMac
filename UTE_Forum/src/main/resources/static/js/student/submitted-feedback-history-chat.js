@@ -91,23 +91,33 @@
   function appendMessage(message) {
     var article = document.createElement("article");
     article.className = "chat-message";
-    if (message.mine || (message.senderId && message.senderId === currentUserId)) {
+
+    // Hỗ trợ cả 2 format: MessageDTO từ staff và ChatMessageView từ clarification
+    var senderId = (message.sender && message.sender.id) ? message.sender.id
+                   : (message.senderId || "");
+    var senderName = (message.sender && message.sender.fullName) ? message.sender.fullName
+                     : (message.senderName || "Người dùng");
+    var text = message.content || message.text || "";
+    var rawTime = message.createAt || message.createdAt || message.time || null;
+    var timeLabel = rawTime ? formatChatTime(rawTime) : "";
+
+    var isMe = senderId && senderId === currentUserId;
+    if (isMe) {
       article.className += " mine";
     }
 
     var header = document.createElement("div");
     header.className = "chat-message-meta";
-
     var sender = document.createElement("strong");
-    sender.textContent = message.senderName || "Người dùng";
+    sender.textContent = senderName;
     header.appendChild(sender);
     article.appendChild(header);
 
-    if (message.text) {
-      var text = document.createElement("p");
-      text.className = "chat-message-text";
-      text.textContent = message.text;
-      article.appendChild(text);
+    if (text) {
+      var p = document.createElement("p");
+      p.className = "chat-message-text";
+      p.textContent = text;
+      article.appendChild(p);
     }
 
     if (Array.isArray(message.attachments) && message.attachments.length > 0) {
@@ -134,13 +144,23 @@
       }
     }
 
-    var timeLabel = document.createElement("div");
-    timeLabel.className = "chat-message-time";
-    timeLabel.textContent = message.time || "";
-    article.appendChild(timeLabel);
+    var timeEl = document.createElement("div");
+    timeEl.className = "chat-message-time";
+    timeEl.textContent = timeLabel;
+    article.appendChild(timeEl);
 
     messageList.appendChild(article);
     messageList.scrollTop = messageList.scrollHeight;
+  }
+
+  function formatChatTime(rawTime) {
+    try {
+      var d = new Date(rawTime);
+      if (isNaN(d.getTime())) return rawTime;
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch(e) {
+      return String(rawTime);
+    }
   }
 
   function openDrawer() {

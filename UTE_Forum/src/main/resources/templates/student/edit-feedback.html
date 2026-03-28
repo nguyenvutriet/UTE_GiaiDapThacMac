@@ -30,10 +30,10 @@
         <span>Thông báo</span>
         <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
       </a>
-      <a class="nav-item" href="#"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+      <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
     </nav>
 
-    <a class="logout-btn" href="#">Đăng xuất</a>
+    <a class="logout-btn" href="/logout">Đăng xuất</a>
   </aside>
 
   <main class="main-content">
