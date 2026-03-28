@@ -7,6 +7,9 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/css/staff/staff-style.css">
     <link rel="stylesheet" href="/department/ChatBox.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
 
     <!-- Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,7 +17,7 @@
 
 <body>
 <div class="staff-layout">
-  <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
 
     <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar">
@@ -244,7 +247,7 @@
                 <div class="chat-section-header">
                     <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>
                     <!-- Thêm type="button" để chống reload trang -->
-<!--                    <button type="button" class="btn-new-chat" onclick="showInlineForm()" th:if="${conversation == null}">+ Mới</button>-->
+                    <!--                    <button type="button" class="btn-new-chat" onclick="showInlineForm()" th:if="${conversation == null}">+ Mới</button>-->
                 </div>
 
                 <input type="hidden" id="requestId" th:value="${feedback.id}">
@@ -302,36 +305,36 @@
 
 
             <!-- ===== CHAT BOX (DẠNG SIDEBAR TRƯỢT TỪ BÊN PHẢI) ===== -->
-                <div id="chatBox"
-                     class="chat-sidebar"
-                     th:data-id="${conversation.id}">
+            <div id="chatBox"
+                 class="chat-sidebar"
+                 th:data-id="${conversation.id}">
 
-                    <!-- Header -->
-                    <div class="chat-header">
-                        <button type="button" class="btn-close-sidebar" onclick="closeChat()">✖</button>
+                <!-- Header -->
+                <div class="chat-header">
+                    <button type="button" class="btn-close-sidebar" onclick="closeChat()">✖</button>
 
-                        <div class="chat-header-main">
-                            <div class="title-row" >
-                                <h3 id="chatTitle" th:text="${conversation != null ? conversation.subject : 'Tiêu đề cuộc trò chuyện'}">Tiêu đề cuộc trò chuyện</h3>
+                    <div class="chat-header-main">
+                        <div class="title-row" >
+                            <h3 id="chatTitle" th:text="${conversation != null ? conversation.subject : 'Tiêu đề cuộc trò chuyện'}">Tiêu đề cuộc trò chuyện</h3>
+                        </div>
+                        <!-- KHỐI NÀY CHỨA TRẠNG THÁI (TRÁI) VÀ NÚT (PHẢI) -->
+                        <div class="status-row">
+                            <div class="status-text" th:if="${conversation != null and conversation.open}">
+                                Trạng thái: <span class="status-active">Đang mở</span>
                             </div>
-                            <!-- KHỐI NÀY CHỨA TRẠNG THÁI (TRÁI) VÀ NÚT (PHẢI) -->
-                            <div class="status-row">
-                                <div class="status-text" th:if="${conversation != null and conversation.open}">
-                                    Trạng thái: <span class="status-active">Đang mở</span>
-                                </div>
-                                <div class="status-text" th:if="${conversation != null and !conversation.open}">
-                                    Trạng thái: <span class="status-active">Đã đóng</span>
-                                </div>
-
-                                <button type="button" class="btn-end-chat" onclick="closeConversation()" th:if="${conversation != null and conversation.open}">
-                                    <i class="far fa-check-circle"></i> Đóng trao đổi
-                                </button>
+                            <div class="status-text" th:if="${conversation != null and !conversation.open}">
+                                Trạng thái: <span class="status-active">Đã đóng</span>
                             </div>
+
+                            <button type="button" class="btn-end-chat" onclick="closeConversation()" th:if="${conversation != null and conversation.open}">
+                                <i class="far fa-check-circle"></i> Đóng trao đổi
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Body / Messages -->
-                    <div class="chat-body">
+                <!-- Body / Messages -->
+                <div class="chat-body">
                     <div th:if="${conversation != null}">
                         <div th:each="msg : ${conversation.messages}" class="msg-container">
                             <!-- Tin nhắn của mình (Bên phải) -->
@@ -406,11 +409,6 @@
         document.getElementById("createPopup").style.display = "flex";
     }
 
-    function closePopup() {
-        document.getElementById("createPopup").style.display = "none";
-    }
-
-
     /* ================= CHAT BOX ================= */
     function openChatBox() {
         let chatBox = document.getElementById("chatBox");
@@ -426,20 +424,18 @@
 
         if (id) {
             currentConversationId = id;
+            // 🔥 Load history mỗi lần mở để có tin đầy đủ
+            loadHistory(id);
 
-            // ✅ Đảm bảo WebSocket luôn sẵn sàng
             if (!isConnected || !stompClient || !stompClient.connected) {
-                console.log("[WS] WebSocket not ready, connecting...");
                 connectSocket(id);
             }
-
             setComposerEnabled(true);
         } else {
             console.error("[WS] No conversation ID found!");
             setComposerEnabled(false);
         }
 
-        // Delay nhỏ để đảm bảo DOM update trước khi scroll
         setTimeout(() => {
             scrollToBottom();
         }, 100);
@@ -458,9 +454,9 @@
 
     /* ================= ĐÓNG TRAO ĐỔI ================= */
     function closeConversation() {
-        let chatInput = document.getElementById("chatInput");
-        if (chatInput) {
-            chatInput.style.display = "none";
+        let chatFooter = document.querySelector(".chat-footer");
+        if (chatFooter) {
+            chatFooter.style.display = "none";
         }
 
         let statusRow = document.querySelector(".status-row");
@@ -572,50 +568,117 @@
         });
     }
 
+    /* ================= UPLOAD FILES ================= */
+    function uploadFiles(files) {
+        if (!files || files.length === 0 || !requestId) {
+            return Promise.resolve([]);
+        }
+
+        let formData = new FormData();
+        formData.append("requestId", requestId);
+        for (let i = 0; i < files.length; i++) {
+            formData.append("files", files[i]);
+        }
+
+        return fetch("/api/history/chat/upload", {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin"
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Tải file lên thất bại");
+                }
+                return response.json();
+            })
+            .then(payload => {
+                if (!payload || !Array.isArray(payload.attachments)) {
+                    return [];
+                }
+                return payload.attachments;
+            });
+    }
+
     /* ================= SEND MESSAGE ================= */
     window.sendMessage = function() {
         console.log("==> [WS] SEND MESSAGE TRIGGERED <==");
+
         let input = document.getElementById("messageInput");
+        let fileInput = document.getElementById("chatFileInput");
+        let btnSend = document.getElementById("btnSendChat");
 
-        if (!currentConversationId) {
-            console.error("❌ currentConversationId is NULL!");
-            alert("Lỗi: Không tìm thấy ID cuộc trò chuyện!");
-            return;
-        }
-
-        if (!input) {
-            console.error("[WS] messageInput NOT FOUND in DOM!");
+        if (!requestId) {
+            console.error("❌ requestId is NULL!");
+            alert("Lỗi: Không tìm thấy ID request!");
             return;
         }
 
         let content = input.value.trim();
-        console.log("[WS] Input content:", content);
+        let files = fileInput && fileInput.files ? fileInput.files : [];
 
-        if (!content) {
-            console.warn("[WS] Content is empty, ignoring send.");
+        if (!content && files.length === 0) {
+            console.warn("[WS] Empty message!");
             return;
         }
 
-        // Xóa input ngay lập tức (UX tốt hơn)
-        input.value = "";
-        input.focus();
+        if (btnSend) btnSend.disabled = true;
 
-        let payload = { content: content };
-        console.log("[WS] isConnected=", isConnected, "stompClient=", !!stompClient, "payload=", payload);
+        // 🔥 CASE 1: KHÔNG CÓ FILE → gửi luôn
+        if (files.length === 0) {
+            let payload = {
+                requestId: requestId,
+                content: content,
+                attachments: []
+            };
+
+            sendPayload(payload);
+
+            // clear input
+            input.value = "";
+            input.focus();
+
+            if (btnSend) btnSend.disabled = false;
+            return; // 🔥 QUAN TRỌNG
+        }
+
+        // 🔥 CASE 2: CÓ FILE → upload rồi gửi
+        uploadFiles(files)
+            .then(attachments => {
+                let payload = {
+                    requestId: requestId,
+                    content: content,
+                    attachments: attachments || []
+                };
+
+                sendPayload(payload);
+
+                input.value = "";
+                if (fileInput) fileInput.value = "";
+                input.focus();
+            })
+            .catch(err => {
+                console.error("Upload error:", err);
+                alert("Lỗi khi tải tệp đính kèm!");
+            })
+            .finally(() => {
+                if (btnSend) btnSend.disabled = false;
+            });
+    };
+
+    function sendPayload(payload) {
+        console.log("[WS] Sending payload:", payload);
 
         if (isConnected && stompClient && stompClient.connected) {
-            // Đã kết nối: gửi ngay — tin sẽ hiện sau khi server broadcast lại
             _doSend(payload);
         } else {
-            // Chưa kết nối: đưa vào hàng đợi, thử kết nối
-            console.log("[WS] Not connected yet, queuing message...");
+            console.log("[WS] Not connected yet, queuing...");
             pendingMessages.push(payload);
+
             if (!stompClient && currentConversationId) {
-                console.log("[WS] Triggering reconnect from sendMessage...");
                 connectSocket(currentConversationId);
             }
         }
-    };
+    }
 
     window._doSend = function(payload) {
         if (!stompClient) {
@@ -623,16 +686,147 @@
             return;
         }
 
+        // include requestId for backend mapping
+        if (!payload.requestId) {
+            payload.requestId = requestId;
+        }
+
         let destination = "/app/chat.send/" + currentConversationId;
-        console.log("[WS] _doSend to " + destination, payload);
+
+        console.log("[WS] SEND TO:", destination, payload);
+
         try {
             stompClient.send(destination, {}, JSON.stringify(payload));
-            console.log("[WS] _doSend success!");
+            console.log("[WS] ✅ Sent!");
         } catch (e) {
-            console.error("[WS] _doSend ERROR: ", e);
-            alert("⚠️ Lỗi gửi tin nhắn: " + e.message);
+            console.error("[WS] ❌ Send error:", e);
         }
     };
+
+    /* ================= PARSE RAW CHAT_V1 PAYLOAD ================= */
+    function unescapeStr(val) {
+        if (!val) return "";
+        let res = "";
+        let escaped = false;
+        for (let i = 0; i < val.length; i++) {
+            let ch = val.charAt(i);
+            if (escaped) {
+                if (ch === 'n') res += '\n';
+                else res += ch;
+                escaped = false;
+                continue;
+            }
+            if (ch === '\\') {
+                escaped = true;
+                continue;
+            }
+            res += ch;
+        }
+        return res;
+    }
+
+    function splitEscaped(val, sep) {
+        let parts = [];
+        let cur = "";
+        let escaped = false;
+        for (let i = 0; i < val.length; i++) {
+            let ch = val.charAt(i);
+            if (escaped) {
+                cur += ch;
+                escaped = false;
+                continue;
+            }
+            if (ch === '\\') {
+                cur += ch;
+                escaped = true;
+                continue;
+            }
+            if (ch === sep) {
+                parts.push(cur);
+                cur = "";
+                continue;
+            }
+            cur += ch;
+        }
+        parts.push(cur);
+        return parts;
+    }
+
+    function parseMessagePayload(rawContent) {
+        if (!rawContent) return { text: "", attachments: [] };
+
+        const PREFIX = "CHAT_V1::";
+        const LEGACY_PREFIX = "CHAT_JSON::";
+        const SEPARATOR = "\n--FILES--\n";
+
+        if (rawContent.startsWith(LEGACY_PREFIX)) {
+            return { text: rawContent.substring(LEGACY_PREFIX.length), attachments: [] };
+        }
+
+        if (!rawContent.startsWith(PREFIX)) {
+            return { text: rawContent, attachments: [] };
+        }
+
+        let payload = rawContent.substring(PREFIX.length);
+        let sepIdx = payload.indexOf(SEPARATOR);
+
+        if (sepIdx < 0) {
+            return { text: unescapeStr(payload), attachments: [] };
+        }
+
+        let textPart = payload.substring(0, sepIdx);
+        let attachmentPart = payload.substring(sepIdx + SEPARATOR.length);
+
+        let attachments = [];
+        let lines = attachmentPart.split("\n");
+        for (let line of lines) {
+            if (!line.trim()) continue;
+            let parts = splitEscaped(line, '|');
+            if (parts.length >= 2) {
+                attachments.push({
+                    name: unescapeStr(parts[0]),
+                    url: unescapeStr(parts[1]),
+                    type: parts.length >= 3 ? unescapeStr(parts[2]) : "application/octet-stream"
+                });
+            }
+        }
+
+        return { text: unescapeStr(textPart), attachments: attachments };
+    }
+
+    function reformatExistingBubbles() {
+        let bubbles = document.querySelectorAll(".chat-body .bubble");
+        bubbles.forEach(b => {
+            // Check if already parsed
+            if (b.dataset.parsed === "true") return;
+            b.dataset.parsed = "true";
+
+            let raw = b.textContent;
+            let parsed = parseMessagePayload(raw);
+            b.innerHTML = escapeHtml(parsed.text);
+
+            if (parsed.attachments && parsed.attachments.length > 0) {
+                let ul = document.createElement("ul");
+                ul.style.listStyle = "none";
+                ul.style.paddingLeft = "0";
+                ul.style.marginTop = "8px";
+                parsed.attachments.forEach(att => {
+                    let li = document.createElement("li");
+                    li.style.marginTop = "4px";
+                    let a = document.createElement("a");
+                    a.href = att.url;
+                    a.target = "_blank";
+                    a.style.color = "inherit";
+                    a.style.textDecoration = "underline";
+                    a.innerHTML = '<i class="fas fa-paperclip"></i> ' + escapeHtml(att.name || "Tệp đính kèm");
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                });
+                // Thêm vào dưới text trong cùng bubble
+                b.appendChild(ul);
+            }
+        });
+    }
 
     /* ================= RENDER MESSAGE ================= */
     function renderMessage(msg) {
@@ -642,21 +836,52 @@
             return;
         }
 
-        // MessageDTO từ server: { id, content, createAt, sender: { id, fullName } }
+        // Tránh render lặp tin nhắn
+        if (msg.id) {
+            let exists = chatBody.querySelector(`[data-mid="${msg.id}"]`);
+            if (exists) return;
+        }
+
         let isMe = false;
-        let senderId = msg.sender ? (msg.sender.id || msg.sender.userId) : null;
+        let senderId = msg.sender ? (msg.sender.id || msg.sender.userId) : (msg.senderId || null);
         if (window.currentUserId && senderId) {
             isMe = String(senderId) === String(window.currentUserId);
         }
-        console.log("[WS] renderMessage isMe=", isMe, "senderId=", senderId, "currentUserId=", window.currentUserId);
 
-        let time = formatTime(msg.createAt || msg.createdAt || msg.create_at);
+        let senderName = "Người gửi";
+        if (isMe) {
+            senderName = "Bạn";
+        } else if (msg.sender && (msg.sender.fullName || msg.sender.name)) {
+            senderName = msg.sender.fullName || msg.sender.name;
+        } else if (msg.senderName) {
+            senderName = msg.senderName;
+        }
+
+        let textContent = msg.content || msg.text || "";
+        let rawTime = msg.createAt || msg.createdAt || msg.time || msg.create_at;
+        let time = formatTime(rawTime);
+
+        let attachmentsHtml = '';
+        if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
+            attachmentsHtml = '<ul style="list-style: none; padding-left: 0; margin-top: 8px;">';
+            msg.attachments.forEach(att => {
+                attachmentsHtml += `<li style="margin-top: 4px;">
+                    <a href="${att.url}" target="_blank" style="color: inherit; text-decoration: underline;">
+                        <i class="fas fa-paperclip"></i> ${escapeHtml(att.name || "Tệp đính kèm")}
+                    </a>
+                </li>`;
+            });
+            attachmentsHtml += '</ul>';
+        }
 
         let html = `
-        <div class="msg-container">
+        <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
             <div class="msg ${isMe ? 'right' : 'left'}">
-                <div class="bubble">${escapeHtml(msg.content)}</div>
-                <time>${time}</time>
+                <div class="bubble">
+                    <span class="sender-name">${escapeHtml(senderName)}</span>
+                    <div class="msg-content">${escapeHtml(textContent)}${attachmentsHtml}</div>
+                    <time>${time}</time>
+                </div>
             </div>
         </div>
         `;
@@ -679,9 +904,13 @@
     /* ================= FORMAT TIME ================= */
     function formatTime(dateTime) {
         if (!dateTime) return "";
-
         let date = new Date(dateTime);
-        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
     }
 
 
@@ -743,22 +972,59 @@
                 document.getElementById("inlineChatForm").style.display = "none";
                 document.getElementById("emptyChatState").style.display = "none";
 
-                // ✅ Hiển thị tin nhắn khởi tạo ngay lập tức
                 if (message && message.trim() !== "") {
                     renderMessage({
+                        id: 'init-' + Date.now(),
                         content: message,
                         createAt: new Date().toISOString(),
                         sender: { id: window.currentUserId }
                     });
                 }
 
-                // ✅ Mở chatBox và kết nối WebSocket
                 openChatBox();
             })
             .catch(err => {
                 console.error("Create conversation error:", err);
                 alert("Lỗi khi tạo cuộc trao đổi!");
             });
+    }
+
+    /* ================= LOAD HISTORY ================= */
+    function loadHistory(conversationId) {
+        fetch('/staff/conversation/' + conversationId + '/messages', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('History fetch failed');
+                return res.json();
+            })
+            .then(data => {
+                let chatBody = document.querySelector('.chat-body');
+                if (chatBody) {
+                    chatBody.innerHTML = '';
+                }
+                if (data && Array.isArray(data.messages)) {
+                    data.messages.forEach(m => {
+                        renderMessage({
+                            id: m.id,
+                            content: m.text || m.content,
+                            attachments: m.attachments,
+                            createAt: m.time,
+                            sender: { id: m.senderId },
+                            senderName: m.senderName
+                        });
+                    });
+                }
+                if (data && data.subject) {
+                    let title = document.getElementById('chatTitle');
+                    if (title) title.textContent = data.subject;
+                }
+                if (data && data.requestId) {
+                    requestId = data.requestId;
+                }
+            })
+            .catch(err => console.error('[WS] loadHistory error', err));
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -775,17 +1041,17 @@
 
         if (id && id.trim() !== "") {
             currentConversationId = id;
-            // Delay nhỏ để đảm bảo WebSocket stack sẵn sàng
+            loadHistory(id);
             setTimeout(() => {
                 connectSocket(id);
                 setComposerEnabled(true);
-            }, 500);
+            }, 300);
         } else {
-            console.log("[WS] No conversation ID on page load");
             setComposerEnabled(false);
         }
 
-        // Hỗ trợ nhấn Enter để gửi tin nhắn
+        reformatExistingBubbles();
+
         let msgInput = document.getElementById("messageInput");
         if (msgInput) {
             msgInput.addEventListener("keydown", function (e) {
@@ -799,8 +1065,8 @@
     });
 </script>
 
+
 </body>
 </html>
-
 
 

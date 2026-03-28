@@ -212,39 +212,41 @@ public class ClarificationChatController {
 
     @MessageMapping("/chat.send/{conversationId}")
     public void sendMessage(@DestinationVariable String conversationId,
-                            Message message,
+                            Map<String, Object> payload,
                             Principal principal) {
 
-        System.out.println("Received message for conversation " + conversationId + ": " + message.getContent());
+        System.out.println("Payload nhận được: " + payload);
+
+        String content = (String) payload.get("content");
 
         ClarificationConversation c =
                 clarificationService.getConversationById(conversationId);
 
         Users sender = userService.getByEmail(principal.getName());
 
+        Message message = new Message();
         message.setId(UUID.randomUUID().toString());
+        message.setContent(content);
         message.setCreateAt(LocalDateTime.now());
         message.setClarificationConversation(c);
         message.setSender(sender);
-        message.setReceiver(c.getRequest().getUser());
+
+        Request request = requestService.getRequestById(c.getRequest().getId());
+        Users receiver = request.getUser();
+
+        message.setReceiver(receiver);
+
         messService.save(message);
 
-        c.getMessages().add(message);
-        clarificationService.save(c);
-        message.setClarificationConversation(c);
-        messService.save(message);
-
-        // Broadcast DTO để tránh lỗi Jackson serialize lazy entity
+        // DTO gửi về client
         MessageDTO dto = new MessageDTO(
                 message.getId(),
                 message.getContent(),
-                message.getCreateAt() != null ? message.getCreateAt().toString() : null,
+                message.getCreateAt().toString(),
                 new SenderDTO(sender.getId(), sender.getFullName())
         );
 
-        // Broadcast đến CẢ HAI topic: staff (/topic/conversation/) và sinh viên (/topic/clarification/)
         messTemplate.convertAndSend("/topic/conversation/" + conversationId, dto);
-        messTemplate.convertAndSend("/topic/clarification/" + conversationId, dto);
     }
 
     public record SenderDTO(String id, String fullName) {}
