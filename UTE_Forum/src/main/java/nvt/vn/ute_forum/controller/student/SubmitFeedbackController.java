@@ -1,4 +1,4 @@
-package nvt.vn.ute_forum.controller;
+package nvt.vn.ute_forum.controller.student;
 
 import nvt.vn.ute_forum.model.Category;
 import nvt.vn.ute_forum.model.Department;
@@ -18,9 +18,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller
 public class SubmitFeedbackController {
+
+    private static final String DEFAULT_DEPARTMENT_ID = "DEP_CTSV";
 
     private final RequestService requestService;
     private final CategoryService categoryService;
@@ -73,6 +78,7 @@ public class SubmitFeedbackController {
         
         populateFormData(model, user);
         model.addAttribute("request", request);
+        model.addAttribute("selectedCategoryIds", request.getCategories().stream().map(Category::getId).collect(Collectors.toList()));
         return "student/edit-feedback";
     }
 
@@ -91,11 +97,10 @@ public class SubmitFeedbackController {
     @PostMapping({"/api/submit", "/feedback/send"})
     public String sendFeedback(@RequestParam(value = "subject") String subject,
                                @RequestParam(value = "description") String description,
-                               @RequestParam(value = "category") String categoryId,
-                               @RequestParam(value = "department") String departmentId,
+                               @RequestParam(value = "categories", required = false) List<String> categoryIds,
+                               @RequestParam(value = "department", required = false) String departmentId,
                                @RequestParam(value = "location", required = false) String location,
-                               @RequestParam(value = "anonymous", required = false) String anonymous,
-                               @RequestParam(value = "public_post", required = false) String publicPost,
+                               @RequestParam(value = "privacy", required = false) String privacy,
                                @RequestParam(value = "attachments", required = false) MultipartFile[] attachments,
                                Authentication authentication,
                                Model model) {
@@ -105,13 +110,16 @@ public class SubmitFeedbackController {
                 return "redirect:/login";
             }
 
-            Department department = departmentService.getAllDepartments().stream()
-                    .filter(d -> d.getId().equals(departmentId))
-                    .findFirst()
-                    .orElse(null);
+            if (!isValidPrivacyMode(privacy)) {
+                model.addAttribute("error", "Vui lòng chọn chế độ gửi: Công khai hoặc Gửi đến phòng ban.");
+                populateFormData(model, user);
+                return "student/submit-feedback";
+            }
+
+            Department department = resolveTargetDepartment(departmentId).orElse(null);
 
             if (department == null) {
-                model.addAttribute("error", "Phòng ban không tồn tại");
+                model.addAttribute("error", "Phòng ban không tồn tại (mặc định: DEP_CTSV).");
                 populateFormData(model, user);
                 return "student/submit-feedback";
             }
@@ -124,23 +132,16 @@ public class SubmitFeedbackController {
 
             request.setSubject(subject);
             request.setDescription(description);
-            request.setPostStatus(publicPost != null ? "PUBLIC" : "PRIVATE");
+            request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
             request.setDepartment(department);
 
-            if (categoryId != null && !categoryId.isEmpty()) {
-                Category category = categoryService.getAllCategories().stream()
-                        .filter(c -> c.getId().equals(categoryId))
-                        .findFirst()
-                        .orElse(null);
-                if (category != null) {
-                    request.getCategories().add(category);
-                }
-            }
+            request.getCategories().clear();
+            request.getCategories().addAll(resolveCategories(categoryIds));
 
             Request savedRequest = requestService.saveOrUpdate(request);
             requestStatusHistoryService.createInitialStatus(savedRequest, savedRequest.getCurrentStatus());
             
-            if (attachments != null && attachments.length > 0 && !attachments[0].isEmpty()) {
+            if (hasAnyAttachment(attachments)) {
                 fileAttachmentService.saveRequestAttachments(savedRequest, attachments);
             }
             
@@ -149,7 +150,7 @@ public class SubmitFeedbackController {
                     .filter(u -> "ROLE_DEPARTMENT".equals(u.getRole()))
                     .collect(java.util.stream.Collectors.toList());
                     
-            if (deptStaffs != null && !deptStaffs.isEmpty()) {
+            if (!deptStaffs.isEmpty()) {
                 Notification notification = new Notification();
                 notification.setId(idGeneratorService.nextNotificationId());
                 notification.setNotificationType("NEW_FEEDBACK_RECEIVED");
@@ -177,11 +178,10 @@ public class SubmitFeedbackController {
     public String updateFeedback(@RequestParam(value = "request_id") String requestId,
                                  @RequestParam(value = "subject") String subject,
                                  @RequestParam(value = "description") String description,
-                                 @RequestParam(value = "category") String categoryId,
-                                 @RequestParam(value = "department") String departmentId,
+                                 @RequestParam(value = "categories", required = false) List<String> categoryIds,
+                                 @RequestParam(value = "department", required = false) String departmentId,
                                  @RequestParam(value = "location", required = false) String location,
-                                 @RequestParam(value = "anonymous", required = false) String anonymous,
-                                 @RequestParam(value = "public_post", required = false) String publicPost,
+                                 @RequestParam(value = "privacy", required = false) String privacy,
                                  @RequestParam(value = "attachments", required = false) MultipartFile[] attachments,
                                  Authentication authentication,
                                  Model model) {
@@ -191,13 +191,22 @@ public class SubmitFeedbackController {
                 return "redirect:/login";
             }
 
-            Department department = departmentService.getAllDepartments().stream()
-                    .filter(d -> d.getId().equals(departmentId))
-                    .findFirst()
-                    .orElse(null);
+            if (!isValidPrivacyMode(privacy)) {
+                model.addAttribute("error", "Vui lòng chọn chế độ gửi: Công khai hoặc Gửi đến phòng ban.");
+                Request existingRequest = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
+                model.addAttribute("request", existingRequest);
+                model.addAttribute("selectedCategoryIds", existingRequest == null ? java.util.Collections.emptyList() : existingRequest.getCategories().stream().map(Category::getId).collect(Collectors.toList()));
+                populateFormData(model, user);
+                return "student/edit-feedback";
+            }
+
+            Department department = resolveTargetDepartment(departmentId).orElse(null);
 
             if (department == null) {
-                model.addAttribute("error", "Phòng ban không tồn tại");
+                model.addAttribute("error", "Phòng ban không tồn tại (mặc định: DEP_CTSV).");
+                Request existingRequest = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
+                model.addAttribute("request", existingRequest);
+                model.addAttribute("selectedCategoryIds", existingRequest == null ? java.util.Collections.emptyList() : existingRequest.getCategories().stream().map(Category::getId).collect(Collectors.toList()));
                 populateFormData(model, user);
                 return "student/edit-feedback"; // Return to edit feedback if error
             }
@@ -214,21 +223,13 @@ public class SubmitFeedbackController {
             request.getCategories().clear();
             request.setSubject(subject);
             request.setDescription(description);
-            request.setPostStatus(publicPost != null ? "PUBLIC" : "PRIVATE");
+            request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
             request.setDepartment(department);
 
-            if (categoryId != null && !categoryId.isEmpty()) {
-                Category category = categoryService.getAllCategories().stream()
-                        .filter(c -> c.getId().equals(categoryId))
-                        .findFirst()
-                        .orElse(null);
-                if (category != null) {
-                    request.getCategories().add(category);
-                }
-            }
+            request.getCategories().addAll(resolveCategories(categoryIds));
 
             Request savedRequest = requestService.saveOrUpdate(request);
-            if (attachments != null && attachments.length > 0 && !attachments[0].isEmpty()) {
+            if (hasAnyAttachment(attachments)) {
                 fileAttachmentService.saveRequestAttachments(savedRequest, attachments);
             }
             return "redirect:/api/history";
@@ -241,6 +242,7 @@ public class SubmitFeedbackController {
             
             Request request = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
             model.addAttribute("request", request);
+            model.addAttribute("selectedCategoryIds", request == null ? java.util.Collections.emptyList() : request.getCategories().stream().map(Category::getId).collect(Collectors.toList()));
             populateFormData(model, user);
             return "student/edit-feedback";
         }
@@ -274,6 +276,54 @@ public class SubmitFeedbackController {
         }
 
         return usersService.getByEmail(email.trim());
+    }
+
+    private boolean hasAnyAttachment(MultipartFile[] attachments) {
+        if (attachments == null || attachments.length == 0) {
+            return false;
+        }
+        for (MultipartFile attachment : attachments) {
+            if (attachment != null && !attachment.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isValidPrivacyMode(String privacy) {
+        return "public".equals(privacy) || "department".equals(privacy);
+    }
+
+    private java.util.Optional<Department> resolveTargetDepartment(String departmentId) {
+        if (departmentId == null || departmentId.isBlank()) {
+            return departmentService.getDepartmentById(DEFAULT_DEPARTMENT_ID);
+        }
+        java.util.Optional<Department> foundDepartment = departmentService.getDepartmentById(departmentId);
+        if (foundDepartment.isPresent()) {
+            return foundDepartment;
+        }
+        return departmentService.getDepartmentById(DEFAULT_DEPARTMENT_ID);
+    }
+
+    private List<Category> resolveCategories(List<String> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<String> cleanedIds = categoryIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (cleanedIds.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        return categoryService.getAllCategories().stream()
+                .filter(category -> cleanedIds.contains(category.getId()))
+                .collect(Collectors.toList());
     }
 }
 

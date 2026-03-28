@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gửi góp ý</title>
+  <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
   <link rel="stylesheet" th:href="@{/css/student/submit_feedback.css}">
 </head>
 <body>
@@ -74,15 +75,20 @@
           <article class="panel">
             <h2><span class="panel-icon">&#9638;</span>Thông tin liên quan</h2>
 
-            <label for="category">Danh mục <span class="required">*</span></label>
-            <select id="category" name="category">
+            <label for="categories">Danh mục</label>
+            <select id="category-picker" class="category-picker">
               <option value="">Chọn danh mục</option>
               <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.subject}">Danh mục</option>
             </select>
+            <select id="categories" name="categories" multiple hidden>
+              <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.subject}">Danh mục</option>
+            </select>
+            <div id="category-chip-list" class="category-chip-list" aria-live="polite"></div>
+<!--            <small>Chọn trên combobox để thêm danh mục. Bấm x trên nhãn để bỏ.</small>-->
 
-            <label for="department">Phòng ban <span class="required">*</span></label>
+            <label for="department">Phòng ban</label>
             <select id="department" name="department">
-              <option value="">Chọn phòng ban</option>
+              <option value="">Để trống sẽ gửi mặc định đến Phòng CTSV</option>
               <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}">Phòng ban</option>
             </select>
 
@@ -95,18 +101,18 @@
 
             <div class="switch-row">
               <div>
-                <p class="switch-title">Gửi ẩn danh</p>
-                <small>Ẩn thông tin cá nhân của bạn</small>
+                <p class="switch-title">Gửi đến phòng ban</p>
+                <small>Không đăng lên diễn đàn</small>
               </div>
-              <input type="checkbox" name="anonymous" value="true">
+              <input type="radio" name="privacy" value="department" required>
             </div>
 
             <div class="switch-row">
               <div>
-                <p class="switch-title">Công khai</p>
+                <p class="switch-title">Gửi công khai</p>
                 <small>Đăng lên diễn đàn</small>
               </div>
-              <input type="checkbox" name="public_post" value="true">
+              <input type="radio" name="privacy" value="public">
             </div>
           </article>
         </div>
@@ -125,6 +131,10 @@
     var pickButton = document.getElementById('pick-files-btn');
     var fileList = document.getElementById('selected-file-list');
     var attachmentBox = document.getElementById('attachment-box');
+    var categoryPicker = document.getElementById('category-picker');
+    var categoriesSelect = document.getElementById('categories');
+    var categoryChipList = document.getElementById('category-chip-list');
+    var selectedFiles = [];
 
     if (!fileInput || !pickButton || !fileList || !attachmentBox) {
       return;
@@ -137,10 +147,59 @@
       }
       for (var i = 0; i < files.length; i++) {
         var item = document.createElement('li');
+        item.className = 'selected-file-item';
         var sizeKb = Math.max(1, Math.round(files[i].size / 1024));
-        item.textContent = files[i].name + ' (' + sizeKb + ' KB)';
+        var text = document.createElement('span');
+        text.textContent = files[i].name + ' (' + sizeKb + ' KB)';
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'selected-file-remove';
+        removeBtn.textContent = 'x';
+        removeBtn.setAttribute('aria-label', 'Bo tep ' + files[i].name);
+        removeBtn.setAttribute('data-index', i);
+        removeBtn.addEventListener('click', function () {
+          var index = parseInt(this.getAttribute('data-index'), 10);
+          if (!isNaN(index)) {
+            selectedFiles.splice(index, 1);
+            syncFileInputWithSelectedFiles();
+            renderSelectedFiles(selectedFiles);
+          }
+        });
+
+        item.appendChild(text);
+        item.appendChild(removeBtn);
         fileList.appendChild(item);
       }
+    }
+
+    function syncFileInputWithSelectedFiles() {
+      var dt = new DataTransfer();
+      for (var i = 0; i < selectedFiles.length; i++) {
+        dt.items.add(selectedFiles[i]);
+      }
+      fileInput.files = dt.files;
+    }
+
+    function appendFiles(newFiles) {
+      if (!newFiles || newFiles.length === 0) {
+        return;
+      }
+
+      for (var i = 0; i < newFiles.length; i++) {
+        var incoming = newFiles[i];
+        var exists = selectedFiles.some(function (saved) {
+          return saved.name === incoming.name
+            && saved.size === incoming.size
+            && saved.lastModified === incoming.lastModified;
+        });
+        if (!exists) {
+          selectedFiles.push(incoming);
+        }
+      }
+
+      syncFileInputWithSelectedFiles();
+      renderSelectedFiles(selectedFiles);
     }
 
     pickButton.addEventListener('click', function () {
@@ -148,7 +207,7 @@
     });
 
     fileInput.addEventListener('change', function () {
-      renderSelectedFiles(fileInput.files);
+      appendFiles(fileInput.files);
     });
 
     attachmentBox.addEventListener('dragover', function (event) {
@@ -164,10 +223,79 @@
       event.preventDefault();
       attachmentBox.classList.remove('is-dragover');
       if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-        fileInput.files = event.dataTransfer.files;
-        renderSelectedFiles(fileInput.files);
+        appendFiles(event.dataTransfer.files);
       }
     });
+
+    function addCategoryFromPicker() {
+      if (!categoryPicker || !categoriesSelect) {
+        return;
+      }
+      var pickedValue = categoryPicker.value;
+      if (!pickedValue) {
+        return;
+      }
+
+      var option = categoriesSelect.querySelector('option[value="' + pickedValue + '"]');
+      if (option) {
+        option.selected = true;
+      }
+
+      categoryPicker.value = '';
+      renderCategoryChips();
+    }
+
+    function renderCategoryChips() {
+      if (!categoriesSelect || !categoryChipList) {
+        return;
+      }
+
+      categoryChipList.innerHTML = '';
+      var selectedOptions = categoriesSelect.selectedOptions;
+      if (!selectedOptions || selectedOptions.length === 0) {
+        return;
+      }
+
+      for (var i = 0; i < selectedOptions.length; i++) {
+        var option = selectedOptions[i];
+        var chip = document.createElement('span');
+        chip.className = 'category-chip';
+
+        var text = document.createElement('span');
+        text.className = 'category-chip-text';
+        text.textContent = option.text;
+
+        var removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'category-chip-remove';
+        removeButton.textContent = 'x';
+        removeButton.setAttribute('aria-label', 'Bo danh muc ' + option.text);
+        removeButton.setAttribute('data-value', option.value);
+        removeButton.addEventListener('click', function () {
+          var value = this.getAttribute('data-value');
+          for (var j = 0; j < categoriesSelect.options.length; j++) {
+            if (categoriesSelect.options[j].value === value) {
+              categoriesSelect.options[j].selected = false;
+              break;
+            }
+          }
+          renderCategoryChips();
+        });
+
+        chip.appendChild(text);
+        chip.appendChild(removeButton);
+        categoryChipList.appendChild(chip);
+      }
+    }
+
+    if (categoriesSelect && categoryChipList) {
+      categoriesSelect.addEventListener('change', renderCategoryChips);
+      renderCategoryChips();
+    }
+
+    if (categoryPicker) {
+      categoryPicker.addEventListener('change', addCategoryFromPicker);
+    }
   })();
 </script>
 </body>
