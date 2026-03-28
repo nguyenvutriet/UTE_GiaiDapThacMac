@@ -137,15 +137,20 @@
 
         <article class="detail-top-card">
           <h2 th:text="${selectedRequest.subject}">Tiêu đề góp ý</h2>
-          <div class="detail-meta">
-            <span class="status-pill"
-                  th:classappend="${selectedRequest.currentStatus == 'PENDING' ? ' pending' : selectedRequest.currentStatus == 'FORWARDING' ? ' forwarding' : selectedRequest.currentStatus == 'APPROVED' ? ' approved' : selectedRequest.currentStatus == 'RESOLVED' ? ' done' : selectedRequest.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
-                  th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
-            <span class="meta-chip mode-chip"
-                  th:classappend="${selectedRequest.postStatus == 'PUBLIC'} ? ' mode-public' : ' mode-department'"
-                  th:text="${selectedRequest.postStatus == 'PUBLIC' ? 'Công khai' : 'Gửi đến phòng ban'}">Chế độ gửi: Gửi đến phòng ban</span>
-            <span class="meta-chip time-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
-            <span class="meta-chip dept-chip" th:text="${ (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+          <div class="detail-meta-row">
+            <div class="detail-meta">
+              <span class="status-pill"
+                    th:classappend="${selectedRequest.currentStatus == 'PENDING' ? ' pending' : selectedRequest.currentStatus == 'FORWARDING' ? ' forwarding' : selectedRequest.currentStatus == 'APPROVED' ? ' approved' : selectedRequest.currentStatus == 'RESOLVED' ? ' done' : selectedRequest.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}"
+                    th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
+              <span class="meta-chip mode-chip"
+                    th:classappend="${selectedRequest.postStatus == 'PUBLIC'} ? ' mode-public' : ' mode-department'"
+                    th:text="${selectedRequest.postStatus == 'PUBLIC' ? 'Công khai' : 'Gửi đến phòng ban'}">Chế độ gửi: Gửi đến phòng ban</span>
+              <span class="meta-chip time-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
+              <span class="meta-chip dept-chip" th:text="${ (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+            </div>
+            <a class="forum-post-btn"
+               th:if="${selectedRequest.postStatus == 'PUBLIC'}"
+               th:href="@{'/api/forum/' + ${selectedRequest.id}}">Xem bài đăng</a>
           </div>
           <h3>Nội dung:</h3>
           <p class="detail-description" th:text="${selectedRequest.description}">Mô tả góp ý...</p>
