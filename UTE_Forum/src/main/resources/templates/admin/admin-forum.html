@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết bài viết</title>
+    <title>Admin - Diễn đàn</title>
     <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -111,7 +111,10 @@
     <main class="main-content">
         <header class="main-header">
             <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
-
+            <div class="forum-tabs">
+                <button class="tab-item active">Diễn đàn</button>
+                <button class="tab-item" onclick="window.location.href='/adannouncement/'">Thông báo</button>
+            </div>
             <div class="main-header-bottom"><h1 class="page-tab">DIỄN ĐÀN</h1></div>
         </header>
 
@@ -428,18 +431,18 @@
                     </span>
                 </div>
 
-                <div style="margin-top: 6px; display: flex; gap: 12px; border-top: 0.5px solid ${isPriority ? 'rgba(0,0,0,0.05)' : '#eee'}; padding-top: 4px;">
-                     ${cmt.canDelete ? `
-                        <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:10px; font-weight:600;">
-                            <i class="fas fa-trash-alt"></i> Xóa
-                        </span>
-                    ` : ''}
-                    ${!cmt.canDelete ? `
-                        <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#777; font-size:10px; font-weight:600;">
-                            <i class="fas fa-flag"></i> Báo cáo
-                        </span>
-                    ` : ''}
-                </div>
+                <div style="margin-top: 6px; display: flex; gap: 12px; border-top: 0.5px solid #eee; padding-top: 4px;">
+             ${cmt.canDelete ? `
+                <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:10px; font-weight:600;">
+                    <i class="fas fa-trash-alt"></i> Xóa
+                </span>
+            ` : ''}
+            ${!cmt.canDelete ? `
+                <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#777; font-size:10px; font-weight:600;">
+                    <i class="fas fa-flag"></i> Báo cáo
+                </span>
+            ` : ''}
+         </div>
             </div>
 
             <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">

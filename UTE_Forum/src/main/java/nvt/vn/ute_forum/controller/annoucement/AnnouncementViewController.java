@@ -52,38 +52,8 @@ public class AnnouncementViewController {
                     model.addAttribute("ann", announcementService.mapToDTO(ann));
                     return "student/announcementDetail";
                 })
-                .orElse("redirect:/api/forum/view");
+                .orElse("redirect:/announcement");
     }
 
-    @GetMapping("/filter")
-    public String listAnnouncements(
-            @RequestParam(required = false) String departmentId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "newest") String sort,
-            @AuthenticationPrincipal UserDetails userDetails, // 1. Thêm cái này
-            Model model) {
-
-        // 2. Kiểm tra đăng nhập (Giống hàm detail của bạn)
-        if (userDetails == null) return "redirect:/login";
-
-        // 3. Lấy thông tin User hiện tại để hiện lên Header/Sidebar
-        Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
-        model.addAttribute("user", currentUser);
-
-        // --- Logic lọc cũ của bạn ---
-        Sort sortOrder = sort.equals("oldest") ? Sort.by("date").ascending() : Sort.by("date").descending();
-
-        Specification<Announcement> spec = AnnoucementService.AnnouncementSpecifications.filterAnnouncements(
-                departmentId,  startDate, endDate);
-
-        List<Announcement> list = announcementRepository.findAll(spec, sortOrder);
-
-//         List<AnnouncementDTO> dtoList = list.stream().map(announcementService::mapToDTO).toList();
-//         model.addAttribute("announcements", dtoList);
-
-        model.addAttribute("announcements", list);
-
-        return "student/announcement-list"; // Đảm bảo đường dẫn file HTML đúng nhé
-    }
+    
 }

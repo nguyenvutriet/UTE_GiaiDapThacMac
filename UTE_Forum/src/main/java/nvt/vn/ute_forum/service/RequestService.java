@@ -35,12 +35,7 @@ public class RequestService {
     @Autowired
     private UsersRepo usersRepo;
 
-    /**
-     * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
-     * @param pageable phân trang
-     * @param currentUserId id user hiện tại
-     * @return Page<ForumPostDTO>
-     */
+
     public Page<ForumPostDTO> getPublicPosts(Pageable pageable, String currentUserId) {
         return requestRepo.findByPostStatus("PUBLIC", pageable)
                 .map(r -> {
@@ -51,7 +46,6 @@ public class RequestService {
                     dto.setDate(r.getTimeCreate());
                     dto.setStatus(r.getCurrentStatus());
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
-                    dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
                     dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
                     dto.setAttachments(mapAttachments(r));
 

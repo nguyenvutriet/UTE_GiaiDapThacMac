@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Thông báo</title>
+    <link rel="stylesheet" th:href="@{/css/student/announcementView.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="page-layout">
+    <aside class="sidebar">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Tên Admin</p>
+                    <p class="student-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span></a>
+            <a class="nav-item" href="/admin/reports"><span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span></a>
+            <a class="nav-item" href="/admin/category"><span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span></a>
+            <a class="nav-item active" href="/admin/forum/view"><span class="nav-icon">&#128172;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
+        </nav>
+
+        <a class="logout-btn" href="/logout">Đăng xuất</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+            <div class="forum-tabs">
+                <button class="tab-item" onclick="window.location.href='/admin/forum/view'">Diễn đàn</button>
+                <button class="tab-item active">Thông báo</button>
+            </div>
+            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
+        </header>
+
+        <section class="annoucement-container">
+
+            <div class="announcement-wrapper" style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <div class="quick-search-container">
+                    <div class="quick-search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input id="globalSearchInput"
+                               type="text"
+                               placeholder="Tìm thông báo..."
+                               autocomplete="off">
+                    </div>
+
+                    <!--                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>-->
+                    <ul id="searchResultList" class="list-group mt-2 shadow-sm">
+                    </ul>
+                </div>
+                <div id="announcement-list" class="announcement">
+                    <div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>
+                </div>
+                <div id="pagination-container" class="pagination-wrapper"></div>
+            </div>
+
+            <aside class="forum-sidebar">
+
+
+                <div class="sidebar-widget">
+                    <h3>Bộ lọc</h3>
+                    <form id="filterForm" class="filter-stack" onsubmit="event.preventDefault(); loadAnnouncements(0);">
+
+
+
+                        <select name="departmentId" id="filterDepartment">
+                            <option value="">Tất cả khoa</option>
+                            <th:block th:each="dept : ${departments}">
+                                <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                            </th:block>
+                        </select>
+
+                        <div class="date-range">
+                            <label>Từ:</label>
+                            <input type="datetime-local" name="startDate">
+                            <label>Đến:</label>
+                            <input type="datetime-local" name="endDate">
+                        </div>
+
+                        <select name="sort" id="filterSort">
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                        </select>
+
+                        <button type="submit" class="btn-apply">Áp dụng lọc</button>
+                        <a href="javascript:void(0)" class="btn-reset" onclick="document.getElementById('filterForm').reset(); loadAnnouncements(0);"
+                           style="text-decoration: none; text-align: center; display: block; margin-top: 10px;">Xóa lọc</a>
+                    </form>
+                </div>
+
+                <div class="sidebar-widget department-info-section">
+                    <h3 style="padding-left: 10px; margin-bottom: 15px; font-size: 1.1rem; color: #2c3e50;">
+                        Thông tin phòng ban
+                    </h3>
+
+                    <select id="infoDeptSelect" onchange="showDeptDetailFromSelect(this.value)">
+                        <option value="">-- Chọn phòng ban --</option>
+                        <th:block th:each="dept : ${departments}">
+                            <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                        </th:block>
+                    </select>
+
+                    <div id="dept-info-display" class="info-card-container" style="display: none;">
+                        <div class="info-row">
+                            <i class="fas fa-signal" style="color: #007bff; width: 25px;"></i>
+                            <strong style="flex: 1;">Trạng thái:</strong>
+                            <span id="info-status"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-envelope" style="color: #17a2b8; width: 25px;"></i>
+                            <strong style="flex: 1;">Email:</strong>
+                            <span id="info-email" style="color: #666;"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-phone-alt" style="color: #6c757d; width: 25px;"></i>
+                            <strong style="flex: 1;">SĐT:</strong>
+                            <span id="info-phone" style="color: #666;"></span>
+                        </div>
+
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt" style="color: #ff4757; width: 25px;"></i>
+                            <strong style="flex: 1;">Vị trí:</strong>
+                            <span id="info-location" style="color: #666;"></span>
+                        </div>
+
+                        <div class="description-box" style="margin-top: 15px; padding: 12px; background: #f8fbff; border-radius: 10px; border: 1px dashed #d0e3ff;">
+                            <p style="margin: 0 0 5px 0; font-weight: bold; font-size: 0.85em; color: #444;">
+                                <i class="fas fa-align-left"></i> Mô tả ngắn:
+                            </p>
+                            <p id="info-desc" style="margin: 0; font-style: italic; color: #777; font-size: 0.9em; line-height: 1.4;"></p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script th:inline="javascript">
+    const pageSize = 5;
+    const announcementList = document.getElementById('announcement-list');
+    const paginationContainer = document.getElementById('pagination-container');
+
+    async function loadAnnouncements(page) {
+        try {
+            announcementList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang lọc dữ liệu...</p></div>';
+
+            // 1. Thu thập dữ liệu từ các ô lọc
+            const deptId = document.getElementsByName('departmentId')[0].value;
+            const start = document.getElementsByName('startDate')[0].value;
+            const end = document.getElementsByName('endDate')[0].value;
+            const sort = document.getElementsByName('sort')[0].value;
+
+            // 2. Tạo URLSearchParams chứa TẤT CẢ các bộ lọc
+            const params = new URLSearchParams({
+                page: page,
+                size: pageSize,
+                departmentId: deptId,
+                startDate: start,
+                endDate: end,
+                sort: sort
+            });
+
+            // 3. Gọi API: Bà phải dùng params.toString() ở đây thì nó mới gửi lọc lên Server được!
+            const response = await fetch(`/api/announcement?${params.toString()}`);
+
+            if (response.status === 401) {
+                announcementList.innerHTML = `<div class="error-card"><p>Vui lòng đăng nhập!</p><a href="/login" class="btn-apply">Đăng nhập</a></div>`;
+                return;
+            }
+
+            const data = await response.json();
+            announcementList.innerHTML = '';
+
+            if (!data.content || data.content.length === 0) {
+                announcementList.innerHTML = '<p style="text-align:center; padding:20px;">Không tìm thấy thông báo nào phù hợp. 💨</p>';
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // 4. Render Card
+            data.content.forEach(ann => {
+                let attachmentsHtml = '';
+                if (ann.attachments && ann.attachments.length > 0) {
+                    const firstFile = ann.attachments[0];
+                    if (isImageFile(firstFile.fileName)) {
+                        attachmentsHtml = `<div class="ann-image-preview"><img src="${firstFile.fileUrl}" class="ann-posted-image" onerror="this.src='/images/default-news.png'"></div>`;
+                    } else {
+                        attachmentsHtml = `<a href="${firstFile.fileUrl}" class="file-link">📎 ${firstFile.fileName}</a>`;
+                    }
+                }
+
+                const card = `
+                <div class="announcement-card" onclick="window.location.href='/adannouncement/detail/${ann.id}'" style="cursor: pointer;">
+                    <div class="ann-header">
+                        <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
+                        <span class="ann-date">${ann.date}</span>
+                    </div>
+                    <div class="ann-body">
+                        <h3 class="ann-title">${ann.title}</h3>
+                        <p class="ann-content">${ann.content}</p>
+                        ${attachmentsHtml}
+                    </div>
+                    <div class="ann-footer">
+                        <a href="/adannouncement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>`;
+                announcementList.insertAdjacentHTML('beforeend', card);
+            });
+
+            renderPagination(data.totalPages, data.number);
+
+        } catch (error) {
+            console.error("Lỗi:", error);
+            announcementList.innerHTML = '<p>Lỗi kết nối Server!</p>';
+        }
+    }
+
+    function renderPagination(totalPages, currentActivePage) {
+        if (!paginationContainer) return;
+        paginationContainer.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        for (let i = 0; i < totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.innerText = i + 1;
+            pageButton.className = (i === currentActivePage) ? 'page-btn active' : 'page-btn';
+            pageButton.onclick = () => {
+                loadAnnouncements(i);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            paginationContainer.appendChild(pageButton);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadAnnouncements(0));
+
+    function isImageFile(fileName) {
+        if (!fileName) return false;
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+        return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+    }
+
+
+    // 1. Lấy đúng ID từ HTML của bà nè
+    const searchInput = document.getElementById('globalSearchInput');
+    const suggestionsList = document.getElementById('searchResultList'); // Cái bảng nhỏ bay lơ lửng
+    const mainContentList = document.getElementById('announcement-list'); // Vùng nội dung chính
+    const paginationBox = document.getElementById('pagination-container');
+
+    let debounceTimer;
+
+    if (searchInput) {
+        // --- 1. XỬ LÝ KHI GÕ (GỢI Ý NHƯ GOOGLE) ---
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const keyword = this.value.trim();
+
+            if (keyword.length < 2) {
+                suggestionsList.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        renderFloatingSuggestions(data);
+                    });
+            }, 300);
+        });
+
+        // --- 2. XỬ LÝ KHI NHẤN ENTER (XEM TẤT CẢ) ---
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const keyword = this.value.trim();
+                if (keyword) {
+                    suggestionsList.style.display = 'none'; // Ẩn cái bảng nhỏ đi
+                    fetchFullResults(keyword); // Đổ dữ liệu vào vùng chính
+                }
+            }
+        });
+    }
+
+    function renderFloatingSuggestions(results) {
+        suggestionsList.innerHTML = '';
+
+        if (results.length === 0) {
+            suggestionsList.innerHTML = '<div class="p-3 text-muted">Không thấy gì hết trơn bà ơi... ❌</div>';
+        } else {
+            results.forEach(ann => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item list-group-item-action suggest-item'; // Nhớ thêm class này nhé bà
+
+                // --- ĐÂY LÀ ĐOẠN SỬA ---
+                item.innerHTML = `
+                <strong class="suggest-title">${ann.title}</strong>
+                <span class="suggest-tag">
+                    <i class="fas fa-building" style="font-size:0.9em; margin-right:3px;"></i>
+                    ${ann.creatorName || 'Phòng ban'}
+                </span>
+            `;
+                // --- KẾT THÚC ĐOẠN SỬA ---
+
+                // Bấm vào phát là bay sang trang chi tiết luôn
+                item.onclick = () => window.location.href = `/adannouncement/detail/${ann.id}`;
+                suggestionsList.appendChild(item);
+            });
+        }
+        suggestionsList.style.display = 'block';
+    }
+
+    // Hàm xử lý khi nhấn Enter (Giống hàm render cũ của bà)
+    async function fetchFullResults(keyword) {
+        mainContentList.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tìm kiếm...</p></div>';
+        paginationBox.style.display = 'none';
+
+        try {
+            const res = await fetch(`/api/announcement/search?keyword=${encodeURIComponent(keyword)}`);
+            const data = await res.json();
+
+            // --- ĐOẠN NÀY ĐÃ XOÁ ICON VÀ THÊM SỐ LƯỢNG ---
+            const resultCount = data.length;
+            // Thêm nút "Quay lại" ở đây nè bà
+            mainContentList.innerHTML = `
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95em;">
+                <span>Kết quả cho từ khóa: <b>"${keyword}"</b> (${resultCount} kết quả)</span>
+                <button onclick="resetSearch()" style="background: none; border: none; color: #007bff; cursor: pointer; text-decoration: underline; padding: 0;">
+                    Quay về danh sách chính
+                </button>
+            </div>
+        `;
+
+            if (resultCount === 0) {
+                mainContentList.innerHTML += '<p style="text-align:center; padding: 30px;">Không tìm thấy thông báo nào phù hợp. 💨</p>';
+                return;
+            }
+
+            data.forEach(ann => {
+                const card = `
+                <div class="announcement-card" onclick="window.location.href='/adannouncement/detail/${ann.id}'" style="cursor: pointer;">
+                    <div class="ann-header">
+                        <span class="dept-name">🏢 ${ann.creatorName || 'Phòng Ban'}</span>
+                        <span class="ann-date">${ann.date}</span>
+                    </div>
+                    <div class="ann-body">
+                        <h3 class="ann-title">${ann.title}</h3>
+                        <p class="ann-content">${ann.content.substring(0, 150)}...</p>
+                    </div>
+                    <div class="ann-footer">
+                        <a href="/adannouncement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết</a>
+                    </div>
+                </div>`;
+                mainContentList.insertAdjacentHTML('beforeend', card);
+            });
+        } catch (err) {
+            mainContentList.innerHTML = '<p>Lỗi tìm kiếm!</p>';
+        }
+    }
+
+    // Click ra ngoài thì ẩn bảng gợi ý
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) suggestionsList.style.display = 'none';
+    });
+
+    // Hàm reset search để dùng cho nút "Quay về"
+    function resetSearch() {
+        searchInput.value = ''; // Xoá chữ trong ô tìm kiếm
+        paginationBox.style.display = 'flex'; // Hiện lại phân trang
+        loadAnnouncements(0); // Gọi lại hàm load gốc của bà (trang 0)
+    }
+
+    async function showDeptDetailFromSelect(deptId) {
+        const infoBox = document.getElementById('dept-info-display');
+        if (!deptId) {
+            infoBox.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/departments/${deptId}`);
+            const dept = await response.json();
+
+            // DÒNG NÀY QUAN TRỌNG: Bà nhìn vào Console (F12) xem nó in ra cái gì
+            console.log("Dữ liệu DTO nhận được:", dept);
+
+            if (Object.keys(dept).length === 0) {
+                console.error("CẢNH BÁO: DTO trả về rỗng {}. Bà hãy kiểm tra lại Constructor trong file DepartmentDTO.java!");
+            }
+
+            // 1. Đổ dữ liệu (Bà check kỹ tên biến trong DTO của bà nhé)
+            document.getElementById('info-email').innerText = dept.email || 'N/A';
+            document.getElementById('info-phone').innerText = dept.phone || 'N/A';
+            document.getElementById('info-location').innerText = dept.location || 'N/A';
+            document.getElementById('info-desc').innerText = dept.description || '';
+
+            // 2. Xử lý trạng thái từ DTO
+            const statusSpan = document.getElementById('info-status');
+            // Lấy đúng cái tên isActive từ JSON bà đã in ra được ở Console
+            const activeValue = dept.isActive;
+
+// Ép kiểu và kiểm tra chuẩn xác
+            if (activeValue === true || activeValue === 1 || String(activeValue) === "true") {
+                statusSpan.innerHTML = '<b style="color: #28a745;">● Còn hoạt động</b>';
+            } else {
+                statusSpan.innerHTML = '<b style="color: #dc3545;">● Ngưng hoạt động</b>';
+            }
+
+            infoBox.style.display = 'block';
+        } catch (error) {
+            console.error("Lỗi:", error);
+        }
+    }
+</script>
+</body>
+</html>
