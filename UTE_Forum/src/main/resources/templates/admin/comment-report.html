@@ -19,12 +19,12 @@
   <aside class="sidebar">
     <div class="brand-block">
       <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
-      <div class="admin-info">
+      <div class="student-info">
         <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
         <div>
-          <p class="admin-name" th:text="${user.fullName}">Tên Admin</p>
-          <p class="admin-id" th:text="'Mã quản trị: ' + ${user.id}"></p>
-          <p class="admin-role">Quản trị viên hệ thống</p>
+          <p class="student-name" th:text="${user.fullName}">Tên Admin</p>
+          <p class="student-id" th:text="'Mã quản trị: ' + ${user.id}"></p>
+          <p class="student-role">Quản trị viên hệ thống</p>
         </div>
       </div>
     </div>

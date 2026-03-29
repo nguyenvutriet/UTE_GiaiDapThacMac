@@ -14,19 +14,20 @@
 <body>
 <div class="page-layout">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="brand-block">
-      <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
-      <div class="admin-info">
-        <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
-        <div>
-          <p class="admin-name" th:text="${user.fullName}">Tên Admin</p>
-          <p class="admin-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị: U_AD_01</p>
-          <p class="admin-role">Quản trị viên hệ thống</p>
+    <!-- ══ ADMIN SIDEBAR ══════════════════════════════════════════════ -->
+    <aside class="sidebar">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${user.fullName}">Tên Admin</p>
+                    <p class="student-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
     <nav class="sidebar-nav">
       <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span></a>

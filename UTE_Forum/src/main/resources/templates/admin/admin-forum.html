@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diễn đàn – Admin</title>
-    <link rel="stylesheet" th:href="@{/css/student/forumView.css}">
+    <title>Chi tiết bài viết</title>
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 
     <style>
         /* ── Deep-link highlight ── */
@@ -82,14 +83,15 @@
 
     <!-- ══ ADMIN SIDEBAR ══════════════════════════════════════════════ -->
     <aside class="sidebar">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
         <div class="brand-block">
             <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
-            <div class="admin-info">
+            <div class="student-info">
                 <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
                 <div>
-                    <p class="admin-name" th:text="${user.fullName}">Tên Admin</p>
-                    <p class="admin-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
-                    <p class="admin-role">Quản trị viên hệ thống</p>
+                    <p class="student-name" th:text="${user.fullName}">Tên Admin</p>
+                    <p class="student-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
                 </div>
             </div>
         </div>
@@ -109,10 +111,7 @@
     <main class="main-content">
         <header class="main-header">
             <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
-            <div class="forum-tabs">
-                <button class="tab-item active">Diễn đàn</button>
-                <button class="tab-item" onclick="location.href='/announcement'">Thông báo</button>
-            </div>
+
             <div class="main-header-bottom"><h1 class="page-tab">DIỄN ĐÀN</h1></div>
         </header>
 
@@ -258,7 +257,6 @@
                             💬 <span class="js-comment-count" th:id="'cmt-count-' + ${post.id}"
                                     th:text="${post.commentCount + ' Bình luận'}">0 Bình luận</span>
                         </button>
-                        <button class="action-btn">🔗 <span>Chia sẻ</span></button>
                     </div>
 
                     <div th:id="'comment-box-' + ${post.id}" class="comment-container" >
@@ -284,13 +282,10 @@
             </div>
 
             <aside class="forum-sidebar">
-                <div class="sidebar-widget">
-                    <h3>🔍 Tìm kiếm</h3>
-                    <input type="text" class="search-input-alt" placeholder="Tìm bài viết...">
-                </div>
+
 
                 <div class="sidebar-widget">
-                    <h3>⏳ Bộ lọc</h3>
+                    <h3>Bộ lọc</h3>
                     <div class="filter-stack">
                         <select id="filterCategory">
                             <option value="">Tất cả danh mục</option> <th:block th:each="cat : ${allCategories}">
@@ -312,14 +307,7 @@
                     <button class="btn-apply" onclick="applyFilter()">Áp dụng lọc</button>
                 </div>
 
-                <div class="sidebar-widget">
-                    <h3>📈 Xu hướng</h3>
-                    <ul class="trending-list">
-                        <li>#DangKyHocPhan</li>
-                        <li>#TuyenSinh2026</li>
-                        <li>#GopYGiangDuong</li>
-                    </ul>
-                </div>
+
             </aside>
         </section>
     </main>
@@ -1506,7 +1494,10 @@
     const input = document.getElementById("globalSearchInput");
     const suggestionBox = document.getElementById("searchSuggestions");
 
-    input.addEventListener("keyup", function() {
+    // Lắng nghe gõ phím để hiện gợi ý (Quick Search)
+    input.addEventListener("keyup", function(e) {
+        if (e.key === "Enter") return;
+
         clearTimeout(typingTimer);
         typingTimer = setTimeout(function() {
             let keyword = input.value.trim();
@@ -1519,43 +1510,57 @@
         }, 200);
     });
 
-    input.addEventListener("keydown", function() {
+    // Xử lý nhấn Enter để ra trang danh sách kết quả (Search List)
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            let keyword = input.value.trim();
+            if (keyword.length > 0) {
+                // SỬA: Thêm /api/forum vào trước /search-list
+                window.location.href = `/admin/forum/search-list?keyword=${encodeURIComponent(keyword)}`;
+            }
+        }
         clearTimeout(typingTimer);
     });
 
-    // Call API
+    // Gọi API lấy JSON gợi ý
     function fetchSuggestions(keyword) {
+        // Giữ nguyên vì bạn đã dùng /api/forum/search rồi
         fetch(`/api/forum/search?keyword=${encodeURIComponent(keyword)}`)
             .then(res => res.json())
             .then(data => renderSuggestions(data))
             .catch(err => console.error(err));
     }
 
+    // Render danh sách gợi ý xuống dưới ô input
     function renderSuggestions(list) {
         if (!list || list.length === 0) {
             suggestionBox.style.display = "none";
             return;
         }
-
         suggestionBox.innerHTML = "";
-
         list.forEach(post => {
             let li = document.createElement("li");
             li.className = "search-suggestion-item";
             li.innerHTML = `
-            <div class="search-title">${post.subject}</div>
-            <div class="search-desc">${post.userName} • ${post.departmentName}</div>
-        `;
-            li.onclick = () => window.location.href = `/api/forum/view?requestId=${post.id}`;
+                <div class="search-title" style="font-weight: bold;">${post.subject}</div>
+                <div class="search-desc" style="font-size: 0.85em; color: #666;">
+                    ${post.userName} • ${post.departmentName}
+                </div>
+            `;
+
+            // SỬA: Click vào dòng nào thì về trang chi tiết của dòng đó
+            // Đúng với @GetMapping("/{id}") trong ForumController
+            li.onclick = () => window.location.href = `/admin/forum/${post.id}`;
+
             suggestionBox.appendChild(li);
         });
-
         suggestionBox.style.display = "block";
     }
 
-    // Ẩn khi click ra ngoài
+    // Đóng hộp gợi ý khi click ra ngoài
     document.addEventListener("click", function (e) {
-        if (!document.querySelector(".quick-search-container").contains(e.target)) {
+        const container = document.querySelector(".quick-search-container");
+        if (container && !container.contains(e.target)) {
             suggestionBox.style.display = "none";
         }
     });
