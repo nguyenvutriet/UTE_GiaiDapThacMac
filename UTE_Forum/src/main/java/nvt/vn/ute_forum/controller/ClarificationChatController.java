@@ -1,11 +1,15 @@
 package nvt.vn.ute_forum.controller;
 
 import nvt.vn.ute_forum.model.*;
-import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
+import nvt.vn.ute_forum.repository.NotificationRepo;
+import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
+import nvt.vn.ute_forum.service.IdGeneratorService;
 import nvt.vn.ute_forum.service.MessageService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.UsersService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,15 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -49,6 +46,15 @@ public class ClarificationChatController {
     @Autowired
     private MessageService messService;
 
+    @Autowired
+    private NotificationRepo notificationRepo;
+
+    @Autowired
+    private IdGeneratorService idGeneratorService;
+
+    @Autowired
+    private UsersRepo usersRepo;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClarificationChatController.class);
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -64,6 +70,21 @@ public class ClarificationChatController {
         this.clarificationConversationService = clarificationConversationService;
         this.messageService = messageService;
         this.usersService = usersService;
+    }
+
+    public record AttachmentDTO(String name, String url, String type) {}
+
+    public record SenderDTO(String id, String fullName) {}
+
+    public record MessageDTO(String id,
+                             String content,
+                             String createAt,        // ISO string: 2026-03-29T09:01:00
+                             SenderDTO sender,
+                             List<AttachmentDTO> attachments) {}
+
+    public record ChatSendRequest(String requestId,
+                                  String content,
+                                  List<MessageService.ChatAttachment> attachments) {
     }
 
     @MessageMapping("/clarification/send")
@@ -104,9 +125,35 @@ public class ClarificationChatController {
                     user.getId()
             );
 
-            // Broadcast đến CẢ HAI topic: sinh viên (/topic/clarification/) và staff (/topic/conversation/)
+            notifyDepartmentStaffWhenStudentSentMessage(payload.requestId(), user, content);
+
             messagingTemplate.convertAndSend("/topic/clarification/" + conversation.getId(), savedMessage);
-            messagingTemplate.convertAndSend("/topic/conversation/" + conversation.getId(), savedMessage);
+
+            List<AttachmentDTO> attDtos = new ArrayList<>();
+            if (savedMessage.attachments() != null) {
+                for (MessageService.ChatAttachment att : savedMessage.attachments()) {
+                    attDtos.add(new AttachmentDTO(att.name(), att.url(), att.type()));
+                }
+            }
+
+            // Format time to dd/MM/yyyy HH:mm:ss for staff
+            String formattedTime = savedMessage.time() == null || savedMessage.time().isEmpty() 
+                    ? java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+                    : savedMessage.time();
+
+            MessageDTO staffDto = new MessageDTO(
+                    savedMessage.id(),
+                    savedMessage.text(),
+                    formattedTime,
+                    new SenderDTO(
+                            String.valueOf(savedMessage.senderId()),
+                            savedMessage.senderName()
+                    ),
+                    attDtos
+            );
+
+            messagingTemplate.convertAndSend("/topic/conversation/" + conversation.getId(), staffDto);
+
         } catch (Exception ex) {
             LOGGER.error("Cannot send clarification message", ex);
         }
@@ -128,7 +175,7 @@ public class ClarificationChatController {
 
         if (conversationOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Cuộc hội thoại chưa được mở hoặc bạn không có quyền gửi"));
+                    .body(Map.of("message", "Cuộc hội thoại chưa đ��ợc mở hoặc bạn không có quyền gửi"));
         }
 
         try {
@@ -140,36 +187,6 @@ public class ClarificationChatController {
         }
     }
 
-    private Users resolveAuthenticatedUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-
-        Object principal = authentication.getPrincipal();
-        String email = null;
-
-        if (principal instanceof UserPrincipal userPrincipal) {
-            email = userPrincipal.getUsername();
-        } else if (principal instanceof UserDetails userDetails) {
-            email = userDetails.getUsername();
-        } else if (principal instanceof String principalName) {
-            email = principalName;
-        }
-
-        return resolvePrincipalName(email);
-    }
-
-    private Users resolvePrincipalName(String principalName) {
-        if (principalName == null || principalName.isBlank() || "anonymousUser".equalsIgnoreCase(principalName)) {
-            return null;
-        }
-        return usersService.getByEmail(principalName.trim());
-    }
-
-    public record ChatSendRequest(String requestId,
-                                  String content,
-                                  List<MessageService.ChatAttachment> attachments) {
-    }
 
     @PostMapping("/staff/create-conversation")
     @ResponseBody
@@ -207,7 +224,7 @@ public class ClarificationChatController {
         message.setClarificationConversation(conversation);
         messService.save(message);
 
-        return Map.of("id", conversation.getId()); // 🔥 QUAN TRỌNG
+        return Map.of("id", conversation.getId());
     }
 
     @MessageMapping("/chat.send/{conversationId}")
@@ -233,25 +250,25 @@ public class ClarificationChatController {
 
         Request request = requestService.getRequestById(c.getRequest().getId());
         Users receiver = request.getUser();
-
         message.setReceiver(receiver);
 
         messService.save(message);
 
-        // DTO gửi về client
+        notifyDepartmentStaffWhenStudentSentMessage(c.getRequest() == null ? null : c.getRequest().getId(), sender, content);
+
+        List<AttachmentDTO> attDtos = new ArrayList<>();
+
         MessageDTO dto = new MessageDTO(
                 message.getId(),
                 message.getContent(),
                 message.getCreateAt().toString(),
-                new SenderDTO(sender.getId(), sender.getFullName())
+                new SenderDTO(sender.getId(), sender.getFullName()),
+                attDtos
         );
 
         messTemplate.convertAndSend("/topic/conversation/" + conversationId, dto);
     }
 
-    public record SenderDTO(String id, String fullName) {}
-
-    public record MessageDTO(String id, String content, String createAt, SenderDTO sender) {}
 
     @PostMapping("/staff/close-conversation/{id}")
     @ResponseBody
@@ -265,7 +282,112 @@ public class ClarificationChatController {
         return ResponseEntity.notFound().build();
     }
 
+    @GetMapping("/staff/conversation/{id}/messages")
+    @ResponseBody
+    public ResponseEntity<?> getConversationMessages(@PathVariable("id") String conversationId,
+                                                     Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Chưa đăng nhập"));
+        }
+
+        ClarificationConversation conversation = clarificationService.getConversationById(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Không tìm thấy cuộc trao đổi"));
+        }
+
+        List<Message> messages = conversation.getMessages();
+
+        List<Map<String, Object>> dtoMessages = new ArrayList<>();
+        for (Message m : messages) {
+            Map<String, Object> mDto = new HashMap<>();
+            mDto.put("id", m.getId());
+            mDto.put("content", m.getContent());
+            mDto.put("time", m.getCreateAt().toString());
+            mDto.put("senderId", m.getSender().getId());
+            mDto.put("senderName", m.getSender().getFullName());
+            dtoMessages.add(mDto);
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("subject", conversation.getSubject());
+        payload.put("requestId", conversation.getRequest().getId());
+        payload.put("messages", dtoMessages);
+
+        return ResponseEntity.ok(payload);
+    }
+
+    private Users resolveAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+        String email = null;
+
+        if (principal instanceof UserPrincipal userPrincipal) {
+            email = userPrincipal.getUsername();
+        } else if (principal instanceof UserDetails userDetails) {
+            email = userDetails.getUsername();
+        } else if (principal instanceof String principalName) {
+            email = principalName;
+        }
+
+        return resolvePrincipalName(email);
+    }
+
+    private Users resolvePrincipalName(String principalName) {
+        if (principalName == null || principalName.isBlank() || "anonymousUser".equalsIgnoreCase(principalName)) {
+            return null;
+        }
+        return usersService.getByEmail(principalName.trim());
+    }
+
+    private void notifyDepartmentStaffWhenStudentSentMessage(String requestId, Users sender, String content) {
+        if (sender == null || requestId == null || requestId.isBlank()) {
+            return;
+        }
+
+        if (!"ROLE_STUDENT".equalsIgnoreCase(sender.getRole())) {
+            return;
+        }
+
+        Request request = requestService.getRequestById(requestId);
+        if (request == null || request.getDepartment() == null || request.getDepartment().getId() == null) {
+            return;
+        }
+
+        List<Users> receivers = usersRepo.findByRoleAndDepartment_Id("ROLE_DEPARTMENT", request.getDepartment().getId())
+                .stream()
+                .filter(user -> user != null && user.getId() != null)
+                .filter(user -> !user.getId().equals(sender.getId()))
+                .toList();
+
+        if (receivers.isEmpty()) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setId(idGeneratorService.nextNotificationId());
+        notification.setNotificationType("MESSAGE_NEW_NOTIFICATION");
+        notification.setTitle("Tin nhắn trao đổi mới");
+
+        String safeSubject = request.getSubject() == null || request.getSubject().isBlank()
+                ? request.getId()
+                : request.getSubject();
+        String safeContent = content == null ? "" : content.trim();
+        if (safeContent.length() > 120) {
+            safeContent = safeContent.substring(0, 120) + "...";
+        }
+
+        notification.setContent("Sinh viên vừa nhắn về yêu cầu: " + safeSubject
+                + (safeContent.isBlank() ? "" : " | " + safeContent));
+        notification.setRead(false);
+        notification.setCreateAt(LocalDateTime.now());
+        notification.setUsers(receivers);
+
+        notificationRepo.save(notification);
+    }
 }
-
-
-
