@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lịch sử góp ý</title>
   <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" th:href="@{/css/student/submitted_feedback_history.css}">
 </head>
 <body>
@@ -144,9 +145,9 @@
                     th:text="${selectedRequest.currentStatus == 'PENDING' ? 'Đang chờ tiếp nhận' : selectedRequest.currentStatus == 'FORWARDING' ? 'Đã được chuyển tiếp' : selectedRequest.currentStatus == 'APPROVED' ? 'Đang xử lý' : selectedRequest.currentStatus == 'RESOLVED' ? 'Đã xử lý' : selectedRequest.currentStatus == 'REJECTED' ? 'Từ chối' : selectedRequest.currentStatus}">Chờ tiếp nhận</span>
               <span class="meta-chip mode-chip"
                     th:classappend="${selectedRequest.postStatus == 'PUBLIC'} ? ' mode-public' : ' mode-department'"
-                    th:text="${selectedRequest.postStatus == 'PUBLIC' ? 'Công khai' : 'Gửi đến phòng ban'}">Chế độ gửi: Gửi đến phòng ban</span>
+                    th:text="${selectedRequest.postStatus == 'PUBLIC' ? 'Công khai' : 'Gửi đến phòng ban'}"></span>
               <span class="meta-chip time-chip" th:text="${selectedRequest.timeCreate != null ? #temporals.format(selectedRequest.timeCreate, 'dd/MM/yyyy HH:mm:ss') : ''}">21/03/2026 10:30:00</span>
-              <span class="meta-chip dept-chip" th:text="${ (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}">Phòng ban tiếp nhận: Phòng Thanh tra giáo dục</span>
+              <span class="meta-chip dept-chip" th:text="${ (selectedRequest.department != null ? selectedRequest.department.name : 'Chưa xác định phòng ban')}"></span>
             </div>
             <a class="forum-post-btn"
                th:if="${selectedRequest.postStatus == 'PUBLIC'}"
@@ -160,14 +161,16 @@
           <ul th:if="${not #lists.isEmpty(selectedRequest.fileAttachments)}">
             <li th:each="file : ${selectedRequest.fileAttachments}">
               <a th:href="${file.fileUrl}" th:text="${file.fileName}" target="_blank">attachment</a>
-<!--              <span th:text="${' (' + file.fileType + ')'}"> </span>-->
             </li>
           </ul>
         </article>
 
         <div class="detail-bottom-grid">
           <div class="detail-panel">
-            <h3>Lịch sử trạng thái</h3>
+            <h3>
+              <i class="fas fa-history"></i> Lịch sử trạng thái
+            </h3>
+
             <div class="timeline">
               <article class="timeline-item" th:each="item : ${selectedTimeline}">
                 <div class="timeline-dot"></div>
@@ -188,7 +191,7 @@
           </div>
 
           <div class="detail-panel">
-            <h3>Trao đổi</h3>
+            <h3>💬 Trao đổi</h3>
             <div class="chat-empty" th:if="${#lists.isEmpty(openConversations)}">
               <p>Chưa có cuộc trò chuyện nào.</p>
             </div>
@@ -197,14 +200,15 @@
               <button type="button"
                       class="conversation-item"
                       th:each="conversation : ${openConversations}"
-                      th:attr="data-conversation-id=${conversation.conversationId},data-request-id=${conversation.requestId},data-subject=${conversation.subject}">
+                      th:classappend="${conversation.open} ? '' : ' closed'"
+                      th:attr="data-conversation-id=${conversation.conversationId},data-request-id=${conversation.requestId},data-subject=${conversation.subject},data-is-open=${conversation.open}">
                 <span class="conversation-item-icon">🏢</span>
                 <div class="conversation-item-main">
-                  <h4 th:text="${conversation.subject}">Mong sớm có phòng lab chuyên sâu về AI & IoT</h4>
+                  <h4 th:text="${conversation.subject}"></h4>
                   <p th:text="${conversation.preview}">Nhấn để xem chi tiết cuộc trao đổi...</p>
-                  <span class="conversation-open-pill" th:text="${conversation.statusLabel}">Đang mở</span>
+                  <span class="conversation-open-pill" th:classappend="${conversation.open} ? '' : ' closed'" th:text="${conversation.statusLabel}">Đang mở</span>
                 </div>
-                <time th:text="${conversation.dateLabel}">27/03/2026</time>
+                <time th:text="${conversation.dateLabel}"></time>
               </button>
             </div>
           </div>
@@ -215,7 +219,7 @@
           <header class="chat-drawer-header">
             <div>
               <h3 id="chat-drawer-title">Trao đổi</h3>
-              <p>Trạng thái: <span class="conversation-open-pill">Đang mở</span></p>
+              <p>Trạng thái: <span class="conversation-open-pill" id="chat-drawer-status-pill">Đang mở</span></p>
             </div>
             <button type="button" class="chat-drawer-close" id="close-chat-drawer-btn">&times;</button>
           </header>

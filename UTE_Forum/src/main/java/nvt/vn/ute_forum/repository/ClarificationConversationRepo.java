@@ -41,12 +41,45 @@ public interface ClarificationConversationRepo extends JpaRepository<Clarificati
 			FROM ClarificationConversation cc
 			JOIN FETCH cc.request r
 			JOIN r.user u
+			WHERE u.id = :studentId
+			ORDER BY cc.createAt DESC
+			""")
+	List<ClarificationConversation> findConversationsByStudentId(@Param("studentId") String studentId);
+
+	@Query("""
+			SELECT cc
+			FROM ClarificationConversation cc
+			JOIN FETCH cc.request r
+			JOIN r.user u
 			WHERE cc.isOpen = true
 			  AND cc.id = :conversationId
 			  AND u.id = :studentId
 			""")
 	Optional<ClarificationConversation> findOpenByIdAndStudentId(@Param("conversationId") String conversationId,
 																 @Param("studentId") String studentId);
+
+	@Query("""
+			SELECT cc
+			FROM ClarificationConversation cc
+			JOIN FETCH cc.request r
+			JOIN r.user u
+			WHERE cc.id = :conversationId
+			  AND u.id = :studentId
+			""")
+	Optional<ClarificationConversation> findByIdAndStudentId(@Param("conversationId") String conversationId,
+											 @Param("studentId") String studentId);
+
+	@Query("""
+			SELECT cc
+			FROM ClarificationConversation cc
+			JOIN FETCH cc.request r
+			JOIN r.user u
+			WHERE r.id = :requestId
+			  AND u.id = :studentId
+			ORDER BY cc.createAt DESC
+			""")
+	List<ClarificationConversation> findByRequestIdAndStudentId(@Param("requestId") String requestId,
+											 @Param("studentId") String studentId);
 
 
     ClarificationConversation findByRequestId(String requestId);

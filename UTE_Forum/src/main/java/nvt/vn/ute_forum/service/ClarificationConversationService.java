@@ -49,11 +49,32 @@ public class ClarificationConversationService {
         return clarificationConversationRepo.findOpenConversationsByStudentId(studentId);
     }
 
+    public List<ClarificationConversation> getConversationsByStudentId(String studentId) {
+        if (studentId == null || studentId.isBlank()) {
+            return Collections.emptyList();
+        }
+        return clarificationConversationRepo.findConversationsByStudentId(studentId);
+    }
+
     public Optional<ClarificationConversation> findOpenByConversationIdForStudent(String conversationId, String studentId) {
         if (conversationId == null || conversationId.isBlank() || studentId == null || studentId.isBlank()) {
             return Optional.empty();
         }
         return clarificationConversationRepo.findOpenByIdAndStudentId(conversationId, studentId);
+    }
+
+    public Optional<ClarificationConversation> findByConversationIdForStudent(String conversationId, String studentId) {
+        if (conversationId == null || conversationId.isBlank() || studentId == null || studentId.isBlank()) {
+            return Optional.empty();
+        }
+        return clarificationConversationRepo.findByIdAndStudentId(conversationId, studentId);
+    }
+
+    public List<ClarificationConversation> findByRequestForStudent(String requestId, String studentId) {
+        if (requestId == null || requestId.isBlank() || studentId == null || studentId.isBlank()) {
+            return Collections.emptyList();
+        }
+        return clarificationConversationRepo.findByRequestIdAndStudentId(requestId, studentId);
     }
 
     public ClarificationConversation getClarificationConversation(String requestId){

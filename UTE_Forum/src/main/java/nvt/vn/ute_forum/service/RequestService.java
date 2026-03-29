@@ -437,6 +437,102 @@ public class RequestService {
         return requestRepo.findById(requestId).orElse(null);
     }
 
+    public Page<Request> filterFeedbacks(String categoryId, Pageable pageable, Users user) {
 
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            return requestRepo.findByCategory(categoryId, pageable);
+        }
+
+        if (user.getRole().equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByCategoryAndDepartment(
+                    categoryId,
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        return Page.empty();
+    }
+
+    public Page<Request> filterByStatus(String status, Pageable pageable, Users user) {
+
+        if ("ALL".equals(status)) {
+            return getAllFeedbacks(pageable, user);
+        }
+
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            return requestRepo.findByCurrentStatus(status, pageable);
+        }
+
+        if (user.getRole().equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByCurrentStatusAndDepartment_Id(
+                    status,
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        return Page.empty();
+    }
+    public Page<Request> getFeedbacks(
+            String category,
+            String status,
+            Pageable pageable,
+            Users user) {
+
+        // 🔥 normalize dữ liệu
+        if ("ALL".equals(category)) category = null;
+        if ("ALL".equals(status)) status = null;
+
+        if (category == null && status == null) {
+            return getAllFeedbacks(pageable, user);
+        }
+
+        if (category != null && status == null) {
+            return filterFeedbacks(category, pageable, user);
+        }
+
+        if (category == null && status != null) {
+            return filterByStatus(status, pageable, user);
+        }
+
+        // 👉 BOTH
+        return filterByCategoryAndStatus(category, status, pageable, user);
+    }
+    public Page<Request> filterByCategoryAndStatus(
+            String categoryId,
+            String status,
+            Pageable pageable,
+            Users user) {
+
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            return requestRepo.findByCategoryAndStatus(categoryId, status, pageable);
+        }
+
+        if (user.getRole().equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByCategoryStatusAndDepartment(
+                    categoryId,
+                    status,
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        return Page.empty();
+    }
+
+    public List<String> getAvailableStatuses(Users user) {
+
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            return List.of("PENDING", "APPROVED", "RESOLVED", "FORWARDING", "REJECTED");
+        }
+
+        if (user.getRole().equals("ROLE_DEPARTMENT")) {
+            return List.of("PENDING", "APPROVED", "RESOLVED", "FORWARDING");
+        }
+
+        return List.of();
+    }
 }
+
 

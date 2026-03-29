@@ -1,7 +1,10 @@
 package nvt.vn.ute_forum.controller;
 
 import nvt.vn.ute_forum.model.*;
+import nvt.vn.ute_forum.repository.NotificationRepo;
+import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
+import nvt.vn.ute_forum.service.IdGeneratorService;
 import nvt.vn.ute_forum.service.MessageService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.UsersService;
@@ -42,6 +45,15 @@ public class ClarificationChatController {
 
     @Autowired
     private MessageService messService;
+
+    @Autowired
+    private NotificationRepo notificationRepo;
+
+    @Autowired
+    private IdGeneratorService idGeneratorService;
+
+    @Autowired
+    private UsersRepo usersRepo;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClarificationChatController.class);
 
@@ -113,6 +125,8 @@ public class ClarificationChatController {
                     user.getId()
             );
 
+            notifyDepartmentStaffWhenStudentSentMessage(payload.requestId(), user, content);
+
             messagingTemplate.convertAndSend("/topic/clarification/" + conversation.getId(), savedMessage);
 
             List<AttachmentDTO> attDtos = new ArrayList<>();
@@ -122,10 +136,15 @@ public class ClarificationChatController {
                 }
             }
 
+            // Format time to dd/MM/yyyy HH:mm:ss for staff
+            String formattedTime = savedMessage.time() == null || savedMessage.time().isEmpty() 
+                    ? java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))
+                    : savedMessage.time();
+
             MessageDTO staffDto = new MessageDTO(
                     savedMessage.id(),
                     savedMessage.text(),
-                    savedMessage.time().toString(),  // LocalDateTime -> ISO
+                    formattedTime,
                     new SenderDTO(
                             String.valueOf(savedMessage.senderId()),
                             savedMessage.senderName()
@@ -235,6 +254,8 @@ public class ClarificationChatController {
 
         messService.save(message);
 
+        notifyDepartmentStaffWhenStudentSentMessage(c.getRequest() == null ? null : c.getRequest().getId(), sender, content);
+
         List<AttachmentDTO> attDtos = new ArrayList<>();
 
         MessageDTO dto = new MessageDTO(
@@ -322,5 +343,51 @@ public class ClarificationChatController {
             return null;
         }
         return usersService.getByEmail(principalName.trim());
+    }
+
+    private void notifyDepartmentStaffWhenStudentSentMessage(String requestId, Users sender, String content) {
+        if (sender == null || requestId == null || requestId.isBlank()) {
+            return;
+        }
+
+        if (!"ROLE_STUDENT".equalsIgnoreCase(sender.getRole())) {
+            return;
+        }
+
+        Request request = requestService.getRequestById(requestId);
+        if (request == null || request.getDepartment() == null || request.getDepartment().getId() == null) {
+            return;
+        }
+
+        List<Users> receivers = usersRepo.findByRoleAndDepartment_Id("ROLE_DEPARTMENT", request.getDepartment().getId())
+                .stream()
+                .filter(user -> user != null && user.getId() != null)
+                .filter(user -> !user.getId().equals(sender.getId()))
+                .toList();
+
+        if (receivers.isEmpty()) {
+            return;
+        }
+
+        Notification notification = new Notification();
+        notification.setId(idGeneratorService.nextNotificationId());
+        notification.setNotificationType("MESSAGE_NEW_NOTIFICATION");
+        notification.setTitle("Tin nhắn trao đổi mới");
+
+        String safeSubject = request.getSubject() == null || request.getSubject().isBlank()
+                ? request.getId()
+                : request.getSubject();
+        String safeContent = content == null ? "" : content.trim();
+        if (safeContent.length() > 120) {
+            safeContent = safeContent.substring(0, 120) + "...";
+        }
+
+        notification.setContent("Sinh viên vừa nhắn về yêu cầu: " + safeSubject
+                + (safeContent.isBlank() ? "" : " | " + safeContent));
+        notification.setRead(false);
+        notification.setCreateAt(LocalDateTime.now());
+        notification.setUsers(receivers);
+
+        notificationRepo.save(notification);
     }
 }

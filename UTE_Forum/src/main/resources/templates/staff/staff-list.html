@@ -62,13 +62,116 @@
                 </form>
 
                 <div>
-                    <button class="filter-btn">
-                        <i class="fas fa-filter"></i> Trạng thái
-                    </button>
+                    <div class="filter-dropdown">
 
-                    <button class="filter-btn">
-                        <i class="fas fa-th-large"></i> Danh mục
-                    </button>
+                        <button class="filter-btn" id="statusBtn" onclick="toggleStatusDropdown()">
+                            <i class="fas fa-filter"></i>
+                            <span th:text="${selectedStatusName != null ? selectedStatusName : 'Trạng thái'}"></span>
+                        </button>
+
+                        <div class="dropdown-menu" id="statusDropdown">
+
+                            <!-- SEARCH -->
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text"
+                                       id="statusSearch"
+                                       placeholder="Tìm trạng thái..."
+                                       onkeyup="filterStatusList(event)">
+                            </div>
+
+                            <!-- ALL -->
+                            <div class="dropdown-item status-item"
+                                 data-id="ALL"
+                                 data-name="Trạng thái"
+                                 th:classappend="${selectedStatus == null} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Trạng thái
+                            </div>
+
+                            <!-- LIST -->
+                            <div class="dropdown-item status-item"
+                                 data-id="PENDING"
+                                 data-name="Đang chờ tiếp nhận"
+                                 th:classappend="${selectedStatus == 'PENDING'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đang chờ tiếp nhận
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="APPROVED"
+                                 data-name="Đang xử lý"
+                                 th:classappend="${selectedStatus == 'APPROVED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đang xử lý
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="RESOLVED"
+                                 data-name="Đã xử lý"
+                                 th:classappend="${selectedStatus == 'RESOLVED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đã xử lý
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="FORWARDING"
+                                 data-name="Chuyển tiếp"
+                                 th:classappend="${selectedStatus == 'FORWARDING'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Chuyển tiếp
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="REJECTED"
+                                 data-name="Từ chối"
+                                 th:classappend="${selectedStatus == 'REJECTED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Từ chối
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="filter-dropdown">
+
+                        <button class="filter-btn" id="categoryBtn" onclick="toggleDropdown()">
+                            <i class="fas fa-th-large"></i>
+                            <span th:text="${selectedCategoryName != null ? selectedCategoryName : 'Danh mục'}"></span>
+                        </button>
+
+                        <div class="dropdown-menu" id="categoryDropdown">
+
+                            <!-- 🔍 SEARCH -->
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text"
+                                       id="categorySearch"
+                                       placeholder="Tìm danh mục..."
+                                       onkeyup="filterCategoryList(event)">
+                            </div>
+
+                            <!-- default -->
+                            <div class="dropdown-item category-item"
+                                 data-id="ALL"
+                                 data-name="Danh mục"
+                                 th:classappend="${selectedCategory == null} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                                Danh mục
+                            </div>
+
+                            <!-- list -->
+                            <div th:each="c : ${categories}"
+                                 class="dropdown-item category-item"
+                                 th:text="${c.subject}"
+                                 th:attr="data-name=${c.subject}, data-id=${c.id}"
+                                 th:classappend="${c.id == selectedCategory} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                            </div>
+
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -103,6 +206,7 @@
                         <!-- TIÊU ĐỀ -->
                         <td class="title-cell">
                             <a th:href="@{/staff/feedback-detail(id=${fb.id})}"
+                               class="title-link"
                                th:text="${fb.subject}">
                             </a>
                         </td>
@@ -175,5 +279,192 @@
     </main>
 
 </div>
+<script>
+    function toggleDropdown() {
+        const dropdown = document.getElementById("categoryDropdown");
+        dropdown.classList.toggle("show");
+
+        if (dropdown.classList.contains("show")) {
+            document.getElementById("categorySearch").value = "";
+            filterCategoryList();
+        }
+    }
+
+    function filterCategory(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name") || "Danh mục";
+
+        document.getElementById("categoryBtn").innerHTML =
+            '<i class="fas fa-th-large"></i> ' + name;
+
+        const current = new URL(window.location.href);
+        const url = new URL(window.location.origin + "/staff/filter-feedbacks");
+
+        const status = current.searchParams.get("status");
+
+        if (status) {
+            url.searchParams.set("status", status);
+        }
+
+        if (!id || id === "ALL") {
+            url.searchParams.delete("categoryId");
+        } else {
+            url.searchParams.set("categoryId", id);
+        }
+
+        window.location.href = url.toString();
+    }
+</script>
+<script>
+    document.addEventListener("click", function(e) {
+        const dropdown = document.getElementById("categoryDropdown");
+        const button = document.getElementById("categoryBtn");
+
+        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+</script>
+<script>
+    function filterCategoryList(event) {
+        const keyword = document
+            .getElementById("categorySearch")
+            .value;
+
+        const items = document.querySelectorAll(".category-item");
+
+        items.forEach(item => {
+            const text = item.getAttribute("data-name");
+
+            if (!text) return;
+
+            const textNormalized = removeVietnameseTones(text);
+            const keywordNormalized = removeVietnameseTones(keyword);
+
+            if (textNormalized.includes(keywordNormalized)) {
+                item.style.display = "block";
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        // ENTER
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+
+            if (!keyword) {
+                window.location.href = "/staff/list-feedbacks";
+                return;
+            }
+
+            const firstVisible = document.querySelector(
+                "#categoryDropdown .category-item:not([style*='display: none']):not([data-id='ALL'])"
+            );
+
+            if (firstVisible) {
+                const id = firstVisible.getAttribute("data-id");
+                const current = new URL(window.location.href);
+                const status = current.searchParams.get("status");
+
+                let url = "/staff/filter-feedbacks?categoryId=" + id;
+
+                if (status) {
+                    url += "&status=" + status;
+                }
+
+                window.location.href = url;
+            }
+        }
+    }
+
+    function removeVietnameseTones(str) {
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase();
+    }
+    function toggleStatusDropdown() {
+        const dropdown = document.getElementById("statusDropdown");
+        dropdown.classList.toggle("show");
+
+        if (dropdown.classList.contains("show")) {
+            document.getElementById("statusSearch").value = "";
+            filterStatusList();
+        }
+    }
+    function filterStatus(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name");
+
+        document.getElementById("statusBtn").innerHTML =
+            '<i class="fas fa-filter"></i> ' + name;
+
+        const current = new URL(window.location.href);
+        const url = new URL(window.location.origin + "/staff/filter-feedbacks");
+
+        const category = current.searchParams.get("categoryId");
+
+        if (category) {
+            url.searchParams.set("categoryId", category);
+        }
+
+        if (!id || id === "ALL") {
+            url.searchParams.delete("status");
+        } else {
+            url.searchParams.set("status", id);
+        }
+
+        window.location.href = url.toString();
+    }
+    function filterStatusList(event) {
+        const keyword = document.getElementById("statusSearch").value;
+
+        const items = document.querySelectorAll(".status-item");
+
+        items.forEach(item => {
+            const text = item.getAttribute("data-name");
+
+            const textNormalized = removeVietnameseTones(text);
+            const keywordNormalized = removeVietnameseTones(keyword);
+
+            if (textNormalized.includes(keywordNormalized)) {
+                item.style.display = "block";
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        // ENTER
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+
+            if (!keyword) {
+                window.location.href = "/staff/list-feedbacks";
+                return;
+            }
+
+            const firstVisible = document.querySelector(
+                "#statusDropdown .status-item:not([style*='display: none']):not([data-id='ALL'])"
+            );
+
+            if (firstVisible) {
+                const id = firstVisible.getAttribute("data-id");
+                const current = new URL(window.location.href);
+                const categoryId = current.searchParams.get("categoryId");
+
+                let url = "/staff/filter-feedbacks?status=" + id;
+
+                if (categoryId) {
+                    url += "&categoryId=" + categoryId;
+                }
+
+                window.location.href = url;
+            }
+        }
+    }
+</script>
+
 </body>
 </html>

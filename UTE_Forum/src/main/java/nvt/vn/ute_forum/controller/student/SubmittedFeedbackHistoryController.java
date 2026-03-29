@@ -133,7 +133,10 @@ public class SubmittedFeedbackHistoryController {
                 : buildOpenConversations(user.getId(), selectedRequest.getId());
         boolean chatEnabled = !openConversations.isEmpty();
         ClarificationConversation selectedConversation = chatEnabled
-                ? clarificationConversationService.findOpenByRequestForStudent(selectedRequest.getId(), user.getId()).orElse(null)
+                ? clarificationConversationService.findByRequestForStudent(selectedRequest.getId(), user.getId())
+                .stream()
+                .findFirst()
+                .orElse(null)
                 : null;
         List<MessageService.ChatMessageView> conversationMessages = (chatEnabled && selectedConversation != null)
                 ? messageService.getConversationMessages(selectedConversation.getId(), user.getId())
@@ -175,11 +178,11 @@ public class SubmittedFeedbackHistoryController {
         }
 
         Optional<ClarificationConversation> conversationOptional = clarificationConversationService
-                .findOpenByConversationIdForStudent(conversationId, user.getId());
+                .findByConversationIdForStudent(conversationId, user.getId());
 
         if (conversationOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Cuộc hội thoại không tồn tại hoặc đã đóng"));
+                    .body(Map.of("message", "Cuộc hội thoại không tồn tại hoặc bạn không có quyền truy cập"));
         }
 
         ClarificationConversation conversation = conversationOptional.get();
@@ -196,6 +199,7 @@ public class SubmittedFeedbackHistoryController {
         response.put("conversationId", conversation.getId());
         response.put("requestId", requestId);
         response.put("subject", subject);
+        response.put("open", Boolean.TRUE.equals(conversation.getOpen()));
         response.put("messages", messageService.getConversationMessages(conversation.getId(), user.getId()));
         return ResponseEntity.ok(response);
     }
@@ -205,50 +209,54 @@ public class SubmittedFeedbackHistoryController {
             return new ArrayList<>();
         }
 
-        Optional<ClarificationConversation> conversationOptional = clarificationConversationService
-                .findOpenByRequestForStudent(requestId, userId);
+        List<ClarificationConversation> conversations = clarificationConversationService
+                .findByRequestForStudent(requestId, userId);
 
-        if (conversationOptional.isEmpty()) {
+        if (conversations.isEmpty()) {
             return new ArrayList<>();
         }
 
-        ClarificationConversation conversation = conversationOptional.get();
-        Request request = conversation.getRequest();
-        String subject = safeValue(conversation.getSubject());
-        if (subject.isBlank() && request != null) {
-            subject = safeValue(request.getSubject());
+        List<OpenConversationItem> items = new ArrayList<>();
+        for (ClarificationConversation conversation : conversations) {
+            Request request = conversation.getRequest();
+            String subject = safeValue(conversation.getSubject());
+            if (subject.isBlank() && request != null) {
+                subject = safeValue(request.getSubject());
+            }
+            if (subject.isBlank()) {
+                subject = "Trao đổi";
+            }
+            String resolvedRequestId = request == null ? "" : safeValue(request.getId());
+            String dateLabel = conversation.getCreateAt() == null
+                    ? ""
+                    : conversation.getCreateAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+            List<MessageService.ChatMessageView> messages = messageService.getConversationMessages(conversation.getId(), userId);
+
+            String preview = messages.stream()
+                    .reduce((first, second) -> second)
+                    .map(last -> {
+                        String text = safeValue(last.text()).trim();
+                        if (!text.isBlank()) {
+                            return text;
+                        }
+                        return "Nhấn để xem chi tiết cuộc trao đổi...";
+                    })
+                    .orElse("Nhấn để xem chi tiết cuộc trao đổi...");
+
+            boolean open = Boolean.TRUE.equals(conversation.getOpen());
+            items.add(new OpenConversationItem(
+                    safeValue(conversation.getId()),
+                    resolvedRequestId,
+                    subject,
+                    dateLabel,
+                    preview,
+                    open ? "Đang mở" : "Đã đóng",
+                    open
+            ));
         }
-        if (subject.isBlank()) {
-            subject = "Trao đổi";
-        }
-        String resolvedRequestId = request == null ? "" : safeValue(request.getId());
-        String dateLabel = conversation.getCreateAt() == null
-                ? ""
-                : conversation.getCreateAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
-        List<MessageService.ChatMessageView> messages = messageService.getConversationMessages(conversation.getId(), userId);
-
-        String preview = messages.stream()
-                .reduce((first, second) -> second)
-                .map(last -> {
-                    String text = safeValue(last.text()).trim();
-                    if (!text.isBlank()) {
-                        return text;
-                    }
-                    return "Nhấn để xem chi tiết cuộc trao đổi...";
-                })
-                .orElse("Nhấn để xem chi tiết cuộc trao đổi...");
-
-        OpenConversationItem item = new OpenConversationItem(
-                safeValue(conversation.getId()),
-                resolvedRequestId,
-                subject,
-                dateLabel,
-                preview,
-                "Đang mở"
-        );
-
-        return new ArrayList<>(Collections.singletonList(item));
+        return items;
     }
 
     private List<Request> applyFilters(List<Request> source,
@@ -645,19 +653,22 @@ public class SubmittedFeedbackHistoryController {
         private final String dateLabel;
         private final String preview;
         private final String statusLabel;
+        private final boolean open;
 
         public OpenConversationItem(String conversationId,
                                     String requestId,
                                     String subject,
                                     String dateLabel,
                                     String preview,
-                                    String statusLabel) {
+                                    String statusLabel,
+                                    boolean open) {
             this.conversationId = conversationId;
             this.requestId = requestId;
             this.subject = subject;
             this.dateLabel = dateLabel;
             this.preview = preview;
             this.statusLabel = statusLabel;
+            this.open = open;
         }
 
         public String getConversationId() {
@@ -682,6 +693,10 @@ public class SubmittedFeedbackHistoryController {
 
         public String getStatusLabel() {
             return statusLabel;
+        }
+
+        public boolean isOpen() {
+            return open;
         }
     }
 }

@@ -58,14 +58,14 @@ public interface RequestRepo extends JpaRepository<Request, String> {
     Page<Request> findByDepartment_Id(String departmentId, Pageable pageable);
 
     /*Tìm kiếm feedback theo key*/
-    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT r FROM Request r WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Request> findByContentContaining(
             @Param("keyword") String keyword,
             Pageable pageable
     );
 
     /*Cho department*/
-    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%')) AND r.department.id = :departmentId")
+    @Query("SELECT r FROM Request r WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%')) AND r.department.id = :departmentId")
     Page<Request> findByContentContainingAndDepartment_Id(
             @Param("keyword") String keyword,
             @Param("departmentId") String departmentId,
@@ -77,4 +77,71 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             "LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<Request> searchPublicPosts(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        """)
+    Page<Request> findByCategory(@Param("categoryId") String categoryId, Pageable pageable);
+
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.department.id = :departmentId
+    """)
+    Page<Request> findByCategoryAndDepartment(
+            @Param("categoryId") String categoryId,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
+
+    Page<Request> findByCurrentStatus(String status, Pageable pageable);
+
+    Page<Request> findByCurrentStatusAndDepartment_Id(
+            String status,
+            String departmentId,
+            Pageable pageable
+    );
+
+    /*Lọc cùng lúc*/
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.currentStatus = :status
+    """)
+    Page<Request> findByCategoryAndStatus(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.currentStatus = :status
+        AND r.department.id = :departmentId
+    """)
+    Page<Request> findByCategoryStatusAndDepartment(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT DISTINCT r FROM Request r
+    LEFT JOIN r.categories c
+    WHERE (:categoryId IS NULL OR c.id = :categoryId)
+    AND (:status IS NULL OR r.currentStatus = :status)
+    AND (:departmentId IS NULL OR r.department.id = :departmentId)
+""")
+    Page<Request> filterAll(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
 }
