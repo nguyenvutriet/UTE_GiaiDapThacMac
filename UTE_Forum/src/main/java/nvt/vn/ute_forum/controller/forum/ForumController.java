@@ -84,17 +84,16 @@ public class ForumController {
             }
         }
 
-        // 2. Gọi hàm convertToFullDTO thần thánh của bà
+        // 2. Gọi hàm convertToFullDTO
         ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
 
         if (post == null) {
-            return "redirect:/forum/view"; // Không thấy bài thì cho về vườn
+            return "redirect:/forum/view";
         }
 
-        // 3. Đẩy dữ liệu ra trang chi tiết
         model.addAttribute("post", post);
 
-        return "student/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+        return "student/postDetail";
     }
 
     @PostMapping("/react")

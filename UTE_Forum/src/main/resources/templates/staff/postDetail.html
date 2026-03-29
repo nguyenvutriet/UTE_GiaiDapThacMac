@@ -187,13 +187,25 @@
     const initialComments = /*[[${post.comments}]]*/ [];
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Lấy danh sách comment từ Model Java thông qua Thymeleaf
-        const comments = /*[[${post.comments}]]*/ [];
+        // Lấy danh sách comment từ Thymeleaf
+        let comments = /*[[${post.comments}]]*/ [];
         const postId = [[${post.id}]];
         const container = document.getElementById(`comment-list-${postId}`);
 
         if (comments && container) {
-            container.innerHTML = ''; // Xóa trắng trước khi nạp
+            container.innerHTML = '';
+
+            // --- BẮT ĐẦU LOGIC SẮP XẾP ---
+            comments.sort((a, b) => {
+                const rolesPriority = ['ROLE_ADMIN', 'ROLE_DEPARTMENT'];
+                const aPriority = rolesPriority.includes(a.userRole) ? 1 : 0;
+                const bPriority = rolesPriority.includes(b.userRole) ? 1 : 0;
+
+                // Đưa ưu tiên (1) lên trước (0)
+                return bPriority - aPriority;
+            });
+            // --- KẾT THÚC LOGIC SẮP XẾP ---
+
             comments.forEach(cmt => {
                 if(cmt) {
                     container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
@@ -215,8 +227,20 @@
         };
 
 
-        const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
+        // Xác định vai trò
+        const isAdmin = cmt.userRole === 'ROLE_ADMIN';
+        const isDepartment = cmt.userRole === 'ROLE_DEPARTMENT';
+        const isPriority = isAdmin || isDepartment;
+        // Định nghĩa Style cho khung comment dựa trên vai trò
+        // Nếu là Admin/Phòng ban: có viền hồng, nền hồng nhạt
+        const commentBoxStyle = isPriority
+            ? `border: 1px solid #ffebeb; background: #fffafa; padding: 10px 15px; border-radius: 20px; position: relative;`
+            : `background: #f0f2f5; padding: 10px 15px; border-radius: 20px;`; // Style mặc định cho SV
 
+        // Avatar mặc định: Icon mũ cử nhân
+        const avatarHTML = `<div style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ddd; background: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                        <i class="fas fa-graduation-cap" style="font-size: 18px; color: black;"></i>
+                    </div>`;
         // 🔥 TEXT CỦA USER
         const reactConfig = reactionData[cmt.reactionType] || {
             text: "Thích",
@@ -238,77 +262,83 @@
         }
 
         return `
-    <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
-        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
-        <div style="max-width: 85%; flex: 1;">
-            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
-                <b style="font-size:13px; color: #050505; line-height: 1;">${cmt.userName}</b>
+<div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
+    <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+    <div style="max-width: 85%; flex: 1;">
+        <div style="${commentBoxStyle}">
 
-                ${isVerified ? `
-                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0; margin-top: 1px;">
-                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
-                    </svg>
-                ` : ''}
-                <span style="font-size:14px;">${cmt.content}</span>
+        <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 4px;">
+            <b style="font-size: 14px; color: ${isAdmin ? '#d32f2f' : '#00558b'};">${cmt.userName}</b>
 
-                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
-                    ${cmt.canDelete ? `
-                        <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
-                            <i class="fas fa-trash-alt"></i> Xóa
-                        </span>
-                    ` : ''}
-
-                    ${!cmt.canDelete ? `
-                        <span class="report-btn" data-comment-id="${cmt.id}"
-                              onclick="reportComment('${cmt.id}')"
-                              style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
-                            <i class="fas fa-flag"></i> Báo cáo
-                        </span>
-                    ` : ''}
-                </div>
-            </div>
-
-            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
-                <small style="color:#65676b; font-size:11px;">
-                    ${formatDirectDate(cmt.date)}
-                </small>
-
-                <!-- REACTION -->
-                <div class="reaction-container">
-                    <div class="reaction-box">
-                        <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
-                        <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
-                        <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
-                        <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
-                        <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
-                        <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
-                    </div>
-
-                    <small id="react-text-${cmt.id}"
-                        style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
-                        onclick="sendReaction('${cmt.id}', 'LIKE')">
-                        ${reactConfig.text}
-                    </small>
-                </div>
-
-                <!-- COUNT -->
-                <div id="reaction-count-container-${cmt.id}"
-     onclick="showReactionDetail('${cmt.id}')"
-     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
-
-                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
-                        ${iconsHTML}
-                    </span>
-
-                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
-                        ${totalCount}
-                    </small>
-                </div>
-
-
-            </div>
+            ${isPriority ? `
+                <svg viewBox="0 0 16 16" width="14" height="14" style="flex-shrink: 0;">
+                    <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                </svg>
+                <span style="font-size: 9px; padding: 2px 5px; border-radius: 4px; background: ${isAdmin ? '#d32f2f' : '#00558b'}; color: white; font-weight: bold; text-transform: uppercase;">
+                    ${isAdmin ? 'ADMIN' : 'PHÒNG BAN'}
+                </span>
+            ` : ''}
         </div>
-    </div>`;
+
+        <div style="font-size: 15px; color: #050505; line-height: 1.4; margin-bottom: 8px;">
+            ${cmt.content}
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; border-top: 1px solid #f2f2f2; padding-top: 5px;">
+            ${cmt.canDelete ? `
+                <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#8e8e8e; font-size:12px; display: flex; align-items: center; gap: 3px;">
+                    <i class="fas fa-trash-alt" style="font-size: 11px;"></i> Xóa
+                </span>
+            ` : `
+                <span class="report-btn" data-comment-id="${cmt.id}" onclick="reportComment('${cmt.id}')"
+                      style="cursor:pointer; color:#8e8e8e; font-size:12px; display: flex; align-items: center; gap: 3px;">
+                    <i class="fas fa-flag" style="font-size: 11px;"></i> Báo cáo
+                </span>
+            `}
+        </div>
+    </div>
+
+        <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
+            <small style="color:#65676b; font-size:11px;">
+                ${formatDirectDate(cmt.date)}
+            </small>
+
+            <!-- REACTION -->
+            <div class="reaction-container">
+                <div class="reaction-box">
+                    <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
+                    <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
+                    <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
+                    <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
+                    <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
+                    <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
+                </div>
+
+                <small id="react-text-${cmt.id}"
+                    style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
+                    onclick="sendReaction('${cmt.id}', 'LIKE')">
+                    ${reactConfig.text}
+                </small>
+            </div>
+
+            <!-- COUNT -->
+            <div id="reaction-count-container-${cmt.id}"
+ onclick="showReactionDetail('${cmt.id}')"
+ style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+
+                <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
+                    ${iconsHTML}
+                </span>
+
+                <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
+                    ${totalCount}
+                </small>
+            </div>
+
+
+        </div>
+    </div>
+</div>`;
     }
 
     // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)

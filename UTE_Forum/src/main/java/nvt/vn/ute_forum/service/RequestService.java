@@ -141,7 +141,7 @@ public class RequestService {
         dto.setId(r.getId());
         dto.setSubject(r.getSubject());
         dto.setDescription(r.getDescription());
-        dto.setDate(r.getTimeCreate()); // Dùng timeCreate cho khớp với getPublicPosts
+        dto.setDate(r.getTimeCreate());
         dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
         dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
         dto.setAttachments(mapAttachments(r));
@@ -172,7 +172,7 @@ public class RequestService {
         long totalReactions = reactionsMap.values().stream().mapToLong(Long::longValue).sum();
         dto.setTotalReactions(totalReactions);
 
-        // Reaction của user hiện tại (Để tô màu nút Like chẳng hạn)
+        // Reaction của user hiện tại
         if (currentUserId != null) {
             votes.stream()
                     .filter(v -> v.getUser().getId().equals(currentUserId))
@@ -182,10 +182,7 @@ public class RequestService {
                         dto.setReactionTypeLower(v.getType().name().toLowerCase());
                     });
         }
-        // Giả sử bà đã lấy được thông tin User hiện tại để check quyền xóa
-// String currentUserId = ... (lấy từ SecurityContext)
 
-        // 1. Lấy danh sách comment theo Request ID
         List<CommentDTO> commentList = commentRepo.findByRequestId(r.getId()).stream()
                 .filter(Objects::nonNull)
                 .map(c -> {
