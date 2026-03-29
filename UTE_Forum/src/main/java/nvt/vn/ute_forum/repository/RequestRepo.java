@@ -72,4 +72,9 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             Pageable pageable
     );
 
+    @Query("SELECT r FROM Request r WHERE r.postStatus = 'PUBLIC' AND " +
+            "(LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Request> searchPublicPosts(@Param("keyword") String keyword, Pageable pageable);
+
 }
