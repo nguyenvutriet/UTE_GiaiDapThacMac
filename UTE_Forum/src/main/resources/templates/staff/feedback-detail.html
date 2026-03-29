@@ -252,124 +252,126 @@
                         <a th:href="@{/api/forum/staff}" class="open-chat-btn">
                             Đi đến diễn đàn
                         </a>
+                    </div>
+                </div>
             </div>
+
 
             <div th:if="${feedback.getPostStatus() == 'PRIVATE'}">
-
-            <div class="table-card" >
-
-                <!-- HEADER CÓ NÚT "+ MỚI" -->
-                <div class="chat-section-header">
-                    <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>
-                    <!-- Thêm type="button" để chống reload trang -->
-                    <!--                    <button type="button" class="btn-new-chat" onclick="showInlineForm()" th:if="${conversation == null}">+ Mới</button>-->
-                </div>
-
-                <input type="hidden" id="requestId" th:value="${feedback.id}">
-
-                <!-- TRẠNG THÁI CHƯA CÓ -->
-                <div th:if="${conversation == null}" id="emptyChatState" class="no-chat">
-                    <div class="empty-chat">
-                        <i class="far fa-comment-dots"></i>
-                        <p>Chưa có cuộc trao đổi nào.</p>
-                        <button type="button" class="open-chat-btn" onclick="showInlineForm()">
-                            Bắt đầu hội thoại mới
-                        </button>
-                    </div>
-                </div>
-
-
-
-                <!-- FORM TẠO MỚI (Ẩn mặc định) -->
-                <div th:if="${conversation == null}" id="inlineChatForm" class="inline-chat-form" style="display: none;">
-                    <h4>Cuộc hội thoại mới</h4>
-
-                    <div class="form-group">
-                        <label>Tiêu đề</label>
-                        <input type="text" id="inlineSubject" placeholder="Nhập tiêu đề cuộc trao đổi">
+                <div class="table-card" >
+                    <!-- HEADER CÓ NÚT "+ MỚI" -->
+                    <div class="chat-section-header">
+                        <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>
+                        <!-- Thêm type="button" để chống reload trang -->
+                        <!--                    <button type="button" class="btn-new-chat" onclick="showInlineForm()" th:if="${conversation == null}">+ Mới</button>-->
                     </div>
 
-                    <div class="form-group">
-                        <label>Tin nhắn</label>
-                        <textarea id="inlineMessage" rows="4" name="message" placeholder="Nhập nội dung tin nhắn..."></textarea>
-                    </div>
+                    <input type="hidden" id="requestId" th:value="${feedback.id}">
 
-                    <div class="form-actions">
-                        <button type="button" class="btn-cancel" onclick="hideInlineForm()">Hủy</button>
-                        <button type="button" class="btn-submit" onclick="submitInlineConversation()">
-                            <i class="far fa-paper-plane"></i> Bắt đầu cuộc hội thoại
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ĐÃ CÓ TRAO ĐỔI (Hiển thị thẻ preview) -->
-                <div th:if="${conversation != null}" class="chat-preview">
-                    <div class="chat-card" onclick="openChatBox()">
-                        <div class="chat-title">
-                            <i class="far fa-comments"></i>
-                            <span th:text="${conversation.subject}"></span>
-                        </div>
-                        <p>Nhấn để mở cuộc trao đổi với phòng ban</p>
-                        <span class="chat-status" th:if="${conversation.getOpen()}">Đang mở</span>
-                        <span class="chat-status" th:if="${!conversation.getOpen()}">Đã đóng</span>
-                        <time th:text="${conversation.getCreateAt()}"></time>
-                    </div>
-
-                </div>
-            </div>
-
-
-            <!-- ===== CHAT BOX (DẠNG SIDEBAR TRƯỢT TỪ BÊN PHẢI) ===== -->
-            <div id="chatBox"
-                 class="chat-sidebar"
-                 th:data-id="${conversation != null ? conversation.id : ''}">
-
-                <!-- 1. Header -->
-                <div class="chat-header">
-                    <button type="button" class="btn-close-sidebar" onclick="closeChat()">✖</button>
-
-                    <div class="chat-header-main">
-                        <div class="title-row" >
-                            <h3 id="chatTitle" th:text="${conversation != null ? conversation.subject : 'Tiêu đề cuộc trò chuyện'}">Tiêu đề cuộc trò chuyện</h3>
-                        </div>
-                        <!-- KHỐI NÀY CHỨA TRẠNG THÁI (TRÁI) VÀ NÚT (PHẢI) -->
-                        <div class="status-row" id="chatStatusRow" th:style="${conversation == null ? 'display:none;' : ''}">
-                            <div class="status-text" id="chatStatusText">
-                                Trạng thái:
-                                <span class="status-active" th:if="${conversation == null or conversation.open}">Đang mở</span>
-                                <span class="status-active" th:if="${conversation != null and !conversation.open}" style="color: #ef4444;">Đã đóng</span>
-                            </div>
-
-                            <button type="button" class="btn-end-chat" id="btnEndChat" onclick="closeConversation()" th:style="${conversation != null and !conversation.open ? 'display:none;' : ''}">
-                                <i class="far fa-check-circle"></i> Đóng trao đổi
+                    <!-- TRẠNG THÁI CHƯA CÓ -->
+                    <div th:if="${conversation == null}" id="emptyChatState" class="no-chat">
+                        <div class="empty-chat">
+                            <i class="far fa-comment-dots"></i>
+                            <p>Chưa có cuộc trao đổi nào.</p>
+                            <button type="button" class="open-chat-btn" onclick="showInlineForm()">
+                                Bắt đầu hội thoại mới
                             </button>
                         </div>
                     </div>
+
+
+
+                    <!-- FORM TẠO MỚI (Ẩn mặc định) -->
+                    <div th:if="${conversation == null}" id="inlineChatForm" class="inline-chat-form" style="display: none;">
+                        <h4>Cuộc hội thoại mới</h4>
+
+                        <div class="form-group">
+                            <label>Tiêu đề</label>
+                            <input type="text" id="inlineSubject" placeholder="Nhập tiêu đề cuộc trao đổi">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tin nhắn</label>
+                            <textarea id="inlineMessage" rows="4" name="message" placeholder="Nhập nội dung tin nhắn..."></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-cancel" onclick="hideInlineForm()">Hủy</button>
+                            <button type="button" class="btn-submit" onclick="submitInlineConversation()">
+                                <i class="far fa-paper-plane"></i> Bắt đầu cuộc hội thoại
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ĐÃ CÓ TRAO ĐỔI (Hiển thị thẻ preview) -->
+                    <div th:if="${conversation != null}" class="chat-preview">
+                        <div class="chat-card" onclick="openChatBox()">
+                            <div class="chat-title">
+                                <i class="far fa-comments"></i>
+                                <span th:text="${conversation.subject}"></span>
+                            </div>
+                            <p>Nhấn để mở cuộc trao đổi với phòng ban</p>
+                            <span class="chat-status" th:if="${conversation.getOpen()}">Đang mở</span>
+                            <span class="chat-status" th:if="${!conversation.getOpen()}">Đã đóng</span>
+                            <time th:text="${conversation.getCreateAt()}"></time>
+                        </div>
+
+                    </div>
                 </div>
 
-                <!-- 2. Body / Messages (KHU VỰC HIỂN THỊ TIN NHẮN CHÍNH - KHÔNG ĐƯỢC XÓA) -->
-                <!-- 2. Body / Messages -->
-                <div class="chat-body" id="chatBody">
-                    <!-- ĐỂ TRỐNG. TẤT CẢ tin nhắn sẽ được JS (loadHistory + renderMessage) vẽ vào đây -->
+
+                <!-- ===== CHAT BOX (DẠNG SIDEBAR TRƯỢT TỪ BÊN PHẢI) ===== -->
+                <div id="chatBox"
+                     class="chat-sidebar"
+                     th:data-id="${conversation != null ? conversation.id : ''}">
+
+                    <!-- 1. Header -->
+                    <div class="chat-header">
+                        <button type="button" class="btn-close-sidebar" onclick="closeChat()">✖</button>
+
+                        <div class="chat-header-main">
+                            <div class="title-row" >
+                                <h3 id="chatTitle" th:text="${conversation != null ? conversation.subject : 'Tiêu đề cuộc trò chuyện'}">Tiêu đề cuộc trò chuyện</h3>
+                            </div>
+                            <!-- KHỐI NÀY CHỨA TRẠNG THÁI (TRÁI) VÀ NÚT (PHẢI) -->
+                            <div class="status-row" id="chatStatusRow" th:style="${conversation == null ? 'display:none;' : ''}">
+                                <div class="status-text" id="chatStatusText">
+                                    Trạng thái:
+                                    <span class="status-active" th:if="${conversation == null or conversation.open}">Đang mở</span>
+                                    <span class="status-active" th:if="${conversation != null and !conversation.open}" style="color: #ef4444;">Đã đóng</span>
+                                </div>
+
+                                <button type="button" class="btn-end-chat" id="btnEndChat" onclick="closeConversation()" th:style="${conversation != null and !conversation.open ? 'display:none;' : ''}">
+                                    <i class="far fa-check-circle"></i> Đóng trao đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Body / Messages (KHU VỰC HIỂN THỊ TIN NHẮN CHÍNH - KHÔNG ĐƯỢC XÓA) -->
+                    <!-- 2. Body / Messages -->
+                    <div class="chat-body" id="chatBody">
+                        <!-- ĐỂ TRỐNG. TẤT CẢ tin nhắn sẽ được JS (loadHistory + renderMessage) vẽ vào đây -->
+                    </div>
+
+                    <!-- 3. Input Area -->
+                    <div class="chat-input" id="chatInput" th:style="${conversation != null && !conversation.getOpen()} ? 'display: none;' : ''">
+                        <!-- Input file ẩn để gọi hàm chọn tệp -->
+                        <input type="file" id="chatFileInput" style="display:none" multiple>
+
+                        <button type="button" class="btn-attach" onclick="document.getElementById('chatFileInput').click()">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+
+                        <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
+
+                        <button type="button" class="btn-send" id="btnSendChat" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+
                 </div>
 
-                <!-- 3. Input Area -->
-                <div class="chat-input" id="chatInput" th:style="${conversation != null && !conversation.getOpen()} ? 'display: none;' : ''">
-                    <!-- Input file ẩn để gọi hàm chọn tệp -->
-                    <input type="file" id="chatFileInput" style="display:none" multiple>
-
-                    <button type="button" class="btn-attach" onclick="document.getElementById('chatFileInput').click()">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-
-                    <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
-
-                    <button type="button" class="btn-send" id="btnSendChat" onclick="sendMessage()">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-
-            </div>
             </div>
         </div>
 
@@ -446,6 +448,10 @@
             stompClient.disconnect();
             stompClient = null;
             isConnected = false;
+        }
+
+        if (currentConversationId) {
+            loadHistory(currentConversationId);  // chỉ load lại lịch sử chat
         }
     }
 
