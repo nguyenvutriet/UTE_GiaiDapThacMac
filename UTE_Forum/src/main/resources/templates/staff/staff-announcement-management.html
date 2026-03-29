@@ -29,7 +29,7 @@
             <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
             <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
             <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thong bao <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
-            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
+            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
             <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
         </nav>
 

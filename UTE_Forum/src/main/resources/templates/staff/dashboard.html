@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cán bộ - Thống kê</title>
+    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+
+    <!-- CSS riêng -->
+    <link rel="stylesheet" href="/css/staff/forumView.css">
+    <link rel="stylesheet" href="/css/staff/staff-style.css">
+    <link rel="stylesheet" href="/css/staff/dashboard.css">
+
+
+    <!-- Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+<div class="staff-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="/images/logo_no_bg.png" class="logo">
+        </div>
+
+        <div class="user-profile">
+            <img src="/images/staff.png" class="avatar">
+            <div class="user-info">
+                <span th:text="${user.department.name}"></span>
+                <span class="user-dept">Nhân viên phòng ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/staff/list-feedbacks" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a href="/api/forum/staff" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a th:href="@{/staff/announcement-management}" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+            <a href="#" class="nav-item active"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+        </nav>
+
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+
+            <div class="main-header-bottom">
+                <h1 class="page-tab">TỔNG QUAN PHÒNG BAN</h1>
+                <div class="date-filter">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="date" id="startDateInput" value="2026-03-01">
+                    <span>đến</span>
+                    <input type="date" id="endDateInput" value="2026-06-30">
+                    <button id="btnFilter" style="margin-left: 10px; cursor: pointer;">Lọc</button>
+                </div>
+            </div>
+        </header>
+        <section class="dashboard-body">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="card-header">
+                        <span>Tổng số góp ý</span>
+                        <i class="fas fa-chart-line blue-icon"></i>
+                    </div>
+                    <h2 id="total-requests">2</h2>
+                    <p class="sub-text">Tổng tiếp nhận toàn thời gian</p>
+                </div>
+                <div class="stat-card">
+                    <div class="card-header">
+                        <span>Đang chờ xử lý</span>
+                        <i class="far fa-clock orange-icon"></i>
+                    </div>
+                    <h2 id="pending-requests">1</h2>
+                    <p class="sub-text">Cần xử lý ngay</p>
+                </div>
+                <div class="stat-card">
+                    <div class="card-header">
+                        <span>Đã giải quyết</span>
+                        <i class="far fa-check-circle green-icon"></i>
+                    </div>
+                    <h2 id="resolved-requests">1</h2>
+                    <p class="sub-text">Đã đóng thành công</p>
+                </div>
+                <div class="stat-card">
+                    <div class="card-header">
+                        <span>Đã từ chối</span>
+                        <i class="far fa-times-circle red-icon"></i>
+                    </div>
+                    <h2 id="rejected-requests">0</h2>
+                    <p class="sub-text">Không hợp lệ hoặc spam</p>
+                </div>
+            </div>
+
+            <div class="charts-main-grid">
+                <div class="chart-container">
+                    <h3>Xu hướng góp ý</h3>
+                    <p class="chart-sub">Số lượng góp ý theo ngày trong giai đoạn đã chọn</p>
+                    <div class="canvas-holder">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Danh mục hàng đầu</h3>
+                    <p class="chart-sub">Các vấn đề được phản ánh nhiều nhất</p>
+                    <div class="canvas-holder">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-secondary-grid">
+                <div class="chart-container">
+                    <h3>Hiệu suất xử lý</h3>
+                    <p class="chart-sub">Thời gian trung bình</p>
+                    <div class="gauge-wrapper">
+                        <canvas id="gaugeChart"></canvas>
+                        <div class="gauge-center-text">
+                            <span id="avg-hours">0.1h</span>
+                            <small>Trung bình</small>
+                        </div>
+                    </div>
+                    <div class="efficiency-legend">
+                        <span><i class="dot blue"></i> Đã xử lý</span>
+                        <span><i class="dot red"></i> Chưa xử lý</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>Tổng quan năm 2026</h3>
+                    <p class="chart-sub">So sánh trạng thái xử lý theo từng tháng</p>
+                    <div class="canvas-holder">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+    // Khai báo biến toàn cục để quản lý các instance của biểu đồ (tránh lỗi vẽ đè)
+    let charts = {};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const deptId = [[${user.department.id}]];
+
+        // 1. Hàm vẽ hoặc cập nhật biểu đồ
+        function renderAllCharts(data) {
+            const chartConfigs = {
+                trendChart: {
+                    type: 'line',
+                    data: {
+                        labels: data.dailyTrends.map(t => t.date),
+                        datasets: [{
+                            label: 'Số lượng góp ý',
+                            data: data.dailyTrends.map(t => t.count),
+                            fill: true,
+                            backgroundColor: 'rgba(24, 119, 242, 0.1)',
+                            borderColor: '#1877f2',
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                },
+                categoryChart: {
+                    type: 'bar',
+                    data: {
+                        labels: data.topCategories.map(c => c.categoryName),
+                        datasets: [{
+                            label: 'Số lượng',
+                            data: data.topCategories.map(c => c.count),
+                            backgroundColor: '#1877f2',
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { indexAxis: 'y', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+                },
+                radarChart: {
+                    type: 'radar',
+                    data: {
+                        labels: data.monthlyStats.map(m => m.month),
+                        datasets: [
+                            { label: 'Đã xử lý', data: data.monthlyStats.map(m => m.resolvedCount), borderColor: '#1877f2', backgroundColor: 'rgba(24, 119, 242, 0.2)' },
+                            { label: 'Chưa xử lý', data: data.monthlyStats.map(m => m.pendingCount), borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.2)' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                },
+                gaugeChart: {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            // Giả sử thang đo chuẩn là 24 giờ (1 ngày)
+                            // Phần 1: Thời gian thực tế | Phần 2: Phần còn lại của thang đo
+                            data: [data.efficiency.avgHours, Math.max(0, 24 - data.efficiency.avgHours)],
+                            backgroundColor: [
+                                data.efficiency.avgHours <= 8 ? '#27ae60' : // Dưới 8h: Xanh (Tốt)
+                                    data.efficiency.avgHours <= 16 ? '#f1c40f' : // Dưới 16h: Vàng (Ổn)
+                                        '#e74c3c', // Trên 16h: Đỏ (Chậm)
+                                '#f1f2f6' // Màu nền xám cho phần còn lại
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        circumference: 180, // Chỉ vẽ nửa vòng tròn trên
+                        rotation: 270,      // Xoay để đỉnh nằm ở giữa
+                        cutout: '80%',      // Độ mỏng của vòng
+                        plugins: {
+                            tooltip: { enabled: false }
+                        }
+                    }
+                }
+            };
+
+            // Duyệt qua từng biểu đồ, nếu đã tồn tại thì xóa đi vẽ mới
+            Object.keys(chartConfigs).forEach(id => {
+                if (charts[id]) charts[id].destroy();
+                charts[id] = new Chart(document.getElementById(id), chartConfigs[id]);
+            });
+        }
+
+        // 2. Hàm Fetch dữ liệu từ API
+        function updateDashboard() {
+            const startVal = document.getElementById('startDateInput').value;
+            const endVal = document.getElementById('endDateInput').value;
+
+            if(!startVal || !endVal) return alert("Vui lòng chọn đủ ngày!");
+
+            // Convert yyyy-mm-dd -> dd/MM/yyyy
+            const [y, m, d] = startVal.split('-');
+            const [ey, em, ed] = endVal.split('-');
+            const startDate = `${d}/${m}/${y}`;
+            const endDate = `${ed}/${em}/${ey}`;
+
+            fetch(`/staff/dashboard/stats?deptId=${deptId}&startDate=${startDate}&endDate=${endDate}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Cập nhật các con số Card
+                    document.getElementById('total-requests').innerText = data.totalRequests;
+                    document.getElementById('pending-requests').innerText = data.pendingRequests;
+                    document.getElementById('resolved-requests').innerText = data.resolvedRequests;
+                    document.getElementById('rejected-requests').innerText = data.rejectedRequests;
+                    document.getElementById('avg-hours').innerText = data.efficiency.avgHours + 'h';
+
+                    // Vẽ lại biểu đồ
+                    renderAllCharts(data);
+                })
+                .catch(err => console.error("Lỗi tải dữ liệu:", err));
+        }
+
+        // 3. Gán sự kiện
+        document.getElementById('btnFilter').addEventListener('click', updateDashboard);
+
+        // Chạy lần đầu
+        updateDashboard();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

@@ -206,4 +206,31 @@ public class RequestController {
         return "staff/staff-list";
     }
 
+    @GetMapping("/dashboard")
+    public String showDashboardPage(Model model, @AuthenticationPrincipal UserDetails currentUser) {
+        // 1. Kiểm tra nếu chưa đăng nhập
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        // 2. Lấy email từ currentUser (getUsername trong class của bạn trả về email)
+        String email = currentUser.getUsername();
+
+        // 3. Truy vấn DB để lấy Object Users có kèm Department
+        Users user = usersRepo.findByEmail(email);
+
+        if (user != null && user.getDepartment() != null) {
+            // Đổ các thông tin cần thiết ra để HTML không bị Null
+            model.addAttribute("user", user);
+            model.addAttribute("deptId", user.getDepartment().getId());
+// Sửa dòng này
+            model.addAttribute("deptName", user.getDepartment().getName());
+        } else {
+            // Trường hợp user không có phòng ban, tránh lỗi sập trang
+            model.addAttribute("deptName", "N/A");
+        }
+
+        return "staff/dashboard";
+    }
+
 }

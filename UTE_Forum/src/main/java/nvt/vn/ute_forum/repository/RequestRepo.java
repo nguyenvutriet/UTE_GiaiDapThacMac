@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -144,4 +145,46 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             @Param("departmentId") String departmentId,
             Pageable pageable
     );
+
+    // 1. Đếm tổng số yêu cầu trong khoảng thời gian
+    @Query("SELECT COUNT(r) FROM Request r WHERE r.department.id = :deptId " +
+            "AND r.timeCreate BETWEEN :startDate AND :endDate")
+    long countByDeptAndTime(@Param("deptId") String deptId,
+                            @Param("startDate") LocalDateTime startDate,
+                            @Param("endDate") LocalDateTime endDate);
+
+    // 2. Đếm theo trạng thái trong khoảng thời gian
+    @Query("SELECT COUNT(r) FROM Request r WHERE r.department.id = :deptId " +
+            "AND r.currentStatus = :status " +
+            "AND r.timeCreate BETWEEN :startDate AND :endDate")
+    long countByStatusDeptAndTime(@Param("deptId") String deptId,
+                                  @Param("status") String status,
+                                  @Param("startDate") LocalDateTime startDate,
+                                  @Param("endDate") LocalDateTime endDate);
+
+    // 3. Thống kê Danh mục hàng đầu (Ảnh 1)
+    @Query("SELECT c.subject, COUNT(r) FROM Request r JOIN r.categories c " +
+            "WHERE r.department.id = :deptId " +
+            "AND r.timeCreate BETWEEN :startDate AND :endDate " +
+            "GROUP BY c.subject ORDER BY COUNT(r) DESC")
+    List<Object[]> getTopCategories(@Param("deptId") String deptId,
+                                    @Param("startDate") LocalDateTime startDate,
+                                    @Param("endDate") LocalDateTime endDate);
+
+    // 4. Thống kê xu hướng theo ngày (Ảnh 1)
+    @Query("SELECT CAST(r.timeCreate AS date), COUNT(r) FROM Request r " +
+            "WHERE r.department.id = :deptId " +
+            "AND r.timeCreate BETWEEN :startDate AND :endDate " +
+            "GROUP BY CAST(r.timeCreate AS date) ORDER BY CAST(r.timeCreate AS date)")
+    List<Object[]> getDailyTrend(@Param("deptId") String deptId,
+                                 @Param("startDate") LocalDateTime startDate,
+                                 @Param("endDate") LocalDateTime endDate);
+
+    // 5. Lấy danh sách Request đã RESOLVED để tính hiệu suất (Ảnh 2)
+    @Query("SELECT r FROM Request r WHERE r.department.id = :deptId " +
+            "AND r.currentStatus = 'RESOLVED' " +
+            "AND r.timeCreate BETWEEN :startDate AND :endDate")
+    List<Request> findResolvedRequestsForEfficiency(@Param("deptId") String deptId,
+                                                    @Param("startDate") LocalDateTime startDate,
+                                                    @Param("endDate") LocalDateTime endDate);
 }
