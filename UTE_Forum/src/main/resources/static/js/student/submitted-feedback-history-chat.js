@@ -368,6 +368,26 @@
     sendButton.disabled = !enabled;
   }
 
+  function setDrawerConversationState(isOpen) {
+    var statusPill = document.getElementById("chat-drawer-status-pill");
+    if (!statusPill) {
+      return;
+    }
+
+    if (isOpen) {
+      statusPill.textContent = "Đang mở";
+      statusPill.classList.remove("closed");
+      setComposerEnabled(true);
+      messageInput.placeholder = "Nhập tin nhắn...";
+      return;
+    }
+
+    statusPill.textContent = "Đã đóng";
+    statusPill.classList.add("closed");
+    setComposerEnabled(false);
+    messageInput.placeholder = "Cuộc hội thoại đã đóng";
+  }
+
    function subscribeConversation(conversationId) {
      if (!stompClient || !stompClient.connected || !conversationId) {
        return;
@@ -418,6 +438,7 @@
     var conversationId = item.getAttribute("data-conversation-id") || "";
     var requestId = item.getAttribute("data-request-id") || "";
     var subject = item.getAttribute("data-subject") || "Trao đổi";
+    var isOpen = (item.getAttribute("data-is-open") || "true") === "true";
 
     if (!conversationId || !requestId) {
       return;
@@ -433,7 +454,7 @@
 
     drawerTitle.textContent = subject;
     openDrawer();
-    setComposerEnabled(true);
+    setDrawerConversationState(isOpen);
     renderEmptyMessage("Đang tải hội thoại...");
 
     loadConversation(conversationId)
@@ -444,8 +465,11 @@
 
         activeRequestId = payload.requestId || activeRequestId;
         drawerTitle.textContent = payload.subject || subject;
+        setDrawerConversationState(payload.open !== false);
         renderMessages(payload.messages || []);
-        subscribeConversation(activeConversationId);
+        if (payload.open !== false) {
+          subscribeConversation(activeConversationId);
+        }
       })
       .catch(function () {
         renderEmptyMessage("Không tải được cuộc hội thoại. Vui lòng thử lại.");

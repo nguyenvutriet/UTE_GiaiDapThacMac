@@ -200,12 +200,13 @@
               <button type="button"
                       class="conversation-item"
                       th:each="conversation : ${openConversations}"
-                      th:attr="data-conversation-id=${conversation.conversationId},data-request-id=${conversation.requestId},data-subject=${conversation.subject}">
+                      th:classappend="${conversation.open} ? '' : ' closed'"
+                      th:attr="data-conversation-id=${conversation.conversationId},data-request-id=${conversation.requestId},data-subject=${conversation.subject},data-is-open=${conversation.open}">
                 <span class="conversation-item-icon">🏢</span>
                 <div class="conversation-item-main">
                   <h4 th:text="${conversation.subject}"></h4>
                   <p th:text="${conversation.preview}">Nhấn để xem chi tiết cuộc trao đổi...</p>
-                  <span class="conversation-open-pill" th:text="${conversation.statusLabel}">Đang mở</span>
+                  <span class="conversation-open-pill" th:classappend="${conversation.open} ? '' : ' closed'" th:text="${conversation.statusLabel}">Đang mở</span>
                 </div>
                 <time th:text="${conversation.dateLabel}"></time>
               </button>
@@ -218,7 +219,7 @@
           <header class="chat-drawer-header">
             <div>
               <h3 id="chat-drawer-title">Trao đổi</h3>
-              <p>Trạng thái: <span class="conversation-open-pill">Đang mở</span></p>
+              <p>Trạng thái: <span class="conversation-open-pill" id="chat-drawer-status-pill">Đang mở</span></p>
             </div>
             <button type="button" class="chat-drawer-close" id="close-chat-drawer-btn">&times;</button>
           </header>
