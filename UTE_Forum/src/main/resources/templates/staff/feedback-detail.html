@@ -311,9 +311,11 @@
                                 <span th:text="${conversation.subject}"></span>
                             </div>
                             <p>Nhấn để mở cuộc trao đổi với phòng ban</p>
-                            <span class="chat-status" th:if="${conversation.getOpen()}">Đang mở</span>
-                            <span class="chat-status" th:if="${!conversation.getOpen()}">Đã đóng</span>
-                            <time th:text="${conversation.getCreateAt()}"></time>
+                            <div class="chat-meta-row">
+                                <span class="chat-status" th:if="${conversation.getOpen()}">Đang mở</span>
+                                <span class="chat-status" th:if="${!conversation.getOpen()}">Đã đóng</span>
+                                <time class="chat-time" th:text="${conversation.getCreateAt()}"></time>
+                            </div>
                         </div>
 
                     </div>
