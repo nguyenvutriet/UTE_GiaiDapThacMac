@@ -29,6 +29,8 @@
   var activeConversationId = "";
   var activeRequestId = "";
   var activeSubscription = null;
+  var subscriptions = {}; // Lưu trữ tất cả subscriptions theo conversationId
+  var appendedMessageIds = {}; // Track message IDs đã được append để tránh duplicate
 
   setComposerEnabled(false);
 
@@ -88,76 +90,234 @@
     stompClient.send("/app/clarification/send", {}, JSON.stringify(payload));
   }
 
-  function appendMessage(message) {
-    var article = document.createElement("article");
-    article.className = "chat-message";
+   function parseMessagePayload(rawContent) {
+     if (!rawContent) return { text: "", attachments: [] };
 
-    // Hỗ trợ cả 2 format: MessageDTO từ staff và ChatMessageView từ clarification
-    var senderId = (message.sender && message.sender.id) ? message.sender.id
-                   : (message.senderId || "");
-    var senderName = (message.sender && message.sender.fullName) ? message.sender.fullName
-                     : (message.senderName || "Người dùng");
-    var text = message.content || message.text || "";
-    var rawTime = message.createAt || message.createdAt || message.time || null;
-    var timeLabel = rawTime ? formatChatTime(rawTime) : "";
+     var PREFIX = "CHAT_V1::";
+     var LEGACY_PREFIX = "CHAT_JSON::";
+     var SEPARATOR = "\n--FILES--\n";
 
-    var isMe = senderId && senderId === currentUserId;
-    if (isMe) {
-      article.className += " mine";
-    }
+     if (rawContent.indexOf(LEGACY_PREFIX) === 0) {
+       return { text: rawContent.substring(LEGACY_PREFIX.length), attachments: [] };
+     }
 
-    var header = document.createElement("div");
-    header.className = "chat-message-meta";
-    var sender = document.createElement("strong");
-    sender.textContent = senderName;
-    header.appendChild(sender);
-    article.appendChild(header);
+     if (rawContent.indexOf(PREFIX) !== 0) {
+       return { text: rawContent, attachments: [] };
+     }
 
-    if (text) {
-      var p = document.createElement("p");
-      p.className = "chat-message-text";
-      p.textContent = text;
-      article.appendChild(p);
-    }
+     var payload = rawContent.substring(PREFIX.length);
+     var sepIdx = payload.indexOf(SEPARATOR);
 
-    if (Array.isArray(message.attachments) && message.attachments.length > 0) {
-      var list = document.createElement("ul");
-      list.className = "chat-attachment-list";
+     if (sepIdx < 0) {
+       return { text: unescapeStr(payload), attachments: [] };
+     }
 
-      for (var i = 0; i < message.attachments.length; i++) {
-        var attachment = message.attachments[i];
-        if (!attachment || !attachment.url) {
-          continue;
-        }
-        var item = document.createElement("li");
-        var link = document.createElement("a");
-        link.href = attachment.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = attachment.name || "Tệp đính kèm";
-        item.appendChild(link);
-        list.appendChild(item);
-      }
+     var textPart = payload.substring(0, sepIdx);
+     var attachmentPart = payload.substring(sepIdx + SEPARATOR.length);
 
-      if (list.children.length > 0) {
-        article.appendChild(list);
-      }
-    }
+     var attachments = [];
+     var lines = attachmentPart.split("\n");
+     for (var i = 0; i < lines.length; i++) {
+       var line = lines[i];
+       if (!line || line.trim() === "") continue;
+       var parts = splitEscapedLine(line, '|');
+       if (parts.length >= 2) {
+         attachments.push({
+           name: unescapeStr(parts[0]),
+           url: unescapeStr(parts[1]),
+           type: parts.length >= 3 ? unescapeStr(parts[2]) : "application/octet-stream"
+         });
+       }
+     }
 
-    var timeEl = document.createElement("div");
-    timeEl.className = "chat-message-time";
-    timeEl.textContent = timeLabel;
-    article.appendChild(timeEl);
+     return { text: unescapeStr(textPart), attachments: attachments };
+   }
 
-    messageList.appendChild(article);
-    messageList.scrollTop = messageList.scrollHeight;
+   function unescapeStr(val) {
+     if (!val) return "";
+     var res = "";
+     var escaped = false;
+     for (var i = 0; i < val.length; i++) {
+       var ch = val.charAt(i);
+       if (escaped) {
+         if (ch === 'n') res += '\n';
+         else res += ch;
+         escaped = false;
+         continue;
+       }
+       if (ch === '\\') {
+         escaped = true;
+         continue;
+       }
+       res += ch;
+     }
+     return res;
+   }
+
+   function splitEscapedLine(val, sep) {
+     var parts = [];
+     var cur = "";
+     var escaped = false;
+     for (var i = 0; i < val.length; i++) {
+       var ch = val.charAt(i);
+       if (escaped) {
+         cur += ch;
+         escaped = false;
+         continue;
+       }
+       if (ch === '\\') {
+         cur += ch;
+         escaped = true;
+         continue;
+       }
+       if (ch === sep) {
+         parts.push(cur);
+         cur = "";
+         continue;
+       }
+       cur += ch;
+     }
+     parts.push(cur);
+     return parts;
+   }
+
+    function appendMessage(message) {
+     // Check duplicate message ID
+     var messageId = message.id;
+     if (messageId && appendedMessageIds[messageId]) {
+       return; // Message đã được append, bỏ qua
+     }
+     if (messageId) {
+       appendedMessageIds[messageId] = true;
+     }
+
+     var article = document.createElement("article");
+     article.className = "chat-message";
+
+     // Hỗ trợ cả 2 format: MessageDTO từ staff và ChatMessageView từ clarification
+     var senderId = (message.sender && message.sender.id) ? message.sender.id
+                    : (message.senderId || "");
+     var senderName = (message.sender && message.sender.fullName) ? message.sender.fullName
+                      : (message.senderName || "Người dùng");
+     
+     // Parse CHAT_V1 content nếu có
+     var rawContent = message.content || message.text || "";
+     var parsedData = parseMessagePayload(rawContent);
+     var text = parsedData.text;
+     
+     var rawTime = message.createAt || message.createdAt || message.time || null;
+     var timeLabel = rawTime ? formatChatTime(rawTime) : "";
+
+     var isMe = senderId && senderId === currentUserId;
+     if (isMe) {
+       article.className += " mine";
+     }
+
+     var header = document.createElement("div");
+     header.className = "chat-message-meta";
+     var sender = document.createElement("strong");
+     sender.textContent = senderName;
+     header.appendChild(sender);
+     article.appendChild(header);
+
+     if (text) {
+       var p = document.createElement("p");
+       p.className = "chat-message-text";
+       p.textContent = text;
+       article.appendChild(p);
+     }
+
+     // Lấy attachments từ parsed data hoặc message.attachments
+     var attachments = (parsedData.attachments && parsedData.attachments.length > 0)
+                       ? parsedData.attachments
+                       : (message.attachments || []);
+
+     if (Array.isArray(attachments) && attachments.length > 0) {
+       var imageAttachments = [];
+       var otherAttachments = [];
+
+       // Phân loại attachment - image vs others
+       for (var i = 0; i < attachments.length; i++) {
+         var attachment = attachments[i];
+         if (!attachment || !attachment.url) continue;
+         
+         var isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachment.url);
+         if (isImage) {
+           imageAttachments.push(attachment);
+         } else {
+           otherAttachments.push(attachment);
+         }
+       }
+
+       // Render images trực tiếp
+       if (imageAttachments.length > 0) {
+         var imageContainer = document.createElement("div");
+         imageContainer.className = "chat-image-container";
+         
+         for (var j = 0; j < imageAttachments.length; j++) {
+           var img = document.createElement("img");
+           img.src = imageAttachments[j].url;
+           img.alt = imageAttachments[j].name || "Hình ảnh";
+           img.className = "chat-inline-image";
+           img.style.maxWidth = "100%";
+           img.style.borderRadius = "8px";
+           img.style.marginTop = "8px";
+           imageContainer.appendChild(img);
+         }
+         
+         article.appendChild(imageContainer);
+       }
+
+       // Render other files as links
+       if (otherAttachments.length > 0) {
+         var list = document.createElement("ul");
+         list.className = "chat-attachment-list";
+
+         for (var k = 0; k < otherAttachments.length; k++) {
+           var attachment = otherAttachments[k];
+           var item = document.createElement("li");
+           var link = document.createElement("a");
+           link.href = attachment.url;
+           link.target = "_blank";
+           link.rel = "noopener noreferrer";
+           link.textContent = attachment.name || "Tệp đính kèm";
+           item.appendChild(link);
+           list.appendChild(item);
+         }
+
+         if (list.children.length > 0) {
+           article.appendChild(list);
+         }
+       }
+     }
+
+     var timeEl = document.createElement("div");
+     timeEl.className = "chat-message-time";
+     timeEl.textContent = timeLabel;
+     article.appendChild(timeEl);
+
+     // Thêm data-mid attribute để track message đã append
+     if (messageId) {
+       article.setAttribute("data-mid", messageId);
+     }
+
+     messageList.appendChild(article);
+     messageList.scrollTop = messageList.scrollHeight;
   }
 
   function formatChatTime(rawTime) {
     try {
       var d = new Date(rawTime);
       if (isNaN(d.getTime())) return rawTime;
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      var day = String(d.getDate()).padStart(2, '0');
+      var month = String(d.getMonth() + 1).padStart(2, '0');
+      var year = d.getFullYear();
+      var hours = String(d.getHours()).padStart(2, '0');
+      var minutes = String(d.getMinutes()).padStart(2, '0');
+      var seconds = String(d.getSeconds()).padStart(2, '0');
+      
+      return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes + ':' + seconds;
     } catch(e) {
       return String(rawTime);
     }
@@ -179,6 +339,7 @@
 
   function clearMessages() {
     messageList.innerHTML = "";
+    appendedMessageIds = {}; // Reset tracking khi clear messages
   }
 
   function renderEmptyMessage(text) {
@@ -207,28 +368,35 @@
     sendButton.disabled = !enabled;
   }
 
-  function subscribeConversation(conversationId) {
-    if (!stompClient || !stompClient.connected || !conversationId) {
-      return;
-    }
+   function subscribeConversation(conversationId) {
+     if (!stompClient || !stompClient.connected || !conversationId) {
+       return;
+     }
 
-    if (activeSubscription) {
-      activeSubscription.unsubscribe();
-      activeSubscription = null;
-    }
+     if (activeSubscription) {
+       activeSubscription.unsubscribe();
+       activeSubscription = null;
+     }
 
-    activeSubscription = stompClient.subscribe("/topic/clarification/" + conversationId, function (frame) {
-      if (!frame || !frame.body) {
-        return;
-      }
-      try {
-        var data = JSON.parse(frame.body);
-        appendMessage(data);
-      } catch (e) {
-        // Ignore malformed frame to keep UI usable.
-      }
-    });
-  }
+     // Message handler chung cho cả 2 topics
+     var messageHandler = function (frame) {
+       if (!frame || !frame.body) {
+         return;
+       }
+       try {
+         var data = JSON.parse(frame.body);
+         appendMessage(data);
+       } catch (e) {
+         // Ignore malformed frame to keep UI usable.
+       }
+     };
+
+     // Subscribe vào topic clarification (khi student gửi)
+     activeSubscription = stompClient.subscribe("/topic/clarification/" + conversationId, messageHandler);
+
+     // Subscribe thêm vào topic conversation (khi staff gửi)
+     stompClient.subscribe("/topic/conversation/" + conversationId, messageHandler);
+   }
 
   function loadConversation(conversationId) {
     return fetch("/api/history/chat/messages?conversationId=" + encodeURIComponent(conversationId), {

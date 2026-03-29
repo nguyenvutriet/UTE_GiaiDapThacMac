@@ -946,6 +946,30 @@ body {
   color: rgba(59, 130, 246, 0.72);
 }
 
+.chat-image-container {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-inline-image {
+  max-width: 280px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.chat-inline-image:hover {
+  transform: scale(1.02);
+}
+
+.chat-message.mine .chat-inline-image {
+  max-width: 280px;
+}
+
 
 .pagination {
   margin-top: 10px;
