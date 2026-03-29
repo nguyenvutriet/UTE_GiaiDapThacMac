@@ -241,19 +241,20 @@
 
             <!-- RIGHT -->
             <!-- ===== TRAO ĐỔI ===== -->
-<!--            <div class="table-card" th:if="${feedback.getPostStatus() == 'PUBLIC'}">-->
+            <div class="table-card" th:if="${feedback.getPostStatus() == 'PUBLIC'}">
 
-<!--                <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>-->
+                <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>
 
-<!--                <div class="no-chat">-->
-<!--                    <div class="empty-chat">-->
-<!--                        <i class="far fa-comment-dots"></i>-->
-<!--                        <p>Góp ý đã được công khai, vui lòng tham gia trao đổi tại diễn đàn.</p>-->
-<!--                        <a th:href="@{/api/forum/staff}" class="open-chat-btn">-->
-<!--                            Đi đến diễn đàn-->
-<!--                        </a>-->
+                <div class="no-chat">
+                    <div class="empty-chat">
+                        <i class="far fa-comment-dots"></i>
+                        <p>Góp ý đã được công khai, vui lòng tham gia trao đổi tại diễn đàn.</p>
+                        <a th:href="@{/api/forum/staff}" class="open-chat-btn">
+                            Đi đến diễn đàn
+                        </a>
+            </div>
 
-<!--            </div>-->
+            <div th:if="${feedback.getPostStatus() == 'PRIVATE'}">
 
             <div class="table-card" >
 
@@ -369,6 +370,7 @@
                 </div>
 
             </div>
+            </div>
         </div>
 
     </main>
@@ -389,10 +391,9 @@
 <script>
     /* ================= GLOBAL ================= */
     let stompClient = null;
-    let isConnected = false;          // flag thực sự kiểm tra trạng thái kết nối
+    let isConnected = false;
     let currentConversationId = null;
 
-    // lấy requestId
     let requestId = null;
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -406,11 +407,6 @@
         let sendBtn = document.querySelector(".btn-send");
         if (input) input.disabled = !enabled;
         if (sendBtn) sendBtn.disabled = !enabled;
-    }
-
-    /* ================= POPUP ================= */
-    function openCreatePopup() {
-        document.getElementById("createPopup").style.display = "flex";
     }
 
     /* ================= CHAT BOX ================= */
@@ -428,7 +424,6 @@
 
         if (id) {
             currentConversationId = id;
-            // chỉ gọi 1 loadHistory chuẩn
             loadHistory(id);
 
             if (!isConnected || !stompClient || !stompClient.connected) {
@@ -440,9 +435,7 @@
             setComposerEnabled(false);
         }
 
-        setTimeout(() => {
-            scrollToBottom();
-        }, 100);
+        setTimeout(scrollToBottom, 100);
     }
 
     function closeChat() {
@@ -458,21 +451,17 @@
 
     /* ================= ĐÓNG TRAO ĐỔI ================= */
     function closeConversation() {
-        let chatFooter = document.querySelector(".chat-footer");
-        if (chatFooter) {
-            chatFooter.style.display = "none";
+        let chatInput = document.getElementById("chatInput");
+        if (chatInput) chatInput.style.display = "none";
+
+        let statusText = document.getElementById("chatStatusText");
+        if (statusText) {
+            statusText.innerHTML = 'Trạng thái: <span class="status-active" style="color: #ef4444;">Đã đóng</span>';
         }
 
-        let statusRow = document.querySelector(".status-row");
-        if (statusRow) {
-            let statusText = statusRow.querySelector(".status-text");
-            if (statusText) {
-                statusText.innerHTML = 'Trạng thái: <span class="status-active">Đã đóng</span>';
-            }
-            let btnEndChat = statusRow.querySelector(".btn-end-chat");
-            if (btnEndChat) {
-                btnEndChat.style.display = "none";
-            }
+        let btnEndChat = document.getElementById("btnEndChat");
+        if (btnEndChat) {
+            btnEndChat.style.display = "none";
         }
 
         if (currentConversationId) {
@@ -483,13 +472,12 @@
     }
 
     /* ================= CONNECT WEBSOCKET ================= */
-    let pendingMessages = [];   // hàng đợi tin nhắn chờ kết nối
-    let reconnectDelay = 2000;  // bắt đầu retry sau 2s
+    let pendingMessages = [];
+    let reconnectDelay = 2000;
     let reconnectTimer = null;
     let healthCheckInterval = null;
 
     function startHealthCheck() {
-        // Kiểm tra sức khỏe kết nối mỗi 5 giây
         if (healthCheckInterval) clearInterval(healthCheckInterval);
 
         healthCheckInterval = setInterval(() => {
@@ -513,7 +501,6 @@
     }
 
     function connectSocket(conversationId) {
-        // ✅ Kiểm tra nếu đã có client hoạt động
         if (stompClient && (stompClient.connected || stompClient.connecting)) {
             console.log("[WS] Already connecting or connected!");
             return;
@@ -523,19 +510,17 @@
 
         let socket = new SockJS('/ws');
         stompClient = Stomp.over(socket);
-        stompClient.debug = null;                 // tắt spam log
+        stompClient.debug = null;
         stompClient.heartbeat.outgoing = 20000;
         stompClient.heartbeat.incoming = 20000;
 
         stompClient.connect({}, function () {
             console.log("[WS] ✅ Connected! conversationId=" + conversationId);
-            console.log("[WS] stompClient.connected =", stompClient.connected);
             isConnected = true;
             currentConversationId = conversationId;
             reconnectDelay = 2000;
             startHealthCheck();
 
-            // Subscribe nhận tin nhắn mới
             stompClient.subscribe('/topic/conversation/' + conversationId, function (frame) {
                 console.log("[WS] Received frame:", frame.body);
                 try {
@@ -546,7 +531,6 @@
                 }
             });
 
-            // Gửi các tin đang chờ trong hàng đợi
             if (pendingMessages.length > 0) {
                 console.log("[WS] Processing " + pendingMessages.length + " pending messages...");
                 while (pendingMessages.length > 0) {
@@ -560,7 +544,6 @@
             stompClient = null;
             isConnected = false;
 
-            // Tự động reconnect với exponential back-off
             if (currentConversationId) {
                 console.log("[WS] Reconnecting in " + reconnectDelay + "ms...");
                 clearTimeout(reconnectTimer);
@@ -603,6 +586,30 @@
             });
     }
 
+    /* ================= BUILD CHAT_V1 CONTENT (staff) ================= */
+    function buildChatV1Content(text, attachments) {
+        const PREFIX = "CHAT_V1::";
+        const SEPARATOR = "\n--FILES--\n";
+
+        function esc(str) {
+            return (str || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/\n/g, '\\n')
+                .replace(/\|/g, '\\|');
+        }
+
+        let base = esc(text || '');
+        if (!attachments || attachments.length === 0) {
+            return PREFIX + base;
+        }
+
+        let lines = attachments.map(att =>
+            esc(att.name) + '|' + esc(att.url) + '|' + esc(att.type)
+        ).join('\n');
+
+        return PREFIX + base + SEPARATOR + lines;
+    }
+
     /* ================= SEND MESSAGE ================= */
     window.sendMessage = function() {
         console.log("==> [WS] SEND MESSAGE TRIGGERED <==");
@@ -627,7 +634,6 @@
 
         if (btnSend) btnSend.disabled = true;
 
-        // 🔥 CASE 1: KHÔNG CÓ FILE → gửi luôn
         if (files.length === 0) {
             let payload = {
                 requestId: requestId,
@@ -637,15 +643,13 @@
 
             sendPayload(payload);
 
-            // clear input
             input.value = "";
             input.focus();
 
             if (btnSend) btnSend.disabled = false;
-            return; // 🔥 QUAN TRỌNG
+            return;
         }
 
-        // 🔥 CASE 2: CÓ FILE → upload rồi gửi
         uploadFiles(files)
             .then(attachments => {
                 let payload = {
@@ -672,11 +676,18 @@
     function sendPayload(payload) {
         console.log("[WS] Sending payload:", payload);
 
+        // Encode thành CHAT_V1 để backend lưu text + files chung trong content
+        let encoded = {
+            requestId: payload.requestId,
+            content: buildChatV1Content(payload.content, payload.attachments || []),
+            attachments: [] // mọi thứ đã nằm trong content
+        };
+
         if (isConnected && stompClient && stompClient.connected) {
-            _doSend(payload);
+            _doSend(encoded);
         } else {
             console.log("[WS] Not connected yet, queuing...");
-            pendingMessages.push(payload);
+            pendingMessages.push(encoded);
 
             if (!stompClient && currentConversationId) {
                 connectSocket(currentConversationId);
@@ -690,7 +701,6 @@
             return;
         }
 
-        // include requestId for backend mapping
         if (!payload.requestId) {
             payload.requestId = requestId;
         }
@@ -798,105 +808,67 @@
         return { text: unescapeStr(textPart), attachments: attachments };
     }
 
-    // function reformatExistingBubbles() {
-    //     let bubbles = document.querySelectorAll(".chat-body .bubble");
-    //     bubbles.forEach(b => {
-    //         // Check if already parsed
-    //         if (b.dataset.parsed === "true") return;
-    //         b.dataset.parsed = "true";
-    //
-    //         let raw = b.textContent;
-    //         let parsed = parseMessagePayload(raw);
-    //         b.innerHTML = escapeHtml(parsed.text);
-    //
-    //         if (parsed.attachments && parsed.attachments.length > 0) {
-    //             let ul = document.createElement("ul");
-    //             ul.style.listStyle = "none";
-    //             ul.style.paddingLeft = "0";
-    //             ul.style.marginTop = "8px";
-    //             parsed.attachments.forEach(att => {
-    //                 let li = document.createElement("li");
-    //                 li.style.marginTop = "4px";
-    //                 let a = document.createElement("a");
-    //                 a.href = att.url;
-    //                 a.target = "_blank";
-    //                 a.style.color = "inherit";
-    //                 a.style.textDecoration = "underline";
-    //                 a.innerHTML = '<i class="fas fa-paperclip"></i> ' + escapeHtml(att.name || "Tệp đính kèm");
-    //                 li.appendChild(a);
-    //                 ul.appendChild(li);
-    //             });
-    //             // Thêm vào dưới text trong cùng bubble
-    //             b.appendChild(ul);
-    //         }
-    //     });
-    // }
-
     /* ================= RENDER MESSAGE ================= */
     function renderMessage(msg) {
         let chatBody = document.querySelector(".chat-body");
         if (!chatBody) return;
 
-        // Chống lặp tin nhắn
         if (msg.id) {
             let exists = chatBody.querySelector(`[data-mid="${msg.id}"]`);
             if (exists) return;
         }
 
-        // 1. Phân biệt người gửi / người nhận
         let isMe = false;
         let senderId = msg.sender ? (msg.sender.id || msg.sender.userId) : (msg.senderId || null);
         if (window.currentUserId && senderId) {
             isMe = String(senderId) === String(window.currentUserId);
         }
 
-        // 2. Lấy tên người gửi
         let senderName = "Người gửi";
         if (msg.sender && (msg.sender.fullName || msg.sender.name)) {
             senderName = msg.sender.fullName || msg.sender.name;
         } else if (msg.senderName) {
             senderName = msg.senderName;
         } else if (isMe) {
-            senderName = "Bạn"; // Fallback nếu không có tên
+            senderName = "Bạn";
         }
 
-        // 3. GIẢI MÃ BẮT BUỘC CHAT_V1 TRƯỚC KHI RENDER
         let rawContent = msg.content || msg.text || "";
         let parsedData = parseMessagePayload(rawContent);
-        let actualText = parsedData.text; // Text đã được làm sạch
+        let actualText = parsedData.text;
 
-        // 4. Lấy thời gian
         let rawTime = msg.createAt || msg.createdAt || msg.time || msg.create_at;
         let time = formatTime(rawTime);
 
-        // 5. Xử lý file đính kèm
         let attachmentsHtml = '';
-        let actualAttachments = (msg.attachments && msg.attachments.length > 0) ? msg.attachments : parsedData.attachments;
+        let actualAttachments = (msg.attachments && msg.attachments.length > 0)
+            ? msg.attachments
+            : parsedData.attachments;
+
         if (Array.isArray(actualAttachments) && actualAttachments.length > 0) {
             attachmentsHtml = '<ul class="chat-attachments">';
             actualAttachments.forEach(att => {
                 attachmentsHtml += `<li>
-                <a href="${att.url}" target="_blank">
-                    <i class="fas fa-paperclip"></i> ${escapeHtml(att.name || "Tệp đính kèm")}
-                </a>
-            </li>`;
+                    <a href="${att.url}" target="_blank">
+                        <i class="fas fa-paperclip"></i> ${escapeHtml(att.name || "Tệp đính kèm")}
+                    </a>
+                </li>`;
             });
             attachmentsHtml += '</ul>';
         }
 
-        // 6. Vẽ HTML chuẩn
         let html = `
-    <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
-        <div class="msg ${isMe ? 'right' : 'left'}">
-            <div class="bubble">
-                <div class="sender-name">${escapeHtml(senderName)}</div>
-                <div class="message-content">${escapeHtml(actualText).replace(/\n/g, '<br>')}</div>
-                ${attachmentsHtml}
-                <time>${time}</time>
+        <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
+            <div class="msg ${isMe ? 'right' : 'left'}">
+                <div class="bubble">
+                    <div class="sender-name">${escapeHtml(senderName)}</div>
+                    <div class="message-content">${escapeHtml(actualText).replace(/\n/g, '<br>')}</div>
+                    ${attachmentsHtml}
+                    <time>${time}</time>
+                </div>
             </div>
         </div>
-    </div>
-    `;
+        `;
 
         chatBody.insertAdjacentHTML("beforeend", html);
         scrollToBottom();
@@ -960,6 +932,7 @@
     function formatTime(dateTime) {
         if (!dateTime) return "";
         let date = new Date(dateTime);
+        if (isNaN(date.getTime())) return "";
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
@@ -967,7 +940,6 @@
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${day}/${month}/${year} ${hours}:${minutes}`;
     }
-
 
     /* ================= AUTO SCROLL ================= */
     function scrollToBottom() {
@@ -977,7 +949,7 @@
         }
     }
 
-    /* ================= ẨN/HIỆN FORM INLINE ================= */
+    /* ================= INLINE FORM ================= */
     function showInlineForm() {
         document.getElementById("emptyChatState").style.display = "none";
         document.getElementById("inlineChatForm").style.display = "block";
@@ -986,14 +958,11 @@
     function hideInlineForm() {
         document.getElementById("inlineChatForm").style.display = "none";
         document.getElementById("emptyChatState").style.display = "block";
-        // Reset dữ liệu
         document.getElementById("inlineSubject").value = "";
         document.getElementById("inlineMessage").value = "";
     }
 
-    /* ================= SUBMIT TỪ FORM INLINE ================= */
     function submitInlineConversation() {
-        // ... các đoạn lấy dữ liệu cũ giữ nguyên ...
         let subject = document.getElementById("inlineSubject").value;
         let message = document.getElementById("inlineMessage").value;
         let chatBox = document.getElementById("chatBox");
@@ -1028,7 +997,6 @@
                 document.getElementById("inlineChatForm").style.display = "none";
                 document.getElementById("emptyChatState").style.display = "none";
 
-                // FIX: Bật thanh trạng thái và nút Đóng sau khi tạo mới thành công
                 document.getElementById("chatStatusRow").style.display = "flex";
                 document.getElementById("btnEndChat").style.display = "inline-flex";
                 document.getElementById("chatStatusText").innerHTML = 'Trạng thái: <span class="status-active">Đang mở</span>';
@@ -1050,28 +1018,7 @@
             });
     }
 
-    // /* ================= CLOSE CONVERSATION ================= */
-    // function closeConversation() {
-    //     let chatInput = document.getElementById("chatInput");
-    //     if (chatInput) chatInput.style.display = "none";
-    //
-    //     let statusText = document.getElementById("chatStatusText");
-    //     if (statusText) {
-    //         statusText.innerHTML = 'Trạng thái: <span class="status-active" style="color: #ef4444;">Đã đóng</span>';
-    //     }
-    //
-    //     let btnEndChat = document.getElementById("btnEndChat");
-    //     if (btnEndChat) {
-    //         btnEndChat.style.display = "none";
-    //     }
-    //
-    //     if (currentConversationId) {
-    //         fetch('/staff/close-conversation/' + currentConversationId, {
-    //             method: 'POST'
-    //         }).catch(err => console.error(err));
-    //     }
-    // }
-
+    /* ================= DOMContentLoaded ================= */
     document.addEventListener("DOMContentLoaded", () => {
         console.log("[WS] DOMContentLoaded triggered");
 
@@ -1086,7 +1033,6 @@
 
         if (id && id.trim() !== "") {
             currentConversationId = id;
-            // load history 1 lần lúc vào trang – sẽ sort chuẩn theo thời gian
             loadHistory(id);
             setTimeout(() => {
                 connectSocket(id);
@@ -1095,9 +1041,6 @@
         } else {
             setComposerEnabled(false);
         }
-
-        // chỉ format lại các bubble SSR cũ (nếu còn), rồi sẽ dần được thay thế bằng renderMessage
-        // reformatExistingBubbles();
 
         let msgInput = document.getElementById("messageInput");
         if (msgInput) {
@@ -1108,11 +1051,8 @@
                 }
             });
         }
-
     });
 </script>
-
-
 </body>
 </html>
 
