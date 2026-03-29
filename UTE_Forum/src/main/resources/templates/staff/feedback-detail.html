@@ -335,13 +335,15 @@
                     <div th:if="${conversation != null}">
                         <div th:each="msg : ${conversation.messages}" class="msg-container">
                             <!-- Tin nhắn của mình (Bên phải) -->
-                            <div class="msg right" th:if="${msg.getSender().getId() == currentUser.id}">
+                            <div class="msg right"
+                                 th:if="${msg.sender != null and msg.sender.id == currentUser.id}">
                                 <div class="bubble" th:text="${msg.content}"></div>
                                 <time th:text="${msg.getCreateAt().getHour() + ':' + msg.getCreateAt().getMinute()}"></time>
                             </div>
 
                             <!-- Tin nhắn của người khác (Bên trái) -->
-                            <div class="msg left" th:if="${msg.getSender().getId() != currentUser.id}">
+                            <div class="msg left"
+                                 th:if="${msg.sender != null and msg.sender.id != currentUser.id}">
                                 <div class="bubble" th:text="${msg.content}"></div>
                                 <time th:text="${msg.getCreateAt().getHour() + ':' + msg.getCreateAt().getMinute()}"></time>
                             </div>

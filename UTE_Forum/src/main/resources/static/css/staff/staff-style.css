@@ -218,7 +218,6 @@ body {
 
 .title-cell {
     font-weight: 700;
-    color: var(--primary-blue);
 }
 
 /* STATUS */
@@ -579,4 +578,128 @@ body {
     display: flex;
     justify-content: space-between;
     margin-bottom: 8px;
+}
+
+/*Tiêu đề*/
+.title-link {
+    text-decoration: none;     /* ❌ bỏ gạch chân */
+    color: #1f2937;            /* màu text bình thường */
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+/* hover đổi màu */
+.title-link:hover {
+    color: red;
+}
+
+/* 🔥 QUAN TRỌNG: chặn màu tím */
+.title-link:visited {
+    color: #1f2937;
+}
+
+/* khi click */
+.title-link:active {
+    color: #1f2937;
+}
+
+.title-cell a {
+    text-decoration: none;
+    color: #111827;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+/* 🎯 hover rõ ràng nhưng không gạch */
+.title-cell a:hover {
+    color: #2563eb;
+    transform: translateX(2px); /* ⭐ hiệu ứng nhẹ */
+}
+
+/*Hiệu ứng nút trạng thái*/
+.status-tag {
+    transition: all 0.2s ease;
+}
+
+.status-tag:hover {
+    filter: brightness(0.9);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/*filter drop*/
+.filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-search {
+    position: relative;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-search input {
+    width: 100%;
+    padding: 6px 10px 6px 32px; /* 🔥 chừa chỗ icon */
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    outline: none;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.dropdown-search input:focus {
+    border-color: #2563eb;
+}
+
+.dropdown-item {
+    position: relative;
+    padding: 10px 14px 10px 30px; /* 🔥 chừa chỗ bên trái */
+    cursor: pointer;
+}
+
+.selected {
+    background: #f1f5f9;
+    font-weight: 500;
+}
+
+/* ✔ dấu tích bên trái */
+.selected::before {
+    content: "✔";
+    position: absolute;
+    left: 10px;
+    color: #2563eb;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;      /* 🔥 QUAN TRỌNG */
+    top: 110%;               /* xuống dưới nút */
+    right: 0;                /* canh phải */
+
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+
+    min-width: 240px;
+    max-height: 300px;
+    overflow-y: auto;
+
+    z-index: 999;            /* 🔥 tránh bị đè */
+}
+
+.dropdown-menu.show {
+    display: block;
 }

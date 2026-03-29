@@ -1,8 +1,11 @@
 package nvt.vn.ute_forum.controller.staff;
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
+import nvt.vn.ute_forum.model.Category;
 import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Request;
+import nvt.vn.ute_forum.repository.CategoryRepo;
+import nvt.vn.ute_forum.service.CategoryService;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/staff")
 public class RequestController {
@@ -29,6 +34,12 @@ public class RequestController {
 
     @Autowired
     private UsersRepo usersRepo;
+
+    @Autowired
+    private CategoryRepo categoryRepo;
+
+    @Autowired
+    private CategoryService categoryService;
 
     @Autowired
     private ClarificationConversationService clarificationConversationService;
@@ -56,6 +67,10 @@ public class RequestController {
 
         // 🔥 4. Đẩy data ra view
         model.addAttribute("feedbacks", requestPage.getContent());
+        List<Category> categories =
+                categoryService.getCategoriesByDepartment(user);
+
+        model.addAttribute("categories", categories);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", requestPage.getTotalPages());
         model.addAttribute("sortField", sortField);
@@ -119,6 +134,42 @@ public class RequestController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", resultPage.getTotalPages());
         model.addAttribute("keyword", keyword);
+        model.addAttribute("currentUser", user);
+
+        return "staff/staff-list";
+    }
+
+    @GetMapping("/filter-feedbacks")
+    public String filterFeedbacks(
+            @RequestParam("categoryId") String categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Users user = usersRepo.findByEmail(userDetails.getUsername());
+
+        Pageable pageable = PageRequest.of(page, 12);
+
+        Page<Request> resultPage =
+                requestService.filterFeedbacks(categoryId, pageable, user);
+
+        // alt flow giống search
+        if (resultPage.isEmpty()) {
+            model.addAttribute("message", "Không có dữ liệu");
+        }
+
+        List<Category> categories =
+                categoryService.getCategoriesByDepartment(user);
+
+        model.addAttribute("categories", categories);
+        model.addAttribute("feedbacks", resultPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", resultPage.getTotalPages());
+        model.addAttribute("selectedCategory", categoryId);
+        Category category = categoryRepo.findById(categoryId).orElse(null);
+        if (category != null) {
+            model.addAttribute("selectedCategoryName", category.getSubject());
+        }
         model.addAttribute("currentUser", user);
 
         return "staff/staff-list";

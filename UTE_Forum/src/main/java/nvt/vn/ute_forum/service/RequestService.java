@@ -385,6 +385,22 @@ public class RequestService {
         return requestRepo.findById(requestId).orElse(null);
     }
 
+    public Page<Request> filterFeedbacks(String categoryId, Pageable pageable, Users user) {
+
+        if (user.getRole().equals("ROLE_ADMIN")) {
+            return requestRepo.findByCategory(categoryId, pageable);
+        }
+
+        if (user.getRole().equals("ROLE_DEPARTMENT")) {
+            return requestRepo.findByCategoryAndDepartment(
+                    categoryId,
+                    user.getDepartment().getId(),
+                    pageable
+            );
+        }
+
+        return Page.empty();
+    }
 
 }
 

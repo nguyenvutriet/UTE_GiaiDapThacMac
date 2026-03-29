@@ -58,16 +58,35 @@ public interface RequestRepo extends JpaRepository<Request, String> {
     Page<Request> findByDepartment_Id(String departmentId, Pageable pageable);
 
     /*Tìm kiếm feedback theo key*/
-    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    @Query("SELECT r FROM Request r WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Request> findByContentContaining(
             @Param("keyword") String keyword,
             Pageable pageable
     );
 
     /*Cho department*/
-    @Query("SELECT r FROM Request r WHERE LOWER(r.description) LIKE LOWER(CONCAT('%', :keyword, '%')) AND r.department.id = :departmentId")
+    @Query("SELECT r FROM Request r WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%')) AND r.department.id = :departmentId")
     Page<Request> findByContentContainingAndDepartment_Id(
             @Param("keyword") String keyword,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        """)
+    Page<Request> findByCategory(@Param("categoryId") String categoryId, Pageable pageable);
+
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.department.id = :departmentId
+    """)
+    Page<Request> findByCategoryAndDepartment(
+            @Param("categoryId") String categoryId,
             @Param("departmentId") String departmentId,
             Pageable pageable
     );

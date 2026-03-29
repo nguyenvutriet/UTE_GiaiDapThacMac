@@ -66,9 +66,45 @@
                         <i class="fas fa-filter"></i> Trạng thái
                     </button>
 
-                    <button class="filter-btn">
-                        <i class="fas fa-th-large"></i> Danh mục
-                    </button>
+                    <div class="filter-dropdown">
+
+                        <button class="filter-btn" id="categoryBtn" onclick="toggleDropdown()">
+                            <i class="fas fa-th-large"></i>
+                            <span th:text="${selectedCategoryName != null ? selectedCategoryName : 'Danh mục'}"></span>
+                        </button>
+
+                        <div class="dropdown-menu" id="categoryDropdown">
+
+                            <!-- 🔍 SEARCH -->
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text"
+                                       id="categorySearch"
+                                       placeholder="Tìm danh mục..."
+                                       onkeyup="filterCategoryList(event)">
+                            </div>
+
+                            <!-- default -->
+                            <div class="dropdown-item category-item"
+                                 data-id="ALL"
+                                 data-name="Danh mục"
+                                 th:classappend="${selectedCategory == null} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                                Danh mục
+                            </div>
+
+                            <!-- list -->
+                            <div th:each="c : ${categories}"
+                                 class="dropdown-item category-item"
+                                 th:text="${c.subject}"
+                                 th:attr="data-name=${c.subject}, data-id=${c.id}"
+                                 th:classappend="${c.id == selectedCategory} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                            </div>
+
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -103,6 +139,7 @@
                         <!-- TIÊU ĐỀ -->
                         <td class="title-cell">
                             <a th:href="@{/staff/feedback-detail(id=${fb.id})}"
+                               class="title-link"
                                th:text="${fb.subject}">
                             </a>
                         </td>
@@ -175,5 +212,95 @@
     </main>
 
 </div>
+<script>
+    function toggleDropdown() {
+        const dropdown = document.getElementById("categoryDropdown");
+        dropdown.classList.toggle("show");
+
+        if (dropdown.classList.contains("show")) {
+            document.getElementById("categorySearch").value = "";
+            filterCategoryList();
+        }
+    }
+
+    function filterCategory(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name") || "Danh mục";
+
+        // 🔥 đổi text nút
+        document.getElementById("categoryBtn").innerHTML =
+            '<i class="fas fa-th-large"></i> ' + name;
+
+        // 🔥 xử lý chuyển trang
+        if (!id || id === "ALL") {
+            window.location.href = window.location.origin + '/staff/list-feedbacks';
+        } else {
+            window.location.href = '/staff/filter-feedbacks?categoryId=' + id;
+        }
+    }
+</script>
+<script>
+    document.addEventListener("click", function(e) {
+        const dropdown = document.getElementById("categoryDropdown");
+        const button = document.getElementById("categoryBtn");
+
+        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+</script>
+<script>
+    function filterCategoryList(event) {
+        const keyword = document
+            .getElementById("categorySearch")
+            .value;
+
+        const items = document.querySelectorAll(".category-item");
+
+        items.forEach(item => {
+            const text = item.getAttribute("data-name");
+
+            if (!text) return;
+
+            const textNormalized = removeVietnameseTones(text);
+            const keywordNormalized = removeVietnameseTones(keyword);
+
+            if (textNormalized.includes(keywordNormalized)) {
+                item.style.display = "block";
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        // ENTER
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+
+            if (!keyword) {
+                window.location.href = "/staff/list-feedbacks";
+                return;
+            }
+
+            const firstVisible = document.querySelector(
+                "#categoryDropdown .category-item:not([style*='display: none']):not([data-id='ALL'])"
+            );
+
+            if (firstVisible) {
+                const id = firstVisible.getAttribute("data-id");
+                window.location.href =
+                    "/staff/filter-feedbacks?categoryId=" + id;
+            }
+        }
+    }
+
+    function removeVietnameseTones(str) {
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase();
+    }
+</script>
 </body>
 </html>

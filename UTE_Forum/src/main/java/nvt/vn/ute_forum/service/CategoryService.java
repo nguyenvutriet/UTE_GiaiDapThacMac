@@ -1,6 +1,7 @@
 package nvt.vn.ute_forum.service;
 
 import nvt.vn.ute_forum.model.Category;
+import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.CategoryRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -83,5 +84,9 @@ public class CategoryService {
             categoryRepo.save(category);
         }
         return category;
+    }
+
+    public List<Category> getCategoriesByDepartment(Users user) {
+        return categoryRepo.findCategoriesByDepartment(user.getDepartment().getId());
     }
 }
