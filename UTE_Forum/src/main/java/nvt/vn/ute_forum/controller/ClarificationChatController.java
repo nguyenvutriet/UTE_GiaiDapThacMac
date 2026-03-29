@@ -16,11 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,7 +203,7 @@ public class ClarificationChatController {
         message.setClarificationConversation(conversation);
         messService.save(message);
 
-        return Map.of("id", conversation.getId()); // 🔥 QUAN TRỌNG
+        return Map.of("id", conversation.getId()); 
     }
 
     @MessageMapping("/chat.send/{conversationId}")
@@ -238,7 +234,6 @@ public class ClarificationChatController {
 
         messService.save(message);
 
-        // DTO gửi về client
         MessageDTO dto = new MessageDTO(
                 message.getId(),
                 message.getContent(),
@@ -263,6 +258,43 @@ public class ClarificationChatController {
             return ResponseEntity.ok(Map.of("message", "Closed successfully"));
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/staff/conversation/{id}/messages")
+    @ResponseBody
+    public ResponseEntity<?> getConversationMessages(@PathVariable("id") String conversationId,
+                                                     Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Chưa đăng nhập"));
+        }
+
+        ClarificationConversation conversation = clarificationService.getConversationById(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Không tìm thấy cuộc trao đổi"));
+        }
+
+        List<Message> messages = conversation.getMessages();
+
+        List<Map<String, Object>> dtoMessages = new ArrayList<>();
+        for (Message m : messages) {
+            Map<String, Object> mDto = new HashMap<>();
+            mDto.put("id", m.getId());
+            mDto.put("content", m.getContent());
+            mDto.put("time", m.getCreateAt());
+            mDto.put("senderId", m.getSender().getId());
+            mDto.put("senderName", m.getSender().getFullName());
+            dtoMessages.add(mDto);
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("subject", conversation.getSubject());
+        payload.put("requestId", conversation.getRequest().getId());
+        payload.put("messages", dtoMessages);
+
+        return ResponseEntity.ok(payload);
     }
 
 }

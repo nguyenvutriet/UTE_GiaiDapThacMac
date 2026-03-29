@@ -241,7 +241,21 @@
 
             <!-- RIGHT -->
             <!-- ===== TRAO ĐỔI ===== -->
-            <div class="table-card">
+<!--            <div class="table-card" th:if="${feedback.getPostStatus() == 'PUBLIC'}">-->
+
+<!--                <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>-->
+
+<!--                <div class="no-chat">-->
+<!--                    <div class="empty-chat">-->
+<!--                        <i class="far fa-comment-dots"></i>-->
+<!--                        <p>Góp ý đã được công khai, vui lòng tham gia trao đổi tại diễn đàn.</p>-->
+<!--                        <a th:href="@{/api/forum/staff}" class="open-chat-btn">-->
+<!--                            Đi đến diễn đàn-->
+<!--                        </a>-->
+
+<!--            </div>-->
+
+            <div class="table-card" >
 
                 <!-- HEADER CÓ NÚT "+ MỚI" -->
                 <div class="chat-section-header">
@@ -307,9 +321,9 @@
             <!-- ===== CHAT BOX (DẠNG SIDEBAR TRƯỢT TỪ BÊN PHẢI) ===== -->
             <div id="chatBox"
                  class="chat-sidebar"
-                 th:data-id="${conversation.id}">
+                 th:data-id="${conversation != null ? conversation.id : ''}">
 
-                <!-- Header -->
+                <!-- 1. Header -->
                 <div class="chat-header">
                     <button type="button" class="btn-close-sidebar" onclick="closeChat()">✖</button>
 
@@ -318,54 +332,44 @@
                             <h3 id="chatTitle" th:text="${conversation != null ? conversation.subject : 'Tiêu đề cuộc trò chuyện'}">Tiêu đề cuộc trò chuyện</h3>
                         </div>
                         <!-- KHỐI NÀY CHỨA TRẠNG THÁI (TRÁI) VÀ NÚT (PHẢI) -->
-                        <div class="status-row">
-                            <div class="status-text" th:if="${conversation != null and conversation.open}">
-                                Trạng thái: <span class="status-active">Đang mở</span>
-                            </div>
-                            <div class="status-text" th:if="${conversation != null and !conversation.open}">
-                                Trạng thái: <span class="status-active">Đã đóng</span>
+                        <div class="status-row" id="chatStatusRow" th:style="${conversation == null ? 'display:none;' : ''}">
+                            <div class="status-text" id="chatStatusText">
+                                Trạng thái:
+                                <span class="status-active" th:if="${conversation == null or conversation.open}">Đang mở</span>
+                                <span class="status-active" th:if="${conversation != null and !conversation.open}" style="color: #ef4444;">Đã đóng</span>
                             </div>
 
-                            <button type="button" class="btn-end-chat" onclick="closeConversation()" th:if="${conversation != null and conversation.open}">
+                            <button type="button" class="btn-end-chat" id="btnEndChat" onclick="closeConversation()" th:style="${conversation != null and !conversation.open ? 'display:none;' : ''}">
                                 <i class="far fa-check-circle"></i> Đóng trao đổi
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Body / Messages -->
-                <div class="chat-body">
-                    <div th:if="${conversation != null}">
-                        <div th:each="msg : ${conversation.messages}" class="msg-container">
-                            <!-- Tin nhắn của mình (Bên phải) -->
-                            <div class="msg right" th:if="${msg.getSender().getId() == currentUser.id}">
-                                <div class="bubble" th:text="${msg.content}"></div>
-                                <time th:text="${msg.getCreateAt().getHour() + ':' + msg.getCreateAt().getMinute()}"></time>
-                            </div>
-
-                            <!-- Tin nhắn của người khác (Bên trái) -->
-                            <div class="msg left" th:if="${msg.getSender().getId() != currentUser.id}">
-                                <div class="bubble" th:text="${msg.content}"></div>
-                                <time th:text="${msg.getCreateAt().getHour() + ':' + msg.getCreateAt().getMinute()}"></time>
-                            </div>
-                        </div>
-                    </div>
+                <!-- 2. Body / Messages (KHU VỰC HIỂN THỊ TIN NHẮN CHÍNH - KHÔNG ĐƯỢC XÓA) -->
+                <!-- 2. Body / Messages -->
+                <div class="chat-body" id="chatBody">
+                    <!-- ĐỂ TRỐNG. TẤT CẢ tin nhắn sẽ được JS (loadHistory + renderMessage) vẽ vào đây -->
                 </div>
 
-                <!-- Input Area -->
+                <!-- 3. Input Area -->
                 <div class="chat-input" id="chatInput" th:style="${conversation != null && !conversation.getOpen()} ? 'display: none;' : ''">
-                    <button type="button" class="btn-attach">
+                    <!-- Input file ẩn để gọi hàm chọn tệp -->
+                    <input type="file" id="chatFileInput" style="display:none" multiple>
+
+                    <button type="button" class="btn-attach" onclick="document.getElementById('chatFileInput').click()">
                         <i class="fas fa-paperclip"></i>
                     </button>
+
                     <input type="text" id="messageInput" placeholder="Nhập tin nhắn...">
-                    <button type="button" class="btn-send" onclick="sendMessage()">
+
+                    <button type="button" class="btn-send" id="btnSendChat" onclick="sendMessage()">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
 
             </div>
         </div>
-
 
     </main>
 
@@ -424,7 +428,7 @@
 
         if (id) {
             currentConversationId = id;
-            // 🔥 Load history mỗi lần mở để có tin đầy đủ
+            // chỉ gọi 1 loadHistory chuẩn
             loadHistory(id);
 
             if (!isConnected || !stompClient || !stompClient.connected) {
@@ -794,100 +798,151 @@
         return { text: unescapeStr(textPart), attachments: attachments };
     }
 
-    function reformatExistingBubbles() {
-        let bubbles = document.querySelectorAll(".chat-body .bubble");
-        bubbles.forEach(b => {
-            // Check if already parsed
-            if (b.dataset.parsed === "true") return;
-            b.dataset.parsed = "true";
-
-            let raw = b.textContent;
-            let parsed = parseMessagePayload(raw);
-            b.innerHTML = escapeHtml(parsed.text);
-
-            if (parsed.attachments && parsed.attachments.length > 0) {
-                let ul = document.createElement("ul");
-                ul.style.listStyle = "none";
-                ul.style.paddingLeft = "0";
-                ul.style.marginTop = "8px";
-                parsed.attachments.forEach(att => {
-                    let li = document.createElement("li");
-                    li.style.marginTop = "4px";
-                    let a = document.createElement("a");
-                    a.href = att.url;
-                    a.target = "_blank";
-                    a.style.color = "inherit";
-                    a.style.textDecoration = "underline";
-                    a.innerHTML = '<i class="fas fa-paperclip"></i> ' + escapeHtml(att.name || "Tệp đính kèm");
-                    li.appendChild(a);
-                    ul.appendChild(li);
-                });
-                // Thêm vào dưới text trong cùng bubble
-                b.appendChild(ul);
-            }
-        });
-    }
+    // function reformatExistingBubbles() {
+    //     let bubbles = document.querySelectorAll(".chat-body .bubble");
+    //     bubbles.forEach(b => {
+    //         // Check if already parsed
+    //         if (b.dataset.parsed === "true") return;
+    //         b.dataset.parsed = "true";
+    //
+    //         let raw = b.textContent;
+    //         let parsed = parseMessagePayload(raw);
+    //         b.innerHTML = escapeHtml(parsed.text);
+    //
+    //         if (parsed.attachments && parsed.attachments.length > 0) {
+    //             let ul = document.createElement("ul");
+    //             ul.style.listStyle = "none";
+    //             ul.style.paddingLeft = "0";
+    //             ul.style.marginTop = "8px";
+    //             parsed.attachments.forEach(att => {
+    //                 let li = document.createElement("li");
+    //                 li.style.marginTop = "4px";
+    //                 let a = document.createElement("a");
+    //                 a.href = att.url;
+    //                 a.target = "_blank";
+    //                 a.style.color = "inherit";
+    //                 a.style.textDecoration = "underline";
+    //                 a.innerHTML = '<i class="fas fa-paperclip"></i> ' + escapeHtml(att.name || "Tệp đính kèm");
+    //                 li.appendChild(a);
+    //                 ul.appendChild(li);
+    //             });
+    //             // Thêm vào dưới text trong cùng bubble
+    //             b.appendChild(ul);
+    //         }
+    //     });
+    // }
 
     /* ================= RENDER MESSAGE ================= */
     function renderMessage(msg) {
         let chatBody = document.querySelector(".chat-body");
-        if (!chatBody) {
-            console.error("[WS] .chat-body not found!");
-            return;
-        }
+        if (!chatBody) return;
 
-        // Tránh render lặp tin nhắn
+        // Chống lặp tin nhắn
         if (msg.id) {
             let exists = chatBody.querySelector(`[data-mid="${msg.id}"]`);
             if (exists) return;
         }
 
+        // 1. Phân biệt người gửi / người nhận
         let isMe = false;
         let senderId = msg.sender ? (msg.sender.id || msg.sender.userId) : (msg.senderId || null);
         if (window.currentUserId && senderId) {
             isMe = String(senderId) === String(window.currentUserId);
         }
 
+        // 2. Lấy tên người gửi
         let senderName = "Người gửi";
-        if (isMe) {
-            senderName = "Bạn";
-        } else if (msg.sender && (msg.sender.fullName || msg.sender.name)) {
+        if (msg.sender && (msg.sender.fullName || msg.sender.name)) {
             senderName = msg.sender.fullName || msg.sender.name;
         } else if (msg.senderName) {
             senderName = msg.senderName;
+        } else if (isMe) {
+            senderName = "Bạn"; // Fallback nếu không có tên
         }
 
-        let textContent = msg.content || msg.text || "";
+        // 3. GIẢI MÃ BẮT BUỘC CHAT_V1 TRƯỚC KHI RENDER
+        let rawContent = msg.content || msg.text || "";
+        let parsedData = parseMessagePayload(rawContent);
+        let actualText = parsedData.text; // Text đã được làm sạch
+
+        // 4. Lấy thời gian
         let rawTime = msg.createAt || msg.createdAt || msg.time || msg.create_at;
         let time = formatTime(rawTime);
 
+        // 5. Xử lý file đính kèm
         let attachmentsHtml = '';
-        if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
-            attachmentsHtml = '<ul style="list-style: none; padding-left: 0; margin-top: 8px;">';
-            msg.attachments.forEach(att => {
-                attachmentsHtml += `<li style="margin-top: 4px;">
-                    <a href="${att.url}" target="_blank" style="color: inherit; text-decoration: underline;">
-                        <i class="fas fa-paperclip"></i> ${escapeHtml(att.name || "Tệp đính kèm")}
-                    </a>
-                </li>`;
+        let actualAttachments = (msg.attachments && msg.attachments.length > 0) ? msg.attachments : parsedData.attachments;
+        if (Array.isArray(actualAttachments) && actualAttachments.length > 0) {
+            attachmentsHtml = '<ul class="chat-attachments">';
+            actualAttachments.forEach(att => {
+                attachmentsHtml += `<li>
+                <a href="${att.url}" target="_blank">
+                    <i class="fas fa-paperclip"></i> ${escapeHtml(att.name || "Tệp đính kèm")}
+                </a>
+            </li>`;
             });
             attachmentsHtml += '</ul>';
         }
 
+        // 6. Vẽ HTML chuẩn
         let html = `
-        <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
-            <div class="msg ${isMe ? 'right' : 'left'}">
-                <div class="bubble">
-                    <span class="sender-name">${escapeHtml(senderName)}</span>
-                    <div class="msg-content">${escapeHtml(textContent)}${attachmentsHtml}</div>
-                    <time>${time}</time>
-                </div>
+    <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
+        <div class="msg ${isMe ? 'right' : 'left'}">
+            <div class="bubble">
+                <div class="sender-name">${escapeHtml(senderName)}</div>
+                <div class="message-content">${escapeHtml(actualText).replace(/\n/g, '<br>')}</div>
+                ${attachmentsHtml}
+                <time>${time}</time>
             </div>
         </div>
-        `;
+    </div>
+    `;
 
         chatBody.insertAdjacentHTML("beforeend", html);
         scrollToBottom();
+    }
+
+    function loadHistory(conversationId) {
+        fetch('/staff/conversation/' + conversationId + '/messages', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('History fetch failed');
+                return res.json();
+            })
+            .then(data => {
+                let chatBody = document.querySelector('.chat-body');
+                if (chatBody) chatBody.innerHTML = '';
+
+                if (data && Array.isArray(data.messages)) {
+                    data.messages.sort((a, b) =>
+                        new Date(a.time || a.createAt) - new Date(b.time || b.createAt)
+                    );
+
+                    data.messages.forEach(m => {
+                        renderMessage({
+                            id: m.id,
+                            content: m.text || m.content,
+                            attachments: m.attachments,
+                            createAt: m.time || m.createAt,
+                            sender: { id: m.senderId },
+                            senderName: m.senderName
+                        });
+                    });
+                }
+
+                if (data && data.subject) {
+                    let title = document.getElementById('chatTitle');
+                    if (title) title.textContent = data.subject;
+                }
+                if (data && data.requestId) {
+                    requestId = data.requestId;
+                }
+
+                scrollToBottom();
+            })
+            .catch(err => console.error('[WS] loadHistory error', err));
     }
 
     /* ================= ESCAPE HTML ================= */
@@ -938,6 +993,7 @@
 
     /* ================= SUBMIT TỪ FORM INLINE ================= */
     function submitInlineConversation() {
+        // ... các đoạn lấy dữ liệu cũ giữ nguyên ...
         let subject = document.getElementById("inlineSubject").value;
         let message = document.getElementById("inlineMessage").value;
         let chatBox = document.getElementById("chatBox");
@@ -972,6 +1028,11 @@
                 document.getElementById("inlineChatForm").style.display = "none";
                 document.getElementById("emptyChatState").style.display = "none";
 
+                // FIX: Bật thanh trạng thái và nút Đóng sau khi tạo mới thành công
+                document.getElementById("chatStatusRow").style.display = "flex";
+                document.getElementById("btnEndChat").style.display = "inline-flex";
+                document.getElementById("chatStatusText").innerHTML = 'Trạng thái: <span class="status-active">Đang mở</span>';
+
                 if (message && message.trim() !== "") {
                     renderMessage({
                         id: 'init-' + Date.now(),
@@ -989,43 +1050,27 @@
             });
     }
 
-    /* ================= LOAD HISTORY ================= */
-    function loadHistory(conversationId) {
-        fetch('/staff/conversation/' + conversationId + '/messages', {
-            method: 'GET',
-            credentials: 'same-origin'
-        })
-            .then(res => {
-                if (!res.ok) throw new Error('History fetch failed');
-                return res.json();
-            })
-            .then(data => {
-                let chatBody = document.querySelector('.chat-body');
-                if (chatBody) {
-                    chatBody.innerHTML = '';
-                }
-                if (data && Array.isArray(data.messages)) {
-                    data.messages.forEach(m => {
-                        renderMessage({
-                            id: m.id,
-                            content: m.text || m.content,
-                            attachments: m.attachments,
-                            createAt: m.time,
-                            sender: { id: m.senderId },
-                            senderName: m.senderName
-                        });
-                    });
-                }
-                if (data && data.subject) {
-                    let title = document.getElementById('chatTitle');
-                    if (title) title.textContent = data.subject;
-                }
-                if (data && data.requestId) {
-                    requestId = data.requestId;
-                }
-            })
-            .catch(err => console.error('[WS] loadHistory error', err));
-    }
+    // /* ================= CLOSE CONVERSATION ================= */
+    // function closeConversation() {
+    //     let chatInput = document.getElementById("chatInput");
+    //     if (chatInput) chatInput.style.display = "none";
+    //
+    //     let statusText = document.getElementById("chatStatusText");
+    //     if (statusText) {
+    //         statusText.innerHTML = 'Trạng thái: <span class="status-active" style="color: #ef4444;">Đã đóng</span>';
+    //     }
+    //
+    //     let btnEndChat = document.getElementById("btnEndChat");
+    //     if (btnEndChat) {
+    //         btnEndChat.style.display = "none";
+    //     }
+    //
+    //     if (currentConversationId) {
+    //         fetch('/staff/close-conversation/' + currentConversationId, {
+    //             method: 'POST'
+    //         }).catch(err => console.error(err));
+    //     }
+    // }
 
     document.addEventListener("DOMContentLoaded", () => {
         console.log("[WS] DOMContentLoaded triggered");
@@ -1041,6 +1086,7 @@
 
         if (id && id.trim() !== "") {
             currentConversationId = id;
+            // load history 1 lần lúc vào trang – sẽ sort chuẩn theo thời gian
             loadHistory(id);
             setTimeout(() => {
                 connectSocket(id);
@@ -1050,7 +1096,8 @@
             setComposerEnabled(false);
         }
 
-        reformatExistingBubbles();
+        // chỉ format lại các bubble SSR cũ (nếu còn), rồi sẽ dần được thay thế bằng renderMessage
+        // reformatExistingBubbles();
 
         let msgInput = document.getElementById("messageInput");
         if (msgInput) {
