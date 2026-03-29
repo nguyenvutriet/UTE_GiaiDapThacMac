@@ -537,3 +537,16 @@
 .btn-send:hover {
     background: #2563eb;
 }
+.chat-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+/* Cho time cùng cỡ chữ với trạng thái */
+.chat-meta-row .chat-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
