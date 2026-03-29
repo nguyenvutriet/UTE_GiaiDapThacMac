@@ -91,4 +91,52 @@ public interface RequestRepo extends JpaRepository<Request, String> {
             Pageable pageable
     );
 
+    Page<Request> findByCurrentStatus(String status, Pageable pageable);
+
+    Page<Request> findByCurrentStatusAndDepartment_Id(
+            String status,
+            String departmentId,
+            Pageable pageable
+    );
+
+    /*Lọc cùng lúc*/
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.currentStatus = :status
+    """)
+    Page<Request> findByCategoryAndStatus(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT DISTINCT r FROM Request r
+        JOIN r.categories c
+        WHERE c.id = :categoryId
+        AND r.currentStatus = :status
+        AND r.department.id = :departmentId
+    """)
+    Page<Request> findByCategoryStatusAndDepartment(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT DISTINCT r FROM Request r
+    LEFT JOIN r.categories c
+    WHERE (:categoryId IS NULL OR c.id = :categoryId)
+    AND (:status IS NULL OR r.currentStatus = :status)
+    AND (:departmentId IS NULL OR r.department.id = :departmentId)
+""")
+    Page<Request> filterAll(
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            @Param("departmentId") String departmentId,
+            Pageable pageable
+    );
 }

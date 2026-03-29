@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/staff")
@@ -141,37 +142,68 @@ public class RequestController {
 
     @GetMapping("/filter-feedbacks")
     public String filterFeedbacks(
-            @RequestParam("categoryId") String categoryId,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
+        // 🔥 lấy user
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
+        // 🔥 xử lý ALL + fix lambda (tạo biến final)
+        String finalCategoryId = "ALL".equals(categoryId) ? null : categoryId;
+        String finalStatus = "ALL".equals(status) ? null : status;
+
+        // 🔥 map status -> name
+        Map<String, String> statusMap = Map.of(
+                "PENDING", "Đang chờ tiếp nhận",
+                "APPROVED", "Đang xử lý",
+                "RESOLVED", "Đã xử lý",
+                "FORWARDING", "Chuyển tiếp",
+                "REJECTED", "Từ chối"
+        );
+
+        // 🔥 giữ trạng thái selected
+        model.addAttribute("selectedStatus", finalStatus);
+        model.addAttribute("selectedCategory", finalCategoryId);
+
+        // 🔥 tên status (fix nút bị reset)
+        model.addAttribute("selectedStatusName",
+                finalStatus != null ? statusMap.get(finalStatus) : null);
+
+        // 🔥 tên category (fix lambda error luôn)
+        String categoryName = null;
+        if (finalCategoryId != null) {
+            categoryName = categoryService.getCategoriesByDepartment(user).stream()
+                    .filter(c -> c.getId().equals(finalCategoryId))
+                    .map(Category::getSubject)
+                    .findFirst()
+                    .orElse(null);
+        }
+        model.addAttribute("selectedCategoryName", categoryName);
+
+        // 🔥 paging
         Pageable pageable = PageRequest.of(page, 12);
 
+        // 🔥 gọi service (NHỚ dùng final biến)
         Page<Request> resultPage =
-                requestService.filterFeedbacks(categoryId, pageable, user);
+                requestService.getFeedbacks(finalCategoryId, finalStatus, pageable, user);
 
-        // alt flow giống search
-        if (resultPage.isEmpty()) {
-            model.addAttribute("message", "Không có dữ liệu");
-        }
-
-        List<Category> categories =
-                categoryService.getCategoriesByDepartment(user);
-
-        model.addAttribute("categories", categories);
+        // 🔥 data ra view
         model.addAttribute("feedbacks", resultPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", resultPage.getTotalPages());
-        model.addAttribute("selectedCategory", categoryId);
-        Category category = categoryRepo.findById(categoryId).orElse(null);
-        if (category != null) {
-            model.addAttribute("selectedCategoryName", category.getSubject());
-        }
+
+        model.addAttribute("categories",
+                categoryService.getCategoriesByDepartment(user));
+
+        model.addAttribute("statuses",
+                requestService.getAvailableStatuses(user));
+
         model.addAttribute("currentUser", user);
 
         return "staff/staff-list";
     }
+
 }
