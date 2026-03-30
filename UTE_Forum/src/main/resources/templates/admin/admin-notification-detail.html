@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Chi tiet thong bao</title>
+    <link rel="stylesheet" th:href="@{/css/admin/admin-notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
+            <p class="brand-name">UTE Forum Admin</p>
+        </div>
+
+        <div class="user-profile">
+            <img th:src="@{/images/staff-avatar.png}" class="avatar" alt="avatar">
+            <div>
+                <p class="user-name" th:text="${admin != null ? admin.fullName : 'Admin'}">Admin</p>
+                <p class="user-role">He thong</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fas fa-users-cog"></i> Quan ly nguoi dung</a>
+            <a href="#" class="nav-item"><i class="fas fa-flag"></i> Quan ly bao cao</a>
+            <a th:href="@{/admin/notifications}" class="nav-item active">
+                <i class="fas fa-bell"></i> Thong bao
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-head">
+            <h1>Chi tiet thong bao</h1>
+        </header>
+
+        <section class="detail-panel">
+            <a class="back-link" th:href="@{/admin/notifications}">&larr; Quay lai danh sach thong bao</a>
+            <h2 th:text="${item.title}">Thong bao</h2>
+            <p class="detail-meta">
+                <span th:text="${item.timeLabel}">Hom nay</span>
+                <span> - </span>
+                <span th:text="${item.read ? 'Da doc' : 'Chua doc'}">Da doc</span>
+            </p>
+            <p class="detail-content" th:text="${item.content}">Noi dung thong bao.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+

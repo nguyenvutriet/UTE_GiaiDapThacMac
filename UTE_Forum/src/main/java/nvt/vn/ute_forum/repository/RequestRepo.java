@@ -12,12 +12,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.List;
-
 @Repository
 public interface RequestRepo extends JpaRepository<Request, String> {
     List<Request> findByUser_IdOrderByTimeCreateDesc(String userId);
     Optional<Request> findByIdAndUser_Id(String id, String userId);
+    Optional<Request> findByIdAndPostStatus(String id, String postStatus);
     // Thêm Pageable vào đây và đổi kiểu trả về thành Page<Request>
     Page<Request> findByPostStatus(String status, Pageable pageable);
 

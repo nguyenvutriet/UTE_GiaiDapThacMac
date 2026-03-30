@@ -10,16 +10,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class RoleNotificationController {
+    private static final Pattern REQUEST_ID_PATTERN = Pattern.compile("(REQ_[A-Za-z0-9_]+)");
 
     private final UsersService usersService;
     private final NotificationService notificationService;
@@ -47,11 +50,10 @@ public class RoleNotificationController {
         return "staff/staff-notification";
     }
 
-    @PostMapping("/staff/notifications/delete")
-    public String deleteStaffNotification(@RequestParam("notificationId") String notificationId,
-                                          @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                          Authentication authentication) {
+    @GetMapping("/staff/notifications/{id}")
+    public String showStaffNotificationDetail(@PathVariable("id") String notificationId,
+                                              Authentication authentication,
+                                              Model model) {
         Users user = resolveAuthenticatedUser(authentication);
         if (user == null) {
             return "redirect:/login";
@@ -60,25 +62,24 @@ public class RoleNotificationController {
             return "redirect:/api/forum/view";
         }
 
-        notificationService.deleteForUser(notificationId, user.getId());
-        return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
-    }
-
-    @PostMapping("/staff/notifications/read")
-    public String markStaffNotificationAsRead(@RequestParam("notificationId") String notificationId,
-                                              @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                              @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                              Authentication authentication) {
-        Users user = resolveAuthenticatedUser(authentication);
-        if (user == null) {
-            return "redirect:/login";
+        Notification notification = notificationService.getByIdForUser(notificationId, user.getId())
+                .orElse(null);
+        if (notification == null) {
+            return "redirect:/staff/notifications";
         }
-        if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
+
+        notificationService.markAsRead(notification);
+        if ("forum".equals(tabByType(notification.getNotificationType()))) {
+            String postId = resolveForumPostId(notification);
+            if (postId != null && !postId.isBlank()) {
+                return "redirect:/api/forum/view?openPostId=" + postId;
+            }
             return "redirect:/api/forum/view";
         }
 
-        notificationService.markAsReadForUser(notificationId, user.getId());
-        return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+        model.addAttribute("staff", user);
+        model.addAttribute("item", toItem(notification));
+        return "staff/staff-notification-detail";
     }
 
     @GetMapping("/admin/notifications")
@@ -99,11 +100,10 @@ public class RoleNotificationController {
         return "admin/admin-notification";
     }
 
-    @PostMapping("/admin/notifications/delete")
-    public String deleteAdminNotification(@RequestParam("notificationId") String notificationId,
-                                          @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                          Authentication authentication) {
+    @GetMapping("/admin/notifications/{id}")
+    public String showAdminNotificationDetail(@PathVariable("id") String notificationId,
+                                              Authentication authentication,
+                                              Model model) {
         Users user = resolveAuthenticatedUser(authentication);
         if (user == null) {
             return "redirect:/login";
@@ -112,29 +112,28 @@ public class RoleNotificationController {
             return "redirect:/api/forum/view";
         }
 
-        notificationService.deleteForUser(notificationId, user.getId());
-        return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
-    }
-
-    @PostMapping("/admin/notifications/read")
-    public String markAdminNotificationAsRead(@RequestParam("notificationId") String notificationId,
-                                              @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                              @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                              Authentication authentication) {
-        Users user = resolveAuthenticatedUser(authentication);
-        if (user == null) {
-            return "redirect:/login";
+        Notification notification = notificationService.getByIdForUser(notificationId, user.getId())
+                .orElse(null);
+        if (notification == null) {
+            return "redirect:/admin/notifications";
         }
-        if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
+
+        notificationService.markAsRead(notification);
+        if ("forum".equals(tabByType(notification.getNotificationType()))) {
+            String postId = resolveForumPostId(notification);
+            if (postId != null && !postId.isBlank()) {
+                return "redirect:/api/forum/view?openPostId=" + postId;
+            }
             return "redirect:/api/forum/view";
         }
 
-        notificationService.markAsReadForUser(notificationId, user.getId());
-        return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+        model.addAttribute("admin", user);
+        model.addAttribute("item", toItem(notification));
+        return "admin/admin-notification-detail";
     }
 
     private void populateNotificationModel(Model model, Users user, String tab, String filter) {
-        List<NotificationItem> allItems = notificationService.getByUserIdWithForumData(user.getId())
+        List<NotificationItem> allItems = notificationService.getByUserId(user.getId())
                 .stream()
                 .map(this::toItem)
                 .toList();
@@ -208,12 +207,12 @@ public class RoleNotificationController {
         return type == null ? "" : type.trim().toUpperCase(Locale.ROOT);
     }
 
-    private String humanTime(LocalDateTime createdAt) {
-        if (createdAt == null) {
+    private String humanTime(LocalDate createdDate) {
+        if (createdDate == null) {
             return "vua xong";
         }
 
-        long days = ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
+        long days = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
         if (days <= 0) {
             return "hom nay";
         }
@@ -246,6 +245,26 @@ public class RoleNotificationController {
             return item.read();
         }
         return !item.read();
+    }
+
+    private String resolveForumPostId(Notification notification) {
+        if (notification == null) {
+            return null;
+        }
+
+        String ref = notification.getReferenceId();
+        if (ref != null && !ref.isBlank()) {
+            return ref.trim();
+        }
+
+        String source = (notification.getContent() == null ? "" : notification.getContent())
+                + " "
+                + (notification.getTitle() == null ? "" : notification.getTitle());
+        Matcher matcher = REQUEST_ID_PATTERN.matcher(source);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     private String normalizeTab(String tab) {

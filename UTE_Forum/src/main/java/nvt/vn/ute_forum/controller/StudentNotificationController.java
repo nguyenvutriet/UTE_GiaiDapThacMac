@@ -10,16 +10,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class StudentNotificationController {
+    private static final Pattern REQUEST_ID_PATTERN = Pattern.compile("(REQ_[A-Za-z0-9_]+)");
 
     private final UsersService usersService;
     private final NotificationService notificationService;
@@ -39,7 +42,7 @@ public class StudentNotificationController {
             return "redirect:/login";
         }
 
-        List<NotificationItem> allItems = notificationService.getByUserIdWithForumData(user.getId())
+        List<NotificationItem> allItems = notificationService.getByUserId(user.getId())
                 .stream()
                 .map(this::toItem)
                 .toList();
@@ -63,32 +66,37 @@ public class StudentNotificationController {
         return "student/notification";
     }
 
-    @PostMapping("/api/notifications/delete")
-    public String deleteNotification(@RequestParam("notificationId") String notificationId,
-                                     @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                     @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                     Authentication authentication) {
+    @GetMapping("/api/notifications/{id}")
+    public String showNotificationDetail(@PathVariable("id") String notificationId,
+                                         Authentication authentication,
+                                         Model model) {
         Users user = resolveAuthenticatedUser(authentication);
         if (user == null) {
             return "redirect:/login";
         }
 
-        notificationService.deleteForUser(notificationId, user.getId());
-        return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
-    }
-
-    @PostMapping("/api/notifications/read")
-    public String markNotificationAsRead(@RequestParam("notificationId") String notificationId,
-                                         @RequestParam(value = "tab", defaultValue = "all") String tab,
-                                         @RequestParam(value = "filter", defaultValue = "all") String filter,
-                                         Authentication authentication) {
-        Users user = resolveAuthenticatedUser(authentication);
-        if (user == null) {
-            return "redirect:/login";
+        Notification notification = notificationService.getByIdForUser(notificationId, user.getId())
+                .orElse(null);
+        if (notification == null) {
+            return "redirect:/api/notifications";
         }
 
-        notificationService.markAsReadForUser(notificationId, user.getId());
-        return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+        notificationService.markAsRead(notification);
+        if ("forum".equals(tabByType(notification.getNotificationType()))) {
+            String postId = resolveForumPostId(notification);
+            if (postId != null && !postId.isBlank()) {
+                return "redirect:/api/forum/view?openPostId=" + postId;
+            }
+            return "redirect:/api/forum/view";
+        }
+
+        NotificationItem detailItem = toItem(notification);
+
+        model.addAttribute("user", user);
+        model.addAttribute("roleLabel", "Sinh vien");
+        model.addAttribute("item", detailItem);
+        model.addAttribute("notificationId", notificationId);
+        return "student/notification-detail";
     }
 
     private NotificationItem toItem(Notification notification) {
@@ -144,12 +152,12 @@ public class StudentNotificationController {
         return type == null ? "" : type.trim().toUpperCase(Locale.ROOT);
     }
 
-    private String humanTime(LocalDateTime createdAt) {
-        if (createdAt == null) {
+    private String humanTime(LocalDate createdDate) {
+        if (createdDate == null) {
             return "vừa xong";
         }
 
-        long days = ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
+        long days = ChronoUnit.DAYS.between(createdDate, LocalDate.now());
         if (days <= 0) {
             return "hôm nay";
         }
@@ -182,6 +190,26 @@ public class StudentNotificationController {
             return item.read();
         }
         return !item.read();
+    }
+
+    private String resolveForumPostId(Notification notification) {
+        if (notification == null) {
+            return null;
+        }
+
+        String ref = notification.getReferenceId();
+        if (ref != null && !ref.isBlank()) {
+            return ref.trim();
+        }
+
+        String source = (notification.getContent() == null ? "" : notification.getContent())
+                + " "
+                + (notification.getTitle() == null ? "" : notification.getTitle());
+        Matcher matcher = REQUEST_ID_PATTERN.matcher(source);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     private String normalizeTab(String tab) {

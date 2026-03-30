@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff - Chi tiet thong bao</title>
+    <link rel="stylesheet" th:href="@{/css/staff/staff-notification.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="staff-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
+        </div>
+
+        <div class="user-profile">
+            <img th:src="@{/images/staff.png}" class="avatar" alt="avatar">
+            <div class="user-info">
+                <span class="user-role" th:text="${staff != null ? staff.fullName : 'Can bo'}">Can bo</span>
+                <span class="user-dept">Nhan vien phong ban</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
+            <a href="#" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
+            <a th:href="@{/staff/notifications}" class="nav-item active">
+                <i class="fas fa-bell"></i> Thong bao
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+        </nav>
+
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-head">
+            <h1>Chi tiet thong bao</h1>
+        </header>
+
+        <section class="detail-panel">
+            <a class="back-link" th:href="@{/staff/notifications}">&larr; Quay lai danh sach thong bao</a>
+            <h2 th:text="${item.title}">Thong bao</h2>
+            <p class="detail-meta">
+                <span th:text="${item.timeLabel}">Hom nay</span>
+                <span> - </span>
+                <span th:text="${item.read ? 'Da doc' : 'Chua doc'}">Da doc</span>
+            </p>
+            <p class="detail-content" th:text="${item.content}">Noi dung thong bao.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>
+

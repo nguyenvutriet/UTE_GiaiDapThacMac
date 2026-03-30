@@ -3,55 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cán bộ - Thông báo</title>
-    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
-
-    <!-- CSS riêng -->
+    <title>Staff - Thong bao</title>
     <link rel="stylesheet" th:href="@{/css/staff/staff-notification.css}">
-    <link rel="stylesheet" href="/css/staff/staff-style.css">
-    <link rel="stylesheet" href="/css/staff/forumView.css">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-
 <body>
 <div class="staff-layout">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="/images/logo_no_bg.png" class="logo">
+            <img th:src="@{/images/logo_no_bg.png}" class="logo" alt="logo">
         </div>
 
         <div class="user-profile">
-            <img src="/images/staff.png" class="avatar">
+            <img th:src="@{/images/staff.png}" class="avatar" alt="avatar">
             <div class="user-info">
-                <span th:text="${staff != null ? staff.fullName : 'Can bo'}">Can bo</span>
-                <span class="user-dept">Nhân viên phòng ban</span>
+                <span class="user-role" th:text="${staff != null ? staff.fullName : 'Can bo'}">Can bo</span>
+                <span class="user-dept">Nhan vien phong ban</span>
             </div>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="/staff/list-feedbacks" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
-            <a href="/api/forum/staff" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
-            <a th:href="@{/staff/announcement-management}" class="nav-item"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
-            <a th:href="@{/staff/notifications}" class="nav-item active"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
-            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
-            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
+            <a href="#" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
+            <a th:href="@{/staff/notifications}" class="nav-item active">
+                <i class="fas fa-bell"></i> Thong bao
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
+            </a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
+            <a th:href="@{/change-password}" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
         </nav>
 
-        <a href="/logout" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i> Đăng xuất
-        </a>
+        <a th:href="@{/logout}" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
     </aside>
 
     <main class="main-content">
-        <header class="main-header">
-            <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
-
-            <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
-
-            <h1>Thông báo phòng ban</h1>
+        <header class="page-head">
+            <h1>Thong bao phong ban</h1>
             <form method="get" th:action="@{/staff/notifications}" class="filter-form">
                 <input type="hidden" name="tab" th:value="${activeTab}">
                 <label class="sr-only" for="staff-filter">Loc theo trang thai doc</label>
@@ -73,36 +61,18 @@
         </div>
 
         <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
-            <article class="notification-item"
-                     th:classappend="${item.read} ? ' read' : ' unread'"
-                     th:attr="data-read-form-id='read-notification-' + ${item.id}"
-                     th:each="item : ${notifications}">
-                <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
-                <div class="item-content">
-                    <div class="item-head">
-                        <h3 th:text="${item.title}">Thong bao</h3>
-                        <div class="item-actions">
+            <a class="notification-link" th:href="@{/staff/notifications/{id}(id=${item.id})}" th:each="item : ${notifications}">
+                <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'">
+                    <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
+                    <div class="item-content">
+                        <div class="item-head">
+                            <h3 th:text="${item.title}">Thong bao</h3>
                             <span th:text="${item.timeLabel}">hom nay</span>
-                            <form method="post" th:action="@{/staff/notifications/delete}" class="delete-form"
-                                  onsubmit="return confirm('Ban co chac muon xoa thong bao nay?');">
-                                <input type="hidden" name="notificationId" th:value="${item.id}">
-                                <input type="hidden" name="tab" th:value="${activeTab}">
-                                <input type="hidden" name="filter" th:value="${activeFilter}">
-                                <button type="submit" class="delete-noti-btn" title="Xoa thong bao">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
                         </div>
+                        <p th:text="${item.content}">Noi dung thong bao</p>
                     </div>
-                    <p th:text="${item.content}">Noi dung thong bao</p>
-                </div>
-                <form method="post" th:action="@{/staff/notifications/read}" class="read-form"
-                      th:id="'read-notification-' + ${item.id}">
-                    <input type="hidden" name="notificationId" th:value="${item.id}">
-                    <input type="hidden" name="tab" th:value="${activeTab}">
-                    <input type="hidden" name="filter" th:value="${activeFilter}">
-                </form>
-            </article>
+                </article>
+            </a>
         </section>
 
         <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
@@ -110,26 +80,6 @@
         </div>
     </main>
 </div>
-<script>
-    document.addEventListener('click', function (event) {
-        if (event.target.closest('.delete-form, .delete-noti-btn')) {
-            return;
-        }
-
-        const item = event.target.closest('.notification-item[data-read-form-id]');
-        if (!item) {
-            return;
-        }
-
-        const formId = item.getAttribute('data-read-form-id');
-        const form = document.getElementById(formId);
-        if (form) {
-            item.classList.remove('unread');
-            item.classList.add('read', 'pending-read');
-            form.submit();
-        }
-    });
-</script>
 </body>
 </html>
 
