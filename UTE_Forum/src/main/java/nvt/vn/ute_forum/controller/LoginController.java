@@ -82,6 +82,44 @@ public class LoginController {
         return "redirect:/reset-password";
     }
 
+    @GetMapping("/reset-password")
+    public String resetPasswordPage(@RequestParam (required = false) String error, Model model){
+
+        if(error != null){
+            model.addAttribute("error", error);
+        }
+
+        return "ResetPassword";
+    }
+
+    @PostMapping("/reset-password")
+    public String resetPassword(@RequestParam String email, @RequestParam String password, RedirectAttributes redirectAttributes, Model model) {
+        if (password.length() < 6) {
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự");
+            return "redirect:/reset-password";
+        }
+
+        if (usersService.overLapByPassword(password, email)) {
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu mới không được trùng với mật khẩu cũ");
+            return "redirect:/reset-password";
+        }
+
+        if (usersService.existPassword(password, email)) {
+            redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+            redirectAttributes.addFlashAttribute("error", "Mật khẩu đã tồn tại, vui lòng chọn mật khẩu khác");
+            return "redirect:/reset-password";
+        }
+
+        usersService.updateUser(email, password);
+        usersService.loadUserByUsername(email);
+
+        redirectAttributes.addFlashAttribute("user", usersService.getByEmail(email));
+        return "redirect:/login";
+
+    }
+
     @GetMapping("/change-password")
     public String changePasswordPage(@AuthenticationPrincipal UserPrincipal userPrincipal, @RequestParam (required = false) String error, Model model){
 

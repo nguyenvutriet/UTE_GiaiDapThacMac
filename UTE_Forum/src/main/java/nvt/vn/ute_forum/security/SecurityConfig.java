@@ -67,12 +67,26 @@ public class SecurityConfig {
                                 "/api/forum/**",
                                 "/api/comments/**",
                                 "/api/vote-comment/**",
-                                "/api/forum/view",
-                                "/staff/list-feedbacks",
+
                                 "/feedback/send",
-                                "/api/forum/staff",
-                                "/apoi/department/**"
+                                "/apoi/department/**",
+
+                                "/api/forum/reactors/details",
+                                "/api/forum/search",
+                                "/ws",
+                                "/topic/**",
+                                "/app/**",
+                                "/department/**",
+                                "/api/history/chat/upload",
+                                "/clarification/send"
                         ).permitAll()
+                        .requestMatchers("/admin/forum/**", "/adannouncement/**", "/api/announcement/**", "/api/departments/** ").hasRole("ADMIN")
+                        .requestMatchers("/staff/list-feedbacks", "/api/forum/staff", "/staff/create-conversation",
+                                "/chat.send/*", "/staff/close-conversation/*", "/staff/conversation/*/messages", "/staff/feedback-detail",
+                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
+                        .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
+                                "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
+                                "/api/forum/search-list", "/announcement", "/announcement/detail/**", "/api/announcement/**", "/api/departments/** ").hasRole("STUDENT")
                         .anyRequest().authenticated())
                 .formLogin(
                         form ->  form.loginPage("/login")
@@ -99,8 +113,8 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .headers(headers -> headers
-                .frameOptions(frame -> frame.sameOrigin()) // CHO PHÉP HIỂN THỊ FRAME TỪ CÙNG NGUỒN
-        );
+                        .frameOptions(frame -> frame.sameOrigin())
+                );
 
 
         return http.build();
