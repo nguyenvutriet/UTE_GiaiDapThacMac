@@ -64,6 +64,23 @@ public class RoleNotificationController {
         return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
+    @PostMapping("/staff/notifications/read")
+    public String markStaffNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                              @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                              @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                              Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/api/forum/view";
+        }
+
+        notificationService.markAsReadForUser(notificationId, user.getId());
+        return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+    }
+
     @GetMapping("/admin/notifications")
     public String showAdminNotifications(@RequestParam(value = "tab", defaultValue = "all") String tab,
                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
@@ -99,8 +116,25 @@ public class RoleNotificationController {
         return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
+    @PostMapping("/admin/notifications/read")
+    public String markAdminNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                              @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                              @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                              Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+        if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
+            return "redirect:/api/forum/view";
+        }
+
+        notificationService.markAsReadForUser(notificationId, user.getId());
+        return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+    }
+
     private void populateNotificationModel(Model model, Users user, String tab, String filter) {
-        List<NotificationItem> allItems = notificationService.getByUserId(user.getId())
+        List<NotificationItem> allItems = notificationService.getByUserIdWithForumData(user.getId())
                 .stream()
                 .map(this::toItem)
                 .toList();

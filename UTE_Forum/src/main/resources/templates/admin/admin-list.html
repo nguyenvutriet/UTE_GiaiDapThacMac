@@ -485,6 +485,7 @@
             </a>
             <a class="nav-item" th:href="@{/admin/notifications}">
                 <span class="nav-icon">&#128276;</span><span>Thông báo</span>
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
             </a>
             <a class="nav-item" th:href="@{/change-password}">
                 <span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span>

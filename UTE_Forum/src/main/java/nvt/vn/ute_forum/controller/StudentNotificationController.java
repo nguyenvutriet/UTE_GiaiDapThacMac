@@ -39,7 +39,7 @@ public class StudentNotificationController {
             return "redirect:/login";
         }
 
-        List<NotificationItem> allItems = notificationService.getByUserId(user.getId())
+        List<NotificationItem> allItems = notificationService.getByUserIdWithForumData(user.getId())
                 .stream()
                 .map(this::toItem)
                 .toList();
@@ -74,6 +74,20 @@ public class StudentNotificationController {
         }
 
         notificationService.deleteForUser(notificationId, user.getId());
+        return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
+    }
+
+    @PostMapping("/api/notifications/read")
+    public String markNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                         @RequestParam(value = "tab", defaultValue = "all") String tab,
+                                         @RequestParam(value = "filter", defaultValue = "all") String filter,
+                                         Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        notificationService.markAsReadForUser(notificationId, user.getId());
         return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 

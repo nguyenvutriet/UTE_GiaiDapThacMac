@@ -49,6 +49,7 @@
 
             <a th:href="@{/staff/notifications}" class="nav-item">
                 <i class="fas fa-bell"></i> Thông báo
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
             </a>
 
             <a href="/staff/dashboard" class="nav-item">
