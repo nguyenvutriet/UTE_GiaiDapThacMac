@@ -31,8 +31,7 @@ public class ForumController {
     private RequestService requestService;
 
     @Autowired
-    private UsersRepo usersRepo; // Inject Repo để tìm User từ DB
-    // 🔥 1. Inject thêm 2 Repo này để lấy dữ liệu cho ô Select
+    private UsersRepo usersRepo;
     @Autowired
     private nvt.vn.ute_forum.repository.CategoryRepo categoryRepo;
     @Autowired
@@ -44,10 +43,10 @@ public class ForumController {
             Model model,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 1. Phân trang: 10 bài mỗi trang, sắp xếp mới nhất lên đầu
+        // Phân trang: 10 bài mỗi trang, sắp xếp mới nhất lên đầu
         Pageable pageable = PageRequest.of(page, 10, Sort.by("timeCreate").descending());
 
-        // 2. Lấy ID user hiện tại nếu đăng nhập
+        // Lấy ID user hiện tại nếu đăng nhập
         String currentUserId = null;
         if (userDetails != null) {
             Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
@@ -57,7 +56,7 @@ public class ForumController {
             }
         }
 
-        // 3. Lấy bài viết từ service mới
+        // Lấy bài viết từ service
         Page<ForumPostDTO> postPage = requestService.getPublicPosts(pageable, currentUserId);
 
         // 4. Đưa vào Model
@@ -85,17 +84,16 @@ public class ForumController {
             }
         }
 
-        // 2. Gọi hàm convertToFullDTO thần thánh của bà
+        // 2. Gọi hàm convertToFullDTO
         ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
 
         if (post == null) {
-            return "redirect:/forum/view"; // Không thấy bài thì cho về vườn
+            return "redirect:/forum/view";
         }
 
-        // 3. Đẩy dữ liệu ra trang chi tiết
         model.addAttribute("post", post);
 
-        return "student/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+        return "student/postDetail";
     }
 
     @PostMapping("/react")

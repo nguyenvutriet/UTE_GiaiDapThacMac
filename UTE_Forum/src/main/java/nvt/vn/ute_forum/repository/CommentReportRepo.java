@@ -24,4 +24,6 @@ public interface CommentReportRepo extends JpaRepository<CommentReport, String> 
 
     @Query("SELECT r FROM CommentReport r WHERE r.comment.id = :cmtId AND r.student.id = :userId")
     Optional<CommentReport> findExisting(String cmtId, String userId);
+
+    boolean existsByComment_IdAndStudent_Id(String commentId, String studentId);
 }

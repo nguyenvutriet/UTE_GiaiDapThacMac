@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết góp ý - Admin</title>
+    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+
+    <!-- CSS forum để lấy sidebar + header -->
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
+    <!-- CSS riêng cho trang chi tiết -->
+    <link rel="stylesheet" href="/css/admin/admin-detail.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #4f6ef7;
+            --text-main: #1e2235;
+            --text-sub: #6b7280;
+            --bg-page: #f0f4ff;
+            --bg-card: #ffffff;
+            --border: #e5e9f5;
+            --shadow: 0 4px 24px rgba(79,110,247,0.08);
+            --radius: 14px;
+            --radius-sm: 8px;
+        }
+
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 100%;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+        }
+
+        .page-layout {
+            display: flex;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            min-height: 100vh;
+            padding: 0 20px 32px 16px;
+            margin-left: 0;
+        }
+
+        .main-header {
+            margin-bottom: 20px;
+        }
+
+        .school-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ababab;
+            letter-spacing: 0.3px;
+        }
+
+        .main-header-top {
+            background: #00558b;
+            border-top: 3px solid #0c79b4;
+            padding: 2px 32px 5px 32px;
+            margin-top: 0 !important;
+            position: relative;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .main-header-bottom {
+            min-height: 58px;
+            border-top: 1px solid #b8bec8;
+            border-bottom: 2px solid #ccc;
+            padding: 22px 0 0 5px;
+        }
+
+        .page-tab {
+            margin: 0;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            background: #00558b;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 5px 22px;
+            letter-spacing: 0.3px;
+        }
+
+        .page-tab::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: -20px;
+            width: 0;
+            height: 0;
+            border-bottom: 28px solid #7d7d7d;
+            border-right: 20px solid transparent;
+        }
+
+        .forum-tabs {
+            display: flex;
+            gap: 18px;
+            padding: 14px 24px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-item {
+            padding: 12px 30px;
+            border-radius: 30px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            background: #1c1e21;
+            color: #fff;
+        }
+
+        .page-sub-actions {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .back-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: #fff;
+            border: 1px solid #dbe3f0;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .back-chip:hover {
+            background: #eef5ff;
+            color: #00558b;
+            border-color: #bfd5f3;
+        }
+
+        .detail-wrapper {
+            margin-top: 12px;
+        }
+
+        /* Ẩn breadcrumb cũ vì đã thay bằng header mới */
+        .breadcrumb-bar {
+            display: none !important;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                padding: 0 12px 24px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page-layout">
+
+    <!-- ===== SIDEBAR kiểu forum ===== -->
+    <aside class="sidebar">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${currentUser.fullName}">Tên Admin</p>
+                    <p class="student-id">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item active" th:href="@{/admin/list-feedbacks}">
+                <span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/reports}">
+                <span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/category}">
+                <span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/forum/view}">
+                <span class="nav-icon">&#128172;</span><span>Diễn đàn</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/notifications}">
+                <span class="nav-icon">&#128276;</span><span>Thông báo</span>
+            </a>
+            <a class="nav-item" th:href="@{/change-password}">
+                <span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span>
+            </a>
+        </nav>
+
+        <a class="logout-btn" th:href="@{/logout}">Đăng xuất</a>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main-content">
+
+        <!-- HEADER kiểu forum -->
+        <header class="main-header">
+            <div class="main-header-top">
+                <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+            </div>
+
+            <div class="main-header-bottom">
+                <h1 class="page-tab">CHI TIẾT GÓP Ý</h1>
+            </div>
+
+            <div class="page-sub-actions">
+                <a th:href="@{/admin/list-feedbacks}" class="back-chip">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Quay lại danh sách</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- CONTENT GRID -->
+        <div class="detail-wrapper">
+
+            <!-- ==================== CỘT TRÁI ==================== -->
+            <div class="col-left">
+
+                <!-- CARD: THÔNG TIN CHÍNH -->
+                <div class="detail-card">
+                    <div class="card-header-row">
+                        <h2 class="feedback-title" th:text="${feedback.subject}">Tiêu đề góp ý</h2>
+
+                        <span class="status-badge"
+                              th:classappend="
+                                ${feedback.currentStatus == 'PENDING'} ? ' pending' :
+                                (${feedback.currentStatus == 'APPROVED'} ? ' processing' :
+                                (${feedback.currentStatus == 'RESOLVED'} ? ' success' :
+                                (${feedback.currentStatus == 'FORWARDING'} ? ' forwarding' :
+                                (${feedback.currentStatus == 'REJECTED'} ? ' rejected' : ''))))
+                              ">
+                            <i th:if="${feedback.currentStatus == 'PENDING'}" class="fas fa-exclamation-circle"></i>
+                            <i th:if="${feedback.currentStatus == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
+                            <i th:if="${feedback.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                            <i th:if="${feedback.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
+                            <i th:if="${feedback.currentStatus == 'REJECTED'}" class="fas fa-ban"></i>
+                            <span th:text="
+                                ${feedback.currentStatus == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                                (${feedback.currentStatus == 'APPROVED'} ? 'Đang xử lý' :
+                                (${feedback.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
+                                (${feedback.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                                (${feedback.currentStatus == 'REJECTED'} ? 'Từ chối' : ''))))
+                            "></span>
+                        </span>
+                    </div>
+
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-user"></i> Người gửi</span>
+                            <span class="meta-value sender-info">
+                                <span class="sender-mini-avatar"
+                                      th:if="${feedback.user != null}"
+                                      th:text="${#strings.substring(feedback.user.fullName, 0, 1)}">
+                                </span>
+                                <span class="sender-mini-avatar anon"
+                                      th:if="${feedback.user == null}">
+                                    <i class="fas fa-user-secret" style="font-size:10px;"></i>
+                                </span>
+                                <span>
+                                    <b th:text="${feedback.user != null ? feedback.user.fullName : 'Người dùng đã xóa'}"></b>
+                                    <small th:if="${feedback.user != null}"
+                                           th:text="${'(' + feedback.user.email + ')'}"></small>
+                                    <small th:if="${feedback.user == null}" style="color:#9ca3af; font-style:italic;">
+                                        Ẩn danh / đã xóa tài khoản
+                                    </small>
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-building"></i> Phòng ban</span>
+                            <span class="meta-value">
+                                <span class="dept-chip"
+                                      th:text="${feedback.department != null ? feedback.department.name : 'N/A'}">
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-clock"></i> Ngày gửi</span>
+                            <span class="meta-value"
+                                  th:text="${#temporals.format(feedback.timeCreate, 'HH:mm:ss - dd/MM/yyyy')}">
+                            </span>
+                        </div>
+
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-tags"></i> Danh mục</span>
+                            <span class="meta-value cat-chips">
+                                <span th:each="cat : ${feedback.categories}"
+                                      class="cat-chip"
+                                      th:text="${cat.subject}">
+                                </span>
+                                <span th:if="${feedback.categories == null or #lists.isEmpty(feedback.categories)}"
+                                      style="color:#b0b7c9; font-style:italic; font-size:13px;">
+                                    Chưa phân loại
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-eye"></i> Hiển thị</span>
+                            <span class="meta-value">
+                                <span class="post-status-chip"
+                                      th:classappend="${feedback.postStatus == 'PUBLIC'} ? ' public' : (${feedback.postStatus == 'PRIVATE'} ? ' private' : ' hidden')"
+                                      th:text="${feedback.postStatus == 'PUBLIC'} ? 'Công khai' : (${feedback.postStatus == 'PRIVATE'} ? 'Riêng tư' : 'Ẩn')">
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="meta-item">
+                            <span class="meta-label"><i class="fas fa-id-badge"></i> Mã góp ý</span>
+                            <span class="meta-value id-chip" th:text="${feedback.id}"></span>
+                        </div>
+                    </div>
+
+                    <div class="content-section">
+                        <div class="section-title">
+                            <i class="fas fa-align-left"></i> Nội dung góp ý
+                        </div>
+                        <div class="content-body" th:text="${feedback.description}">
+                            Nội dung...
+                        </div>
+                    </div>
+
+                    <div class="attachment-section" th:if="${not #lists.isEmpty(feedback.fileAttachments)}">
+                        <div class="section-title">
+                            <i class="fas fa-paperclip"></i> File đính kèm
+                        </div>
+
+                        <div class="image-grid">
+                            <a th:each="file : ${feedback.fileAttachments}"
+                               th:if="${file.fileType != null and #strings.startsWith(file.fileType, 'image/')}"
+                               th:href="${file.fileUrl}"
+                               target="_blank"
+                               class="img-thumb-link">
+                                <img th:src="${file.fileUrl}" th:alt="${file.fileName}" class="img-thumb">
+                            </a>
+                        </div>
+
+                        <ul class="file-list">
+                            <li th:each="file : ${feedback.fileAttachments}"
+                                th:if="${file.fileType == null or !#strings.startsWith(file.fileType, 'image/')}">
+                                <i class="fas fa-file-alt"></i>
+                                <a th:href="${file.fileUrl}"
+                                   th:text="${file.fileName}"
+                                   target="_blank">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CARD: TRAO ĐỔI LÀM RÕ -->
+                <div class="detail-card" th:if="${conversation != null}">
+                    <div class="card-section-header">
+                        <i class="fas fa-comments"></i> Trao đổi làm rõ
+                        <span class="conv-status-chip"
+                              th:classappend="${conversation.open} ? ' open' : ' closed'"
+                              th:text="${conversation.open} ? 'Đang mở' : 'Đã đóng'">
+                        </span>
+                    </div>
+
+                    <div class="conv-info-row">
+                        <span><i class="fas fa-bookmark"></i> Chủ đề: <b th:text="${conversation.subject}"></b></span>
+                        <span><i class="fas fa-calendar-alt"></i> Ngày tạo: <b th:text="${#temporals.format(conversation.createAt, 'dd/MM/yyyy')}"></b></span>
+                    </div>
+
+                    <div class="chat-box" th:id="${'chat-' + conversation.id}">
+                        <div th:each="msg : ${conversation.messages}"
+                             class="chat-msg"
+                             th:classappend="${msg.sender != null and msg.sender.role == 'ROLE_STUDENT'} ? ' msg-student' : ' msg-staff'">
+
+                            <div class="chat-bubble">
+                                <div class="chat-sender-name"
+                                     th:text="${msg.sender != null ? msg.sender.fullName : 'Hệ thống'}">
+                                </div>
+                                <div class="chat-text" th:text="${msg.content}"></div>
+                                <div class="chat-time"
+                                     th:text="${#temporals.format(msg.createAt, 'HH:mm dd/MM/yyyy')}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div th:if="${conversation.messages == null or #lists.isEmpty(conversation.messages)}"
+                             class="chat-empty">
+                            <i class="fas fa-comment-slash"></i>
+                            <span>Chưa có tin nhắn nào.</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-readonly-note">
+                        <i class="fas fa-info-circle"></i>
+                        Admin chỉ xem nội dung trao đổi, không tham gia nhắn tin.
+                    </div>
+                </div>
+
+                <!-- CARD: BÌNH LUẬN -->
+                <div class="detail-card" th:if="${not #lists.isEmpty(feedback.comments)}">
+                    <div class="card-section-header">
+                        <i class="fas fa-comment-dots"></i> Bình luận
+                        <span class="count-chip" th:text="${#lists.size(feedback.comments)}">0</span>
+                    </div>
+
+                    <div class="comment-list">
+                        <div th:each="cmt : ${feedback.comments}" class="cmt-item">
+                            <div class="cmt-avatar"
+                                 th:text="${cmt.user != null ? #strings.substring(cmt.user.fullName, 0, 1) : '?'}">
+                            </div>
+                            <div class="cmt-body">
+                                <div class="cmt-header">
+                                    <b th:text="${cmt.user != null ? cmt.user.fullName : 'Ẩn danh'}"></b>
+                                    <small th:text="${#temporals.format(cmt.date, 'HH:mm dd/MM/yyyy')}"></small>
+                                </div>
+                                <div class="cmt-text" th:text="${cmt.content}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ==================== CỘT PHẢI ==================== -->
+            <div class="col-right">
+
+                <div class="detail-card">
+                    <div class="card-section-header">
+                        <i class="fas fa-history"></i> Lịch sử trạng thái
+                    </div>
+
+                    <div class="timeline" th:if="${not #lists.isEmpty(feedback.statusHistory)}">
+                        <div th:each="h : ${feedback.statusHistory}" class="timeline-item">
+                            <div class="timeline-dot"
+                                 th:classappend="
+                                    ${h.status == 'PENDING'} ? ' dot-pending' :
+                                    (${h.status == 'APPROVED'} ? ' dot-processing' :
+                                    (${h.status == 'RESOLVED'} ? ' dot-success' :
+                                    (${h.status == 'FORWARDING'} ? ' dot-forwarding' :
+                                    (${h.status == 'REJECTED'} ? ' dot-rejected' : ''))))
+                                 ">
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="tl-badge"
+                                          th:classappend="
+                                            ${h.status == 'PENDING'} ? ' pending' :
+                                            (${h.status == 'APPROVED'} ? ' processing' :
+                                            (${h.status == 'RESOLVED'} ? ' success' :
+                                            (${h.status == 'FORWARDING'} ? ' forwarding' :
+                                            (${h.status == 'REJECTED'} ? ' rejected' : ''))))
+                                          "
+                                          th:text="
+                                            ${h.status == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                                            (${h.status == 'APPROVED'} ? 'Đang xử lý' :
+                                            (${h.status == 'RESOLVED'} ? 'Đã xử lý' :
+                                            (${h.status == 'FORWARDING'} ? 'Chuyển tiếp' :
+                                            (${h.status == 'REJECTED'} ? 'Từ chối' : ''))))
+                                          ">
+                                    </span>
+                                    <span class="tl-time"
+                                          th:text="${#temporals.format(h.createAt, 'HH:mm dd/MM')}">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(feedback.statusHistory)}"
+                         class="empty-hint">
+                        <i class="fas fa-clock"></i> Chưa có lịch sử.
+                    </div>
+                </div>
+
+                <div class="detail-card" th:if="${forwardLogs != null and not #lists.isEmpty(forwardLogs)}">
+                    <div class="card-section-header">
+                        <i class="fas fa-share-alt"></i> Lịch sử chuyển tiếp
+                    </div>
+
+                    <div class="forward-log-list">
+                        <div th:each="log : ${forwardLogs}" class="forward-log-item">
+                            <div class="fwd-icon"><i class="fas fa-share"></i></div>
+                            <div class="fwd-body">
+                                <div class="fwd-dept">
+                                    <span th:text="${log.fromDepartment != null ? log.fromDepartment.name : '?'}"></span>
+                                    <i class="fas fa-long-arrow-alt-right"></i>
+                                    <span th:text="${log.toDepartment != null ? log.toDepartment.name : '?'}"></span>
+                                </div>
+                                <div class="fwd-note" th:if="${log.note != null and not #strings.isEmpty(log.note)}"
+                                     th:text="${log.note}">
+                                </div>
+                                <div class="fwd-time"
+                                     th:text="${#temporals.format(log.createdAt, 'HH:mm - dd/MM/yyyy')}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card" th:if="${feedback.user != null}">
+                    <div class="card-section-header">
+                        <i class="fas fa-id-card"></i> Thông tin người gửi
+                        <span class="admin-only-badge">
+                            <i class="fas fa-shield-alt"></i> Admin
+                        </span>
+                    </div>
+
+                    <div class="user-detail-box">
+                        <div class="user-big-avatar"
+                             th:text="${#strings.substring(feedback.user.fullName, 0, 1)}">
+                        </div>
+                        <div class="user-detail-info">
+                            <div class="user-detail-name" th:text="${feedback.user.fullName}"></div>
+                            <div class="user-detail-row">
+                                <i class="fas fa-envelope"></i>
+                                <span th:text="${feedback.user.email}"></span>
+                            </div>
+                            <div class="user-detail-row" th:if="${feedback.user.department != null}">
+                                <i class="fas fa-building"></i>
+                                <span th:text="${feedback.user.department.name}"></span>
+                            </div>
+                            <div class="user-detail-row">
+                                <i class="fas fa-user-tag"></i>
+                                <span th:text="${
+                                    feedback.user.role == 'ROLE_STUDENT' ? 'Sinh viên' :
+                                    (feedback.user.role == 'ROLE_DEPARTMENT' ? 'Nhân viên phòng ban' :
+                                    (feedback.user.role == 'ROLE_ADMIN' ? 'Quản trị viên' : feedback.user.role))
+                                }"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-card" th:if="${feedback.user == null}">
+                    <div class="card-section-header">
+                        <i class="fas fa-id-card"></i> Thông tin người gửi
+                        <span class="admin-only-badge">
+                            <i class="fas fa-shield-alt"></i> Admin
+                        </span>
+                    </div>
+                    <div class="anon-user-box">
+                        <i class="fas fa-user-secret"></i>
+                        <span>Người dùng đã xóa tài khoản hoặc gửi ẩn danh.</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

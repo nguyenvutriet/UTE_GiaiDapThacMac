@@ -32,7 +32,6 @@ public class RequestService {
 
     @Autowired
     private VoteRepo voteRepo;
-
     @Autowired
     private UsersRepo usersRepo;
 
@@ -54,6 +53,7 @@ public class RequestService {
      * @param currentUserId id user hiện tại
      * @return Page<ForumPostDTO>
      */
+
     public Page<ForumPostDTO> getPublicPosts(Pageable pageable, String currentUserId) {
         return requestRepo.findByPostStatus("PUBLIC", pageable)
                 .map(r -> {
@@ -64,7 +64,7 @@ public class RequestService {
                     dto.setDate(r.getTimeCreate());
                     dto.setStatus(r.getCurrentStatus());
                     dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
-                    dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");
+                    dto.setReactionTypeLower(dto.getReactionType() != null ? dto.getReactionType().toLowerCase() : "");//luu y
                     dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
                     dto.setAttachments(mapAttachments(r));
 
@@ -201,10 +201,7 @@ public class RequestService {
                         dto.setReactionTypeLower(v.getType().name().toLowerCase());
                     });
         }
-        // Giả sử bà đã lấy được thông tin User hiện tại để check quyền xóa
-// String currentUserId = ... (lấy từ SecurityContext)
 
-        // 1. Lấy danh sách comment theo Request ID
         List<CommentDTO> commentList = commentRepo.findByRequestId(r.getId()).stream()
                 .filter(Objects::nonNull)
                 .map(c -> {
@@ -545,6 +542,51 @@ public class RequestService {
         }
 
         return List.of();
+    }
+
+
+
+    @Transactional
+    public Request getAdminFeedbackDetail(String id) {
+        Request request = requestRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy góp ý: " + id));
+
+        request.getUser().getFullName();
+        request.getCategories().size();
+        request.getComments().size();
+        request.getFileAttachments().size();
+        request.getForwardingLogs().size();
+
+        return request;
+    }
+
+    /**
+     * Tìm kiếm tất cả feedback - admin không lọc phòng ban
+     */
+    public Page<Request> searchAllFeedbacks(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return requestRepo.findAll(pageable);
+        }
+        return requestRepo.findAllByContentContaining(keyword.trim(), pageable);
+    }
+
+    /**
+     * Lọc feedback theo departmentId + categoryId + status - dành cho admin
+     * Không giới hạn phòng ban, lấy tất cả request kể cả ẩn danh
+     */
+    public Page<Request> getAdminFeedbacks(
+            String departmentId,
+            String categoryId,
+            String status,
+            Pageable pageable) {
+
+        // Nếu không có filter nào -> lấy tất cả
+        if (departmentId == null && categoryId == null && status == null) {
+            return requestRepo.findAll(pageable);
+        }
+
+        // Có ít nhất 1 filter -> dùng query tổng hợp
+        return requestRepo.adminFilterAll(departmentId, categoryId, status, pageable);
     }
 
     @Transactional

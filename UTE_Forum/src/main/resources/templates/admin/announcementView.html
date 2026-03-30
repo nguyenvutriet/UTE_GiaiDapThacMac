@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thông báo</title>
+    <title>Admin - Thông báo</title>
     <link rel="stylesheet" th:href="@{/css/student/announcementView.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 <div class="page-layout">
     <aside class="sidebar">
-    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
         <div class="brand-block">
             <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
             <div class="student-info">
-                <img th:src="@{/images/student.png}" alt="avatar" class="avatar">
+                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
                 <div>
-                    <p class="student-name" th:text="${user?.fullName}">Nguyễn Văn An</p>
-                    <p class="student-id" th:text="'MSSV: ' + ${user?.id}">MSSV</p>
-                    <p class="student-role" th:text="${user?.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
+                    <p class="student-name" th:text="${user.fullName}">Tên Admin</p>
+                    <p class="student-id" th:text="'Mã quản trị: ' + ${user.id}">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
                 </div>
             </div>
         </div>
+
         <nav class="sidebar-nav">
-            <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
-            <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
-            <a class="nav-item active" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
+            <a class="nav-item" href="#"><span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span></a>
+            <a class="nav-item" href="/admin/reports"><span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span></a>
+            <a class="nav-item" href="/admin/category"><span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span></a>
+            <a class="nav-item active" href="/admin/forum/view"><span class="nav-icon">&#128172;</span><span>Diễn đàn</span></a>
             <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
+
         <a class="logout-btn" href="/logout">Đăng xuất</a>
     </aside>
 
@@ -36,7 +39,7 @@
         <header class="main-header">
             <div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
             <div class="forum-tabs">
-                <button class="tab-item" onclick="window.location.href='/api/forum/view'">Diễn đàn</button>
+                <button class="tab-item" onclick="window.location.href='/admin/forum/view'">Diễn đàn</button>
                 <button class="tab-item active">Thông báo</button>
             </div>
             <div class="main-header-bottom"><h1 class="page-tab">THÔNG BÁO</h1></div>
@@ -54,7 +57,7 @@
                                autocomplete="off">
                     </div>
 
-<!--                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>-->
+                    <!--                    <ul id="searchSuggestions" class="search-suggestion-list" style="display:none;"></ul>-->
                     <ul id="searchResultList" class="list-group mt-2 shadow-sm">
                     </ul>
                 </div>
@@ -203,7 +206,7 @@
                 }
 
                 const card = `
-                <div class="announcement-card" onclick="window.location.href='/announcement/detail/${ann.id}'" style="cursor: pointer;">
+                <div class="announcement-card" onclick="window.location.href='/adannouncement/detail/${ann.id}'" style="cursor: pointer;">
                     <div class="ann-header">
                         <span class="dept-name">🏢 ${ann.creatorName || 'Ban Quản Trị'}</span>
                         <span class="ann-date">${ann.date}</span>
@@ -214,7 +217,7 @@
                         ${attachmentsHtml}
                     </div>
                     <div class="ann-footer">
-                        <a href="/announcement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
+                        <a href="/adannouncement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>`;
                 announcementList.insertAdjacentHTML('beforeend', card);
@@ -315,7 +318,7 @@
                 // --- KẾT THÚC ĐOẠN SỬA ---
 
                 // Bấm vào phát là bay sang trang chi tiết luôn
-                item.onclick = () => window.location.href = `/announcement/detail/${ann.id}`;
+                item.onclick = () => window.location.href = `/adannouncement/detail/${ann.id}`;
                 suggestionsList.appendChild(item);
             });
         }
@@ -350,7 +353,7 @@
 
             data.forEach(ann => {
                 const card = `
-                <div class="announcement-card" onclick="window.location.href='/announcement/detail/${ann.id}'" style="cursor: pointer;">
+                <div class="announcement-card" onclick="window.location.href='/adannouncement/detail/${ann.id}'" style="cursor: pointer;">
                     <div class="ann-header">
                         <span class="dept-name">🏢 ${ann.creatorName || 'Phòng Ban'}</span>
                         <span class="ann-date">${ann.date}</span>
@@ -360,7 +363,7 @@
                         <p class="ann-content">${ann.content.substring(0, 150)}...</p>
                     </div>
                     <div class="ann-footer">
-                        <a href="/announcement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết</a>
+                        <a href="/adannouncement/detail/${ann.id}" class="btn-detail" onclick="event.stopPropagation()">Xem chi tiết</a>
                     </div>
                 </div>`;
                 mainContentList.insertAdjacentHTML('beforeend', card);

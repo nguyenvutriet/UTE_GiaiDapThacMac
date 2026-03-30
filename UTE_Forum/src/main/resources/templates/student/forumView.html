@@ -293,8 +293,130 @@
 <script th:inline="javascript">
     let activePostId = null;
 
-    function renderCommentHTML(cmt) {
+//     function renderCommentHTML(cmt) {
+//
+//         const reactionData = {
+//             'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
+//             'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
+//             'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
+//             'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
+//             'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
+//             'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
+//         };
+//
+//
+//         const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
+//
+//         // 🔥 TEXT CỦA USER
+//         const reactConfig = reactionData[cmt.reactionType] || {
+//             text: "Thích",
+//             color: "#65676b",
+//             icon: ""
+//         };
+//
+//         // 🔥 BUILD ICON + COUNT
+//         let iconsHTML = "";
+//         let totalCount = 0;
+//
+//         if (cmt.reactions) {
+//             Object.entries(cmt.reactions).forEach(([key, value]) => {
+//                 if (value > 0) {
+//                     iconsHTML += reactionData[key].icon + " ";
+//                     totalCount += value;
+//                 }
+//             });
+//         }
+//
+//         return `
+//     <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
+//         <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+//         <div style="max-width: 85%; flex: 1;">
+//             <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
+// <div style="background: ${isVerified ? '#f0f7ff' : '#f8f9fa'};
+//                 /* Sinh viên thì padding nhỏ hơn, Cán bộ thì to hơn */
+//                 padding: ${isVerified ? '10px 14px' : '6px 12px'};
+//                 border-radius: 18px;
+//                 border: ${isVerified ? '1px solid #cfe4ff' : '1px solid #eee'};
+//                 /* Thu nhỏ chiều ngang tối đa của cmt sinh viên nếu muốn */
+//                 max-width: ${isVerified ? '100%' : '90%'};">
+//
+//         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+//             <b style="font-size: ${isVerified ? '13px' : '12px'}; color: ${isVerified ? '#00558b' : '#444'}; line-height: 1.2;">
+//                 ${cmt.userName}
+//             </b>
+//
+//             ${isVerified ? `
+//                 <svg viewBox="0 0 16 16" width="12" height="12">
+//                     <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+//                 </svg>
+//             ` : ''}
+//         </div>
+//
+//         <div style="margin-top: 2px;">
+//             <span style="font-size: ${isVerified ? '14px' : '12.5px'}; color: #333; line-height: 1.4;">
+//                 ${cmt.content}
+//             </span>
+//         </div>
+//
+//         <div style="margin-top: 6px; display: flex; gap: 12px; border-top: 0.5px solid #eee; padding-top: 4px;">
+//              ${cmt.canDelete ? `
+//                 <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:10px; font-weight:600;">
+//                     <i class="fas fa-trash-alt"></i> Xóa
+//                 </span>
+//             ` : ''}
+//             ${!cmt.canDelete ? `
+//                 <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#777; font-size:10px; font-weight:600;">
+//                     <i class="fas fa-flag"></i> Báo cáo
+//                 </span>
+//             ` : ''}
+//         </div>
+//     </div>
+//             </div>
+//
+//             <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
+//                 <small style="color:#65676b; font-size:11px;">
+//                     ${formatDirectDate(cmt.date)}
+//                 </small>
+//
+//                 <!-- REACTION -->
+//                 <div class="reaction-container">
+//                     <div class="reaction-box">
+//                         <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
+//                         <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
+//                         <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
+//                         <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
+//                         <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
+//                         <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
+//                     </div>
+//
+//                     <small id="react-text-${cmt.id}"
+//                         style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
+//                         onclick="sendReaction('${cmt.id}', 'LIKE')">
+//                         ${reactConfig.text}
+//                     </small>
+//                 </div>
+//
+//                 <!-- COUNT -->
+//                 <div id="reaction-count-container-${cmt.id}"
+//      onclick="showReactionDetail('${cmt.id}')"
+//      style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+//
+//                     <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
+//                         ${iconsHTML}
+//                     </span>
+//
+//                     <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
+//                         ${totalCount}
+//                     </small>
+//                 </div>
+//
+//
+//             </div>
+//         </div>
+//     </div>`;
+//     }
 
+    function renderCommentHTML(cmt) {
         const reactionData = {
             'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
             'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
@@ -304,20 +426,19 @@
             'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
         };
 
+        // 1. Cập nhật logic kiểm tra ưu tiên
+        const isAdmin = cmt.userRole === 'ROLE_ADMIN';
+        const isDept = cmt.userRole === 'ROLE_DEPARTMENT' || cmt.userRole === 'ROLE_STAFF';
+        const isPriority = isAdmin || isDept; // Các vai trò cần làm nổi bật
 
-        const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
-
-        // 🔥 TEXT CỦA USER
         const reactConfig = reactionData[cmt.reactionType] || {
             text: "Thích",
             color: "#65676b",
             icon: ""
         };
 
-        // 🔥 BUILD ICON + COUNT
         let iconsHTML = "";
         let totalCount = 0;
-
         if (cmt.reactions) {
             Object.entries(cmt.reactions).forEach(([key, value]) => {
                 if (value > 0) {
@@ -331,31 +452,56 @@
     <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
         <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
         <div style="max-width: 85%; flex: 1;">
-            <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
-                <b style="font-size:13px; color: #050505; line-height: 1;">${cmt.userName}</b>
+            <div style="background: ${isPriority ? (isAdmin ? '#fff0f0' : '#f0f7ff') : '#f8f9fa'};
+                        padding: ${isPriority ? '10px 14px' : '6px 12px'};
+                        border-radius: 18px;
+                        border: ${isPriority ? (isAdmin ? '1px solid #ffcccc' : '1px solid #cfe4ff') : '1px solid #eee'};
+                        max-width: ${isPriority ? '100%' : '90%'};
+                        position: relative;">
 
-                ${isVerified ? `
-                    <svg viewBox="0 0 16 16" width="12" height="12" style="flex-shrink: 0; margin-top: 1px;">
-                        <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
-                    </svg>
-                ` : ''}
-                <span style="font-size:14px;">${cmt.content}</span>
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px; flex-wrap: wrap;">
+                    <b style="font-size: ${isPriority ? '13px' : '12px'}; color: ${isAdmin ? '#d32f2f' : (isDept ? '#00558b' : '#444')}; line-height: 1.2;">
+                        ${cmt.userName}
+                    </b>
 
-                <div style="margin-top: 8px; display: flex; gap: 15px; border-top: 1px solid #e0e0e0; padding-top: 5px;">
-                    ${cmt.canDelete ? `
-                        <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:11px; font-weight:600;">
-                            <i class="fas fa-trash-alt"></i> Xóa
-                        </span>
-                    ` : ''}
-
-                    ${!cmt.canDelete ? `
-                        <span class="report-btn" data-comment-id="${cmt.id}"
-                              onclick="reportComment('${cmt.id}')"
-                              style="cursor:pointer; color:#00558b; font-size:11px; font-weight:600;">
-                            <i class="fas fa-flag"></i> Báo cáo
+                    ${isPriority ? `
+                        <svg viewBox="0 0 16 16" width="12" height="12">
+                            <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
+                        </svg>
+                        <span style="font-size: 9px; padding: 1px 5px; border-radius: 4px; background: ${isAdmin ? '#d32f2f' : '#00558b'}; color: white; font-weight: bold; text-transform: uppercase; margin-left: 2px;">
+                            ${isAdmin ? 'Admin' : 'Phòng ban'}
                         </span>
                     ` : ''}
                 </div>
+
+                <div style="margin-top: 2px;">
+                    <span style="font-size: ${isPriority ? '14px' : '12.5px'}; color: #111; line-height: 1.4; font-weight: ${isPriority ? '500' : 'normal'};">
+                        ${cmt.content}
+                    </span>
+                </div>
+
+                <div style="margin-top: 6px; display: flex; gap: 12px; border-top: 0.5px solid #eee; padding-top: 4px;">
+             ${cmt.canDelete ? `
+                <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:10px; font-weight:600;">
+                    <i class="fas fa-trash-alt"></i> Xóa
+                </span>
+            ` : ''}
+            ${!cmt.canDelete ? `
+                <span
+                    class="report-btn ${cmt.reportedByCurrentUser ? 'reported' : ''}"
+                    data-comment-id="${cmt.id}"
+                    onclick="${cmt.reportedByCurrentUser ? '' : `reportComment('${cmt.id}')`}"
+                    style="
+                        cursor:${cmt.reportedByCurrentUser ? 'default' : 'pointer'};
+                        color:${cmt.reportedByCurrentUser ? '#d32f2f' : '#777'};
+                        font-size:10px;
+                        font-weight:600;
+                        opacity:${cmt.reportedByCurrentUser ? '1' : '1'};
+                    ">
+                    <i class="fas fa-flag"></i> ${cmt.reportedByCurrentUser ? 'Đã báo cáo' : 'Báo cáo'}
+                </span>
+            ` : ''}
+         </div>
             </div>
 
             <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
@@ -363,7 +509,6 @@
                     ${formatDirectDate(cmt.date)}
                 </small>
 
-                <!-- REACTION -->
                 <div class="reaction-container">
                     <div class="reaction-box">
                         <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
@@ -373,34 +518,50 @@
                         <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
                         <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
                     </div>
-
-                    <small id="react-text-${cmt.id}"
-                        style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
-                        onclick="sendReaction('${cmt.id}', 'LIKE')">
+                    <small id="react-text-${cmt.id}" style="color:${reactConfig.color}; font-weight:600; cursor:pointer;" onclick="sendReaction('${cmt.id}', 'LIKE')">
                         ${reactConfig.text}
                     </small>
                 </div>
 
-                <!-- COUNT -->
-                <div id="reaction-count-container-${cmt.id}"
-     onclick="showReactionDetail('${cmt.id}')"
-     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
-
-                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
-                        ${iconsHTML}
-                    </span>
-
-                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
-                        ${totalCount}
-                    </small>
+                <div id="reaction-count-container-${cmt.id}" onclick="showReactionDetail('${cmt.id}')"
+                     style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'}; align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
+                    <span id="reaction-icons-${cmt.id}" style="font-size:12px;">${iconsHTML}</span>
+                    <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">${totalCount}</small>
                 </div>
-
-
             </div>
         </div>
     </div>`;
     }
 
+    // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
+    // function toggleComments(requestId) {
+    //     const commentBox = document.getElementById('comment-box-' + requestId);
+    //     const commentList = document.getElementById('comment-list-' + requestId);
+    //     if (!commentBox) return;
+    //
+    //     const isOpening = !commentBox.classList.contains('show');
+    //     if (isOpening) {
+    //         commentBox.classList.add('show');
+    //         commentList.innerHTML = '<p style="font-size:12px; color:gray; text-align:center; padding:10px;">Đang tải...</p>';
+    //
+    //         fetch('/api/comments/' + requestId)
+    //             .then(res => res.json())
+    //             .then(data => {
+    //                 commentList.innerHTML = '';
+    //                 if (data.length === 0) {
+    //                     commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';
+    //                 } else {
+    //                     data.forEach(cmt => {
+    //                         commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
+    //                     });
+    //                     restoreReportedState(); // ← thêm vào đây
+    //                 }
+    //             })
+    //             .catch(err => commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải.</p>');
+    //     } else {
+    //         commentBox.classList.remove('show');
+    //     }
+    // }
     // 1. TÍNH NĂNG XỔ BÌNH LUẬN TẠI CHỖ (TOGGLE)
     function toggleComments(requestId) {
         const commentBox = document.getElementById('comment-box-' + requestId);
@@ -416,16 +577,43 @@
                 .then(res => res.json())
                 .then(data => {
                     commentList.innerHTML = '';
-                    if (data.length === 0) {
+                    if (!data || data.length === 0) {
                         commentList.innerHTML = '<p style="font-size:13px; color:gray; text-align:center; padding:10px;">Chưa có bình luận nào.</p>';
                     } else {
-                        data.forEach(cmt => {
-                            commentList.innerHTML += renderCommentHTML(cmt); // ĐÃ DÙNG HÀM RENDER XỊN
+                        // 🔥 BƯỚC QUAN TRỌNG: SẮP XẾP ƯU TIÊN ROLE TRƯỚC KHI RENDER
+                        data.sort((a, b) => {
+                            const priority = {
+                                'ROLE_ADMIN': 1,
+                                'ROLE_DEPARTMENT': 2,
+                                'ROLE_STAFF': 2,
+                                'ROLE_STUDENT': 3
+                            };
+
+                            const pA = priority[a.userRole] || 3; // Mặc định là 3 nếu ko xác định
+                            const pB = priority[b.userRole] || 3;
+
+                            // Nếu Role khác nhau -> Ông nhỏ hơn (Admin/Phòng ban) lên đầu
+                            if (pA !== pB) {
+                                return pA - pB;
+                            }
+
+                            // Nếu cùng Role -> Ông nào mới hơn (date lớn hơn) lên đầu
+                            return new Date(b.date) - new Date(a.date);
                         });
-                        restoreReportedState(); // ← thêm vào đây
+
+                        // Sau khi đã sắp xếp xong xuôi, mới vẽ ra màn hình
+                        data.forEach(cmt => {
+                            // Chèn HTML đã được render từ hàm renderCommentHTML xịn
+                            commentList.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+                        });
+
+                        restoreReportedState();
                     }
                 })
-                .catch(err => commentList.innerHTML = '<p style="color:red; font-size:12px;">Lỗi tải.</p>');
+                .catch(err => {
+                    console.error("Lỗi:", err);
+                    commentList.innerHTML = '<p style="color:red; font-size:12px; text-align:center;">Lỗi tải bình luận.</p>';
+                });
         } else {
             commentBox.classList.remove('show');
         }
@@ -491,15 +679,22 @@
 
     // 2. TÍNH NĂNG MỞ MODAL
     function openPostModal(post) {
-        // 🔥 SỬA LỖI 1: Gán ID để các hàm sau nhận diện được bài viết đang mở
+        // 🔥 Gán ID để các hàm sau nhận diện được bài viết đang mở
         activePostId = post.id;
 
         document.getElementById('modal-header-text').innerText = `Bài viết của ${post.userName}`;
         document.getElementById('detail-user-name').innerText = post.userName;
 
-        // Lấy ngày tháng an toàn
-        const postCard = event.currentTarget;
-        const dateText = postCard ? postCard.querySelector('.display-date-text').innerText : "";
+        // Lấy ngày tháng an toàn (Thêm try-catch hoặc check null để ko bị văng lỗi làm hư Vote)
+        let dateText = "";
+        try {
+            if (window.event && window.event.currentTarget) {
+                const postCard = window.event.currentTarget;
+                const dateElem = postCard.querySelector('.display-date-text');
+                dateText = dateElem ? dateElem.innerText : "";
+            }
+        } catch (e) { console.log("Không lấy được date từ event"); }
+
         document.getElementById('detail-post-date').innerText = dateText;
         document.getElementById('detail-subject').innerText = post.subject;
         document.getElementById('detail-description').innerText = post.description;
@@ -516,18 +711,39 @@
             .then(res => res.json())
             .then(data => {
                 commentList.innerHTML = '';
-                // Khởi tạo thẻ span để hàm update số lượng tìm thấy được
+
+                if (!data || data.length === 0) {
+                    commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
+                } else {
+                    // 🔥 BƯỚC QUAN TRỌNG: SẮP XẾP ƯU TIÊN TRONG MODAL
+                    data.sort((a, b) => {
+                        const priority = {
+                            'ROLE_ADMIN': 1,
+                            'ROLE_DEPARTMENT': 2,
+                            'ROLE_STAFF': 2,
+                            'ROLE_STUDENT': 3
+                        };
+                        const pA = priority[a.userRole] || 3;
+                        const pB = priority[b.userRole] || 3;
+
+                        if (pA !== pB) return pA - pB;
+                        return new Date(b.date) - new Date(a.date);
+                    });
+
+                    // Render dữ liệu đã sắp xếp
+                    commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt)).join('');
+                    restoreReportedState();
+                }
+
+                // Cập nhật số lượng sau khi đã có data
                 const countHeader = document.querySelector('.modal-comments-area h4');
                 if (countHeader) {
                     countHeader.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${data.length}</span>)`;
                 }
-
-                if (data.length === 0) {
-                    commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
-                } else {
-                    commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt)).join('');
-                    restoreReportedState(); // ← thêm vào đây
-                }
+            })
+            .catch(err => {
+                console.error("Lỗi modal cmt:", err);
+                commentList.innerHTML = '<p style="text-align:center; color:red;">Không thể tải bình luận.</p>';
             });
 
         document.getElementById('postModal').style.display = 'flex';
@@ -829,7 +1045,10 @@
         let reason = selected.value;
         if (reason === 'Khác') {
             const extra = document.getElementById('extra-reason-text').value.trim();
-            if (!extra) { alert('Vui lòng mô tả lý do!'); return; }
+            if (!extra) {
+                alert('Vui lòng mô tả lý do!');
+                return;
+            }
             reason = extra;
         }
 
@@ -839,51 +1058,52 @@
             body: JSON.stringify({ commentId: commentId, reason: reason })
         })
             .then(async res => {
-                document.getElementById('report-modal-overlay').remove();
+                const overlay = document.getElementById('report-modal-overlay');
+                if (overlay) overlay.remove();
+
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {}
+
                 if (res.ok) {
                     markAsReported(commentId);
-                    alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
-                } else {
-                    let errorMsg = `Lỗi ${res.status}`;
-                    try {
-                        const body = await res.json();
-                        errorMsg = body.message || body.error || errorMsg;
-                    } catch {
-                        try {
-                            const text = await res.text();
-                            if (text) errorMsg = text;
-                        } catch {}
-                    }
-                    alert('Báo cáo thất bại: ' + errorMsg);
+                    alert(data?.message || 'Đã gửi báo cáo thành công. Cảm ơn bạn!');
+                    return;
                 }
+
+                if (res.status === 409) {
+                    markAsReported(commentId);
+                    alert(data?.message || 'Bạn đã báo cáo bình luận này rồi.');
+                    return;
+                }
+
+                alert(data?.message || `Báo cáo thất bại (HTTP ${res.status})`);
             })
-            .catch(err => alert('Lỗi kết nối: ' + err.message));
+            .catch(err => {
+                alert('Lỗi kết nối: ' + err.message);
+            });
     }
 
     function markAsReported(commentId) {
-        // Lưu vào localStorage để giữ trạng thái qua reload
-        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
-        if (!reported.includes(String(commentId))) {
-            reported.push(String(commentId));
-            localStorage.setItem('reportedComments', JSON.stringify(reported));
-        }
         applyReportedStyle(commentId);
     }
 
     function applyReportedStyle(commentId) {
         document.querySelectorAll(`.report-btn[data-comment-id="${commentId}"]`).forEach(el => {
+            el.classList.add('reported');
             el.style.color = '#d32f2f';
-            el.style.opacity = '0.7';
+            el.style.opacity = '1';
             el.style.cursor = 'default';
             el.title = 'Đã báo cáo';
             el.onclick = null;
+            el.innerHTML = '<i class="fas fa-flag"></i> Đã báo cáo';
         });
     }
 
     // Gọi sau mỗi lần render comment để khôi phục trạng thái đã báo cáo
     function restoreReportedState() {
-        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
-        reported.forEach(commentId => applyReportedStyle(commentId));
+        // Không cần nữa nếu backend đã trả reportedByCurrentUser
     }
 
     function formatDirectDate(dateParam) {

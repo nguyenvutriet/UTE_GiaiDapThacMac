@@ -144,4 +144,94 @@ public class AdminForumController {
         model.addAttribute("allDepartments", departmentRepo.findAll());
         return "admin/admin-forum";
     }
+
+//    @GetMapping("/{id}")
+//    public String showPostDetail(@PathVariable String id,
+//                                 Model model,
+//                                 @AuthenticationPrincipal UserDetails userDetails) {
+//        // 1. Lấy user hiện tại để check reaction
+//        String currentUserId = null;
+//        if (userDetails != null) {
+//            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+//            if (currentUser != null) {
+//                currentUserId = currentUser.getId();
+//                model.addAttribute("user", currentUser);
+//            }
+//        }
+//
+//        // 2. Gọi hàm convertToFullDTO thần thánh của bà
+//        ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
+//
+//        if (post == null) {
+//            return "redirect:/forum/staff"; // Không thấy bài thì cho về vườn
+//        }
+//
+//        // 3. Đẩy dữ liệu ra trang chi tiết
+//        model.addAttribute("post", post);
+//
+//        return "admin/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+//    }
+
+    @GetMapping("/{id}")
+    public String showPostDetail(@PathVariable String id,
+                                 @RequestParam(value = "commentId", required = false) String commentId,
+                                 Model model,
+                                 @AuthenticationPrincipal UserDetails userDetails) {
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+            if (currentUser != null) {
+                currentUserId = currentUser.getId();
+                model.addAttribute("user", currentUser);
+            }
+        }
+
+        ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
+
+        if (post == null) {
+            return "redirect:/admin/forum";
+        }
+
+        model.addAttribute("post", post);
+        model.addAttribute("deepLinkCommentId", commentId);
+
+        return "admin/postDetail";
+    }
+
+    @GetMapping("/search-list")
+    public String searchPublicPosts(
+            @RequestParam("keyword") String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // 1. Phân trang tương tự như trang chủ Forum
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("timeCreate").descending());
+
+        // 2. Lấy ID user hiện tại để kiểm tra xem họ đã "Like/Love" bài đó chưa
+        String currentUserId = null;
+        if (userDetails != null) {
+            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+            if (currentUser != null) {
+                currentUserId = currentUser.getId();
+                model.addAttribute("user", currentUser);
+            }
+        }
+
+        // 3. Gọi hàm search mới (đã bao gồm mapping Reactions/Comments giống getPublicPosts)
+        // Lưu ý: keyword cần được trim để tránh khoảng trắng thừa
+        Page<ForumPostDTO> postPage = requestService.getPublicSearchPosts(keyword.trim(), pageable, currentUserId);
+
+        // 4. Đưa dữ liệu vào Model (giữ nguyên tên biến để dùng chung Template HTML)
+        model.addAttribute("requests", postPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", postPage.getTotalPages());
+        model.addAttribute("keyword", keyword); // Gửi lại keyword để hiển thị trên ô Search hoặc dùng cho phân trang
+
+        // Các dữ liệu bổ trợ cho Sidebar/Filter
+        model.addAttribute("allCategories", categoryRepo.findAll());
+        model.addAttribute("allDepartments", departmentRepo.findAll());
+
+        return "admin/admin-forum"; // Dùng chung giao diện với trang Forum chính
+    }
 }

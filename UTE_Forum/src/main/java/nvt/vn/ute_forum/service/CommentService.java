@@ -22,6 +22,9 @@ public class CommentService {
     @Autowired
     private VoteCommentRepo voteCommentRepo;
 
+    @Autowired
+    private UsersService usersService;
+
     //*
     @Autowired
     private CommentReportRepo reportRepo;
@@ -40,46 +43,90 @@ public class CommentService {
     //*
 
 
+//    public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
+//        return commentRepo.findActiveByRequestId(requestId).stream()
+//                .map(c -> {
+//
+//                    String commentOwnerId = String.valueOf(c.getUser().getId());
+//                    boolean canDelete = commentOwnerId.equals(currentUserId);
+//
+//                    CommentDTO dto = new CommentDTO(
+//                            c.getUser().getFullName(),
+//                            c.getContent(),
+//                            c.getDate(),
+//                            c.getId(),
+//                            canDelete,
+//                            c.getUser().getRole() // <-- Truyền thêm Role của User vào đây
+//                    );
+//
+//                    Optional<VoteComment> userVote = Optional.empty();
+//
+//                    if (currentUserId != null && !currentUserId.isEmpty()) {
+//                        userVote = voteCommentRepo
+//                                .findByIdUserIdAndIdCommentId(currentUserId, c.getId());
+//                    }
+//
+//                    dto.setReactionType(
+//                            userVote.map(v -> v.getType().name()).orElse(null)
+//                    );
+//
+//                    // 🔥 2. LẤY TỔNG REACTION
+//                    List<Object[]> raw = voteCommentRepo.countReactionsByCommentId(c.getId());
+//
+//                    Map<String, Long> reactions = new HashMap<>();
+//
+//                    for (Object[] row : raw) {
+//                        reactions.put(row[0].toString(), (Long) row[1]);
+//                    }
+//
+//                    dto.setReactions(reactions);
+//
+//                    return dto;
+//
+//                })
+//                .collect(Collectors.toList());
+//    }
+
     public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
         return commentRepo.findActiveByRequestId(requestId).stream()
                 .map(c -> {
-
-                    String commentOwnerId = String.valueOf(c.getUser().getId());
-                    boolean canDelete = commentOwnerId.equals(currentUserId);
+                    String commentOwnerId = c.getUser() != null ? String.valueOf(c.getUser().getId()) : null;
+                    boolean canDelete = currentUserId != null && currentUserId.equals(commentOwnerId);
 
                     CommentDTO dto = new CommentDTO(
-                            c.getUser().getFullName(),
+                            c.getUser() != null ? c.getUser().getFullName() : "Ẩn danh",
                             c.getContent(),
                             c.getDate(),
                             c.getId(),
                             canDelete,
-                            c.getUser().getRole() // <-- Truyền thêm Role của User vào đây
+                            c.getUser() != null ? c.getUser().getRole() : "ROLE_STUDENT"
                     );
 
                     Optional<VoteComment> userVote = Optional.empty();
-
                     if (currentUserId != null && !currentUserId.isEmpty()) {
-                        userVote = voteCommentRepo
-                                .findByIdUserIdAndIdCommentId(currentUserId, c.getId());
+                        userVote = voteCommentRepo.findByIdUserIdAndIdCommentId(currentUserId, c.getId());
                     }
 
-                    dto.setReactionType(
-                            userVote.map(v -> v.getType().name()).orElse(null)
-                    );
+                    dto.setReactionType(userVote.map(v -> v.getType().name()).orElse(null));
 
-                    // 🔥 2. LẤY TỔNG REACTION
                     List<Object[]> raw = voteCommentRepo.countReactionsByCommentId(c.getId());
-
                     Map<String, Long> reactions = new HashMap<>();
-
                     for (Object[] row : raw) {
                         reactions.put(row[0].toString(), (Long) row[1]);
                     }
-
                     dto.setReactions(reactions);
 
-                    return dto;
+                    // ===== FIX GỐC Ở ĐÂY =====
+                    boolean reportedByCurrentUser = false;
+                    if (currentUserId != null && !currentUserId.isEmpty()) {
+                        reportedByCurrentUser = reportRepo.existsByComment_IdAndStudent_Id(c.getId(), currentUserId);
+                    }
+                    dto.setReportedByCurrentUser(reportedByCurrentUser);
 
+                    // Nếu DTO đã có field isActive thì set luôn
+                    dto.setIsActive(c.getIsActive());
+
+                    return dto;
                 })
                 .collect(Collectors.toList());
     }
