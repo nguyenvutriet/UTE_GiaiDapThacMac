@@ -10,6 +10,10 @@ public class CommentDTO {
     private String id;
     private boolean canDelete;
 
+    private Boolean isActive;
+
+    private boolean reportedByCurrentUser;
+
     // 🔥 THÊM 2 CÁI NÀY
     private String reactionType;
     private Map<String, Long> reactions;
@@ -51,4 +55,19 @@ public class CommentDTO {
 
     public String getUserRole() { return userRole; }
     public void setUserRole(String userRole) { this.userRole = userRole; }
+
+    public boolean isReportedByCurrentUser() { return reportedByCurrentUser; }
+
+    public void setReportedByCurrentUser(boolean reportedByCurrentUser) {
+        this.reportedByCurrentUser = reportedByCurrentUser;
+    }
+
+    public Boolean getIsActive(){
+        return isActive;
+    }
+    public void setIsActive(Boolean isActive){
+        this.isActive = isActive;
+    }
+
 }
+

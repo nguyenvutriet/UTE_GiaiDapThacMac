@@ -145,11 +145,38 @@ public class AdminForumController {
         return "admin/admin-forum";
     }
 
+//    @GetMapping("/{id}")
+//    public String showPostDetail(@PathVariable String id,
+//                                 Model model,
+//                                 @AuthenticationPrincipal UserDetails userDetails) {
+//        // 1. Lấy user hiện tại để check reaction
+//        String currentUserId = null;
+//        if (userDetails != null) {
+//            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+//            if (currentUser != null) {
+//                currentUserId = currentUser.getId();
+//                model.addAttribute("user", currentUser);
+//            }
+//        }
+//
+//        // 2. Gọi hàm convertToFullDTO thần thánh của bà
+//        ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
+//
+//        if (post == null) {
+//            return "redirect:/forum/staff"; // Không thấy bài thì cho về vườn
+//        }
+//
+//        // 3. Đẩy dữ liệu ra trang chi tiết
+//        model.addAttribute("post", post);
+//
+//        return "admin/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+//    }
+
     @GetMapping("/{id}")
     public String showPostDetail(@PathVariable String id,
+                                 @RequestParam(value = "commentId", required = false) String commentId,
                                  Model model,
                                  @AuthenticationPrincipal UserDetails userDetails) {
-        // 1. Lấy user hiện tại để check reaction
         String currentUserId = null;
         if (userDetails != null) {
             Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
@@ -159,17 +186,16 @@ public class AdminForumController {
             }
         }
 
-        // 2. Gọi hàm convertToFullDTO thần thánh của bà
         ForumPostDTO post = requestService.getPostDetail(id, currentUserId);
 
         if (post == null) {
-            return "redirect:/forum/staff"; // Không thấy bài thì cho về vườn
+            return "redirect:/admin/forum";
         }
 
-        // 3. Đẩy dữ liệu ra trang chi tiết
         model.addAttribute("post", post);
+        model.addAttribute("deepLinkCommentId", commentId);
 
-        return "admin/postDetail"; // Đường dẫn tới file HTML chi tiết của bà
+        return "admin/postDetail";
     }
 
     @GetMapping("/search-list")

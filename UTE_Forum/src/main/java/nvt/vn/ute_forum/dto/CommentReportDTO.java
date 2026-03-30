@@ -42,7 +42,8 @@ public class CommentReportDTO {
         this.commentActive = commentActive;
 
         // Link xem bình luận
-        this.source = "/admin/forum?requestId=" + requestId + "&commentId=" + commentId;    }
+        this.source = "/admin/forum/" + requestId + "?commentId=" + commentId;
+    }
 
     // getter & setter
 

@@ -487,8 +487,18 @@
                 </span>
             ` : ''}
             ${!cmt.canDelete ? `
-                <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#777; font-size:10px; font-weight:600;">
-                    <i class="fas fa-flag"></i> Báo cáo
+                <span
+                    class="report-btn ${cmt.reportedByCurrentUser ? 'reported' : ''}"
+                    data-comment-id="${cmt.id}"
+                    onclick="${cmt.reportedByCurrentUser ? '' : `reportComment('${cmt.id}')`}"
+                    style="
+                        cursor:${cmt.reportedByCurrentUser ? 'default' : 'pointer'};
+                        color:${cmt.reportedByCurrentUser ? '#d32f2f' : '#777'};
+                        font-size:10px;
+                        font-weight:600;
+                        opacity:${cmt.reportedByCurrentUser ? '1' : '1'};
+                    ">
+                    <i class="fas fa-flag"></i> ${cmt.reportedByCurrentUser ? 'Đã báo cáo' : 'Báo cáo'}
                 </span>
             ` : ''}
          </div>
@@ -1035,7 +1045,10 @@
         let reason = selected.value;
         if (reason === 'Khác') {
             const extra = document.getElementById('extra-reason-text').value.trim();
-            if (!extra) { alert('Vui lòng mô tả lý do!'); return; }
+            if (!extra) {
+                alert('Vui lòng mô tả lý do!');
+                return;
+            }
             reason = extra;
         }
 
@@ -1045,51 +1058,52 @@
             body: JSON.stringify({ commentId: commentId, reason: reason })
         })
             .then(async res => {
-                document.getElementById('report-modal-overlay').remove();
+                const overlay = document.getElementById('report-modal-overlay');
+                if (overlay) overlay.remove();
+
+                let data = null;
+                try {
+                    data = await res.json();
+                } catch (e) {}
+
                 if (res.ok) {
                     markAsReported(commentId);
-                    alert('Đã gửi báo cáo thành công. Cảm ơn bạn!');
-                } else {
-                    let errorMsg = `Lỗi ${res.status}`;
-                    try {
-                        const body = await res.json();
-                        errorMsg = body.message || body.error || errorMsg;
-                    } catch {
-                        try {
-                            const text = await res.text();
-                            if (text) errorMsg = text;
-                        } catch {}
-                    }
-                    alert('Báo cáo thất bại: ' + errorMsg);
+                    alert(data?.message || 'Đã gửi báo cáo thành công. Cảm ơn bạn!');
+                    return;
                 }
+
+                if (res.status === 409) {
+                    markAsReported(commentId);
+                    alert(data?.message || 'Bạn đã báo cáo bình luận này rồi.');
+                    return;
+                }
+
+                alert(data?.message || `Báo cáo thất bại (HTTP ${res.status})`);
             })
-            .catch(err => alert('Lỗi kết nối: ' + err.message));
+            .catch(err => {
+                alert('Lỗi kết nối: ' + err.message);
+            });
     }
 
     function markAsReported(commentId) {
-        // Lưu vào localStorage để giữ trạng thái qua reload
-        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
-        if (!reported.includes(String(commentId))) {
-            reported.push(String(commentId));
-            localStorage.setItem('reportedComments', JSON.stringify(reported));
-        }
         applyReportedStyle(commentId);
     }
 
     function applyReportedStyle(commentId) {
         document.querySelectorAll(`.report-btn[data-comment-id="${commentId}"]`).forEach(el => {
+            el.classList.add('reported');
             el.style.color = '#d32f2f';
-            el.style.opacity = '0.7';
+            el.style.opacity = '1';
             el.style.cursor = 'default';
             el.title = 'Đã báo cáo';
             el.onclick = null;
+            el.innerHTML = '<i class="fas fa-flag"></i> Đã báo cáo';
         });
     }
 
     // Gọi sau mỗi lần render comment để khôi phục trạng thái đã báo cáo
     function restoreReportedState() {
-        const reported = JSON.parse(localStorage.getItem('reportedComments') || '[]');
-        reported.forEach(commentId => applyReportedStyle(commentId));
+        // Không cần nữa nếu backend đã trả reportedByCurrentUser
     }
 
     function formatDirectDate(dateParam) {

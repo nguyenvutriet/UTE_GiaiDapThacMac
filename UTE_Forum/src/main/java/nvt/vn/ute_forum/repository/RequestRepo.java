@@ -187,4 +187,28 @@ public interface RequestRepo extends JpaRepository<Request, String> {
     List<Request> findResolvedRequestsForEfficiency(@Param("deptId") String deptId,
                                                     @Param("startDate") LocalDateTime startDate,
                                                     @Param("endDate") LocalDateTime endDate);
+
+
+
+    @Query("""
+    SELECT DISTINCT r FROM Request r
+    LEFT JOIN r.categories c
+    WHERE (:departmentId IS NULL OR r.department.id = :departmentId)
+    AND (:categoryId IS NULL OR c.id = :categoryId)
+    AND (:status IS NULL OR r.currentStatus = :status)
+""")
+    Page<Request> adminFilterAll(
+            @Param("departmentId") String departmentId,
+            @Param("categoryId") String categoryId,
+            @Param("status") String status,
+            Pageable pageable
+    );
+
+    @Query("SELECT r FROM Request r WHERE LOWER(r.subject) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Request> findAllByContentContaining(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+
 }

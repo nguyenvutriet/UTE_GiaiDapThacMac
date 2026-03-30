@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý góp ý</title>
+
+    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #4f6ef7;
+            --text-main: #1e2235;
+            --text-sub: #6b7280;
+            --bg-page: #f0f4ff;
+            --bg-card: #ffffff;
+            --border: #e5e9f5;
+            --shadow: 0 4px 24px rgba(79,110,247,0.08);
+            --radius: 14px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* ===== MAIN CONTENT: canh theo sidebar forum ===== */
+        .main-content {
+            flex: 1;
+            padding: 0 24px 32px;
+            min-height: 100vh;
+            margin-left: 0;
+        }
+
+        /* ===== HEADER phụ thêm cho page này ===== */
+        .main-header {
+            margin-bottom: 28px;
+        }
+
+        .main-header-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .page-tab-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .page-total-badge {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            background: linear-gradient(90deg, #4f6ef7, #a78bfa);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 999px;
+        }
+
+        /* ========== TABLE CARD ========== */
+        .table-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        /* ========== TOOLBAR ========== */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-page);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 9px 16px;
+            min-width: 280px;
+            transition: border 0.18s;
+        }
+
+        .search-wrapper:focus-within {
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .search-wrapper i { color: var(--text-sub); font-size: 14px; }
+
+        .search-wrapper input {
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 13.5px;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        .search-wrapper input::placeholder { color: #b0b7c9; }
+
+        /* FILTERS */
+        .filters-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-dropdown {
+            position: relative;
+        }
+
+        .filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: var(--bg-page);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-btn:hover, .filter-btn.active-filter {
+            border-color: var(--primary);
+            background: #eef2ff;
+            color: var(--primary);
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            min-width: 210px;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show { display: block; }
+
+        .dropdown-search {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dropdown-search input {
+            border: none;
+            outline: none;
+            font-size: 13px;
+            width: 100%;
+            color: var(--text-main);
+        }
+
+        .dropdown-search .search-icon { color: var(--text-sub); font-size: 12px; }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        .dropdown-item:hover { background: #f0f4ff; color: var(--primary); }
+
+        .dropdown-item.selected {
+            background: #eef2ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ========== TABLE ========== */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        .admin-table thead tr {
+            background: #f8f9ff;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .admin-table th {
+            padding: 14px 18px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .admin-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .admin-table tbody tr:last-child td { border-bottom: none; }
+
+        .admin-table tbody tr {
+            transition: background 0.12s;
+        }
+
+        .admin-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        /* TITLE CELL */
+        .title-link {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13.5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-width: 280px;
+            line-height: 1.45;
+            transition: color 0.15s;
+        }
+
+        .title-link:hover { color: var(--primary); }
+
+        /* SORT LINK */
+        .sort-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            transition: color 0.15s;
+        }
+
+        .sort-link:hover { color: var(--primary); }
+
+        /* DEPARTMENT TAG */
+        .dept-tag {
+            display: inline-block;
+            background: #f0f4ff;
+            color: var(--primary);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* CATEGORY TAG */
+        .cat-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-width: 200px;
+        }
+
+        .cat-tag {
+            display: inline-block;
+            background: #f3f4f6;
+            color: var(--text-sub);
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 11.5px;
+        }
+
+        /* SENDER CELL */
+        .sender-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sender-avatar {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f6ef7, #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .sender-avatar.anon {
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+        }
+
+        .sender-name {
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .sender-anon {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-style: italic;
+        }
+
+        /* STATUS TAGS */
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-tag.pending   { background: #fff7ed; color: #d97706; }
+        .status-tag.processing { background: #eff6ff; color: #2563eb; }
+        .status-tag.success   { background: #f0fdf4; color: #16a34a; }
+        .status-tag.forwarding { background: #faf5ff; color: #7c3aed; }
+        .status-tag.rejected  { background: #fff1f2; color: #e11d48; }
+
+        /* DATE CELL */
+        .date-cell {
+            color: var(--text-sub);
+            font-size: 12.5px;
+            white-space: nowrap;
+        }
+
+        /* ANONYMOUS NOTE */
+        .anon-note {
+            background: linear-gradient(90deg, #f0f4ff, #faf5ff);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 10px 16px;
+            margin: 0 24px 16px;
+            font-size: 12.5px;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ========== PAGINATION ========== */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .p-btn {
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-page);
+            border: 1.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .p-btn:hover:not(.disabled) {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .p-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .page-info {
+            font-size: 13.5px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-sub);
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            color: #c7d0e8;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px 16px 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page-layout">
+    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+
+    <!-- ===== SIDEBAR lấy từ forum ===== -->
+    <aside class="sidebar">
+        <div class="brand-block">
+            <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
+            <div class="student-info">
+                <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
+                <div>
+                    <p class="student-name" th:text="${currentUser.fullName}">Tên Admin</p>
+                    <p class="student-id">Mã quản trị</p>
+                    <p class="student-role">Quản trị viên hệ thống</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item active" th:href="@{/admin/list-feedbacks}">
+                <span class="nav-icon">&#9998;</span><span>Góp ý tiếp nhận</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/reports}">
+                <span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/category}">
+                <span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/forum/view}">
+                <span class="nav-icon">&#128172;</span><span>Diễn đàn</span>
+            </a>
+            <a class="nav-item" th:href="@{/admin/notifications}">
+                <span class="nav-icon">&#128276;</span><span>Thông báo</span>
+            </a>
+            <a class="nav-item" th:href="@{/change-password}">
+                <span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span>
+            </a>
+        </nav>
+
+        <a class="logout-btn" th:href="@{/logout}">Đăng xuất</a>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main-content">
+
+        <!-- HEADER lấy từ forum -->
+        <header class="main-header">
+            <div class="main-header-top">
+                <p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p>
+            </div>
+
+            <div class="main-header-bottom">
+                <div class="page-tab-wrap">
+                    <h1 class="page-tab">QUẢN LÝ GÓP Ý</h1>
+                </div>
+            </div>
+        </header>
+
+        <div class="table-card">
+
+            <!-- TOOLBAR -->
+            <div class="toolbar">
+                <!-- Search -->
+                <form th:action="@{/admin/search-feedbacks}" method="get">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="keyword"
+                               th:value="${keyword}"
+                               placeholder="Tìm kiếm theo tiêu đề..."
+                               onkeydown="if(event.key==='Enter'){this.form.submit();}">
+                    </div>
+                </form>
+
+                <!-- Filters -->
+                <div class="filters-group">
+
+                    <!-- DEPARTMENT FILTER -->
+                    <div class="filter-dropdown">
+                        <button type="button" class="filter-btn"
+                                th:classappend="${selectedDepartment != null} ? ' active-filter'"
+                                id="deptBtn" onclick="toggleDeptDropdown()">
+                            <i class="fas fa-building"></i>
+                            <span th:text="${selectedDepartmentName != null ? selectedDepartmentName : 'Phòng ban'}">Phòng ban</span>
+                        </button>
+
+                        <div class="dropdown-menu" id="deptDropdown">
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="deptSearch"
+                                       placeholder="Tìm phòng ban..."
+                                       onkeyup="filterDeptList(event)">
+                            </div>
+
+                            <div class="dropdown-item dept-item"
+                                 data-id="ALL" data-name="Phòng ban"
+                                 th:classappend="${selectedDepartment == null} ? ' selected'"
+                                 onclick="filterDept(this)">
+                                Tất cả phòng ban
+                            </div>
+
+                            <div th:each="dept : ${departments}"
+                                 class="dropdown-item dept-item"
+                                 th:text="${dept.name}"
+                                 th:attr="data-name=${dept.name}, data-id=${dept.id}"
+                                 th:classappend="${dept.id == selectedDepartment} ? ' selected'"
+                                 onclick="filterDept(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STATUS FILTER -->
+                    <div class="filter-dropdown">
+                        <button type="button" class="filter-btn"
+                                th:classappend="${selectedStatus != null} ? ' active-filter'"
+                                id="statusBtn" onclick="toggleStatusDropdown()">
+                            <i class="fas fa-filter"></i>
+                            <span th:text="${selectedStatusName != null ? selectedStatusName : 'Trạng thái'}">Trạng thái</span>
+                        </button>
+
+                        <div class="dropdown-menu" id="statusDropdown">
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="statusSearch"
+                                       placeholder="Tìm trạng thái..."
+                                       onkeyup="filterStatusList(event)">
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="ALL" data-name="Trạng thái"
+                                 th:classappend="${selectedStatus == null} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Tất cả trạng thái
+                            </div>
+
+                            <div class="dropdown-item status-item"
+                                 data-id="PENDING" data-name="Đang chờ tiếp nhận"
+                                 th:classappend="${selectedStatus == 'PENDING'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đang chờ tiếp nhận
+                            </div>
+                            <div class="dropdown-item status-item"
+                                 data-id="APPROVED" data-name="Đang xử lý"
+                                 th:classappend="${selectedStatus == 'APPROVED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đang xử lý
+                            </div>
+                            <div class="dropdown-item status-item"
+                                 data-id="RESOLVED" data-name="Đã xử lý"
+                                 th:classappend="${selectedStatus == 'RESOLVED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Đã xử lý
+                            </div>
+                            <div class="dropdown-item status-item"
+                                 data-id="FORWARDING" data-name="Chuyển tiếp"
+                                 th:classappend="${selectedStatus == 'FORWARDING'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Chuyển tiếp
+                            </div>
+                            <div class="dropdown-item status-item"
+                                 data-id="REJECTED" data-name="Từ chối"
+                                 th:classappend="${selectedStatus == 'REJECTED'} ? ' selected'"
+                                 onclick="filterStatus(this)">
+                                Từ chối
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CATEGORY FILTER -->
+                    <div class="filter-dropdown">
+                        <button type="button" class="filter-btn"
+                                th:classappend="${selectedCategory != null} ? ' active-filter'"
+                                id="categoryBtn" onclick="toggleCategoryDropdown()">
+                            <i class="fas fa-th-large"></i>
+                            <span th:text="${selectedCategoryName != null ? selectedCategoryName : 'Danh mục'}">Danh mục</span>
+                        </button>
+
+                        <div class="dropdown-menu" id="categoryDropdown">
+                            <div class="dropdown-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="categorySearch"
+                                       placeholder="Tìm danh mục..."
+                                       onkeyup="filterCategoryList(event)">
+                            </div>
+
+                            <div class="dropdown-item category-item"
+                                 data-id="ALL" data-name="Danh mục"
+                                 th:classappend="${selectedCategory == null} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                                Tất cả danh mục
+                            </div>
+
+                            <div th:each="c : ${categories}"
+                                 class="dropdown-item category-item"
+                                 th:text="${c.subject}"
+                                 th:attr="data-name=${c.subject}, data-id=${c.id}"
+                                 th:classappend="${c.id == selectedCategory} ? ' selected'"
+                                 onclick="filterCategory(this)">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- NOTE -->
+            <div class="anon-note">
+                <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                Với quyền Admin, bạn có thể xem thông tin người gửi kể cả khi họ chọn ẩn danh.
+            </div>
+
+            <!-- TABLE -->
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-align-left"></i> TIÊU ĐỀ</th>
+                        <th><i class="fas fa-building"></i> PHÒNG BAN</th>
+                        <th><i class="fas fa-layer-group"></i> DANH MỤC</th>
+                        <th>
+                            <a th:href="@{/admin/list-feedbacks(page=${currentPage}, sortField='currentStatus', sortDir=${sortDir == 'ASC' ? 'DESC' : 'ASC'})}"
+                               class="sort-link">
+                                <i class="fas fa-spinner"></i> TRẠNG THÁI
+                                <i th:if="${sortField == 'currentStatus' and sortDir == 'ASC'}" class="fas fa-arrow-up"></i>
+                                <i th:if="${sortField == 'currentStatus' and sortDir == 'DESC'}" class="fas fa-arrow-down"></i>
+                            </a>
+                        </th>
+                        <th><i class="fas fa-user"></i> NGƯỜI GỬI</th>
+                        <th>
+                            <a th:href="@{/admin/list-feedbacks(page=${currentPage}, sortField='timeCreate', sortDir=${sortDir == 'ASC' ? 'DESC' : 'ASC'})}"
+                               class="sort-link">
+                                <i class="fas fa-clock"></i> NGÀY GỬI
+                                <i th:if="${sortField == 'timeCreate' and sortDir == 'ASC'}" class="fas fa-arrow-up"></i>
+                                <i th:if="${sortField == 'timeCreate' and sortDir == 'DESC'}" class="fas fa-arrow-down"></i>
+                            </a>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    <tr th:if="${#lists.isEmpty(feedbacks)}">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Không có góp ý nào.</p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:each="fb : ${feedbacks}">
+
+                        <!-- TIÊU ĐỀ -->
+                        <td class="title-cell">
+                            <a th:href="@{/admin/feedback-detail(id=${fb.id})}"
+                               class="title-link"
+                               th:text="${fb.subject}">
+                            </a>
+                        </td>
+
+                        <!-- PHÒNG BAN -->
+                        <td>
+                            <span class="dept-tag"
+                                  th:text="${fb.department != null ? fb.department.name : 'N/A'}">
+                            </span>
+                        </td>
+
+                        <!-- DANH MỤC -->
+                        <td>
+                            <div class="cat-list">
+                                <span th:each="cat : ${fb.categories}"
+                                      class="cat-tag"
+                                      th:text="${cat.subject}">
+                                </span>
+                                <span th:if="${fb.categories == null or #lists.isEmpty(fb.categories)}"
+                                      style="color: #b0b7c9; font-size: 12px; font-style: italic;">
+                                    —
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- TRẠNG THÁI -->
+                        <td>
+                            <span class="status-tag"
+                                  th:classappend="
+                                    ${fb.currentStatus == 'PENDING'} ? ' pending' :
+                                    (${fb.currentStatus == 'APPROVED'} ? ' processing' :
+                                    (${fb.currentStatus == 'RESOLVED'} ? ' success' :
+                                    (${fb.currentStatus == 'FORWARDING'} ? ' forwarding' :
+                                    (${fb.currentStatus == 'REJECTED'} ? ' rejected' : ''))))
+                                  ">
+                                <i th:if="${fb.currentStatus == 'PENDING'}" class="fas fa-exclamation-circle"></i>
+                                <i th:if="${fb.currentStatus == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
+                                <i th:if="${fb.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                                <i th:if="${fb.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
+                                <i th:if="${fb.currentStatus == 'REJECTED'}" class="fas fa-ban"></i>
+                                <span th:text="
+                                    ${fb.currentStatus == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                                    (${fb.currentStatus == 'APPROVED'} ? 'Đang xử lý' :
+                                    (${fb.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
+                                    (${fb.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                                    (${fb.currentStatus == 'REJECTED'} ? 'Từ chối' : ''))))
+                                "></span>
+                            </span>
+                        </td>
+
+                        <!-- NGƯỜI GỬI -->
+                        <td>
+                            <div class="sender-cell">
+                                <div th:if="${fb.user != null}"
+                                     class="sender-avatar"
+                                     th:text="${#strings.substring(fb.user.fullName, 0, 1)}">
+                                </div>
+
+                                <div th:if="${fb.user == null}"
+                                     class="sender-avatar anon">
+                                    <i class="fas fa-user-secret" style="font-size:11px;"></i>
+                                </div>
+
+                                <div>
+                                    <div class="sender-name"
+                                         th:text="${fb.user != null ? fb.user.fullName : 'Người dùng đã xóa'}">
+                                    </div>
+
+                                    <div th:if="${fb.user != null}"
+                                         style="font-size:11.5px; color:#9ca3af; margin-top:1px;"
+                                         th:text="${fb.user.email}">
+                                    </div>
+
+                                    <div th:if="${fb.user == null}" class="sender-anon">
+                                        Ẩn danh / đã xóa tài khoản
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- NGÀY GỬI -->
+                        <td class="date-cell"
+                            th:text="${#temporals.format(fb.timeCreate, 'HH:mm dd/MM/yyyy')}">
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="pagination">
+                <a th:href="${currentPage == 0} ? '#' : @{/admin/list-feedbacks(page=${currentPage - 1}, sortField=${sortField}, sortDir=${sortDir})}"
+                   th:classappend="${currentPage == 0} ? ' disabled'"
+                   class="p-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+
+                <span class="page-info">
+                    Trang <span th:text="${currentPage + 1}"></span> /
+                    <span th:text="${totalPages}"></span>
+                </span>
+
+                <a th:href="${currentPage + 1 >= totalPages} ? '#' : @{/admin/list-feedbacks(page=${currentPage + 1}, sortField=${sortField}, sortDir=${sortDir})}"
+                   th:classappend="${currentPage + 1 >= totalPages} ? ' disabled'"
+                   class="p-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    function removeVietnameseTones(str) {
+        return str
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d").replace(/Đ/g, "D")
+            .toLowerCase();
+    }
+
+    function buildFilterUrl(overrides = {}) {
+        const current = new URL(window.location.href);
+        const url = new URL(window.location.origin + "/admin/filter-feedbacks");
+
+        const dept = current.searchParams.get("departmentId");
+        const status = current.searchParams.get("status");
+        const cat = current.searchParams.get("categoryId");
+
+        if (dept) url.searchParams.set("departmentId", dept);
+        if (status) url.searchParams.set("status", status);
+        if (cat) url.searchParams.set("categoryId", cat);
+
+        for (const [k, v] of Object.entries(overrides)) {
+            if (!v || v === "ALL") url.searchParams.delete(k);
+            else url.searchParams.set(k, v);
+        }
+        return url.toString();
+    }
+
+    function toggleDeptDropdown() {
+        const d = document.getElementById("deptDropdown");
+        d.classList.toggle("show");
+        if (d.classList.contains("show")) {
+            document.getElementById("deptSearch").value = "";
+            filterDeptList();
+        }
+    }
+
+    function filterDept(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name");
+        document.getElementById("deptBtn").innerHTML = '<i class="fas fa-building"></i> ' + name;
+        window.location.href = buildFilterUrl({ departmentId: id });
+    }
+
+    function filterDeptList(event) {
+        const kw = document.getElementById("deptSearch").value;
+        document.querySelectorAll(".dept-item").forEach(item => {
+            const text = item.getAttribute("data-name") || "";
+            item.style.display =
+                removeVietnameseTones(text).includes(removeVietnameseTones(kw))
+                    ? "block" : "none";
+        });
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+            const first = document.querySelector("#deptDropdown .dept-item:not([style*='display: none']):not([data-id='ALL'])");
+            if (first) window.location.href = buildFilterUrl({ departmentId: first.getAttribute("data-id") });
+        }
+    }
+
+    function toggleStatusDropdown() {
+        const d = document.getElementById("statusDropdown");
+        d.classList.toggle("show");
+        if (d.classList.contains("show")) {
+            document.getElementById("statusSearch").value = "";
+            filterStatusList();
+        }
+    }
+
+    function filterStatus(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name");
+        document.getElementById("statusBtn").innerHTML = '<i class="fas fa-filter"></i> ' + name;
+        window.location.href = buildFilterUrl({ status: id });
+    }
+
+    function filterStatusList(event) {
+        const kw = document.getElementById("statusSearch").value;
+        document.querySelectorAll(".status-item").forEach(item => {
+            const text = item.getAttribute("data-name") || "";
+            item.style.display =
+                removeVietnameseTones(text).includes(removeVietnameseTones(kw))
+                    ? "block" : "none";
+        });
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+            const first = document.querySelector("#statusDropdown .status-item:not([style*='display: none']):not([data-id='ALL'])");
+            if (first) window.location.href = buildFilterUrl({ status: first.getAttribute("data-id") });
+        }
+    }
+
+    function toggleCategoryDropdown() {
+        const d = document.getElementById("categoryDropdown");
+        d.classList.toggle("show");
+        if (d.classList.contains("show")) {
+            document.getElementById("categorySearch").value = "";
+            filterCategoryList();
+        }
+    }
+
+    function filterCategory(el) {
+        const id = el.getAttribute("data-id");
+        const name = el.getAttribute("data-name");
+        document.getElementById("categoryBtn").innerHTML = '<i class="fas fa-th-large"></i> ' + name;
+        window.location.href = buildFilterUrl({ categoryId: id });
+    }
+
+    function filterCategoryList(event) {
+        const kw = document.getElementById("categorySearch").value;
+        document.querySelectorAll(".category-item").forEach(item => {
+            const text = item.getAttribute("data-name") || "";
+            item.style.display =
+                removeVietnameseTones(text).includes(removeVietnameseTones(kw))
+                    ? "block" : "none";
+        });
+        if (event && event.key === "Enter") {
+            event.preventDefault();
+            const first = document.querySelector("#categoryDropdown .category-item:not([style*='display: none']):not([data-id='ALL'])");
+            if (first) window.location.href = buildFilterUrl({ categoryId: first.getAttribute("data-id") });
+        }
+    }
+
+    document.addEventListener("click", function(e) {
+        const pairs = [
+            ["deptDropdown", "deptBtn"],
+            ["statusDropdown", "statusBtn"],
+            ["categoryDropdown", "categoryBtn"],
+        ];
+        pairs.forEach(([dropId, btnId]) => {
+            const drop = document.getElementById(dropId);
+            const btn  = document.getElementById(btnId);
+            if (!drop.contains(e.target) && !btn.contains(e.target)) {
+                drop.classList.remove("show");
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

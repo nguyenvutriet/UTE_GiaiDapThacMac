@@ -524,6 +524,51 @@ public class RequestService {
 
         return List.of();
     }
+
+
+
+    @Transactional
+    public Request getAdminFeedbackDetail(String id) {
+        Request request = requestRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy góp ý: " + id));
+
+        request.getUser().getFullName();
+        request.getCategories().size();
+        request.getComments().size();
+        request.getFileAttachments().size();
+        request.getForwardingLogs().size();
+
+        return request;
+    }
+
+    /**
+     * Tìm kiếm tất cả feedback - admin không lọc phòng ban
+     */
+    public Page<Request> searchAllFeedbacks(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.isBlank()) {
+            return requestRepo.findAll(pageable);
+        }
+        return requestRepo.findAllByContentContaining(keyword.trim(), pageable);
+    }
+
+    /**
+     * Lọc feedback theo departmentId + categoryId + status - dành cho admin
+     * Không giới hạn phòng ban, lấy tất cả request kể cả ẩn danh
+     */
+    public Page<Request> getAdminFeedbacks(
+            String departmentId,
+            String categoryId,
+            String status,
+            Pageable pageable) {
+
+        // Nếu không có filter nào -> lấy tất cả
+        if (departmentId == null && categoryId == null && status == null) {
+            return requestRepo.findAll(pageable);
+        }
+
+        // Có ít nhất 1 filter -> dùng query tổng hợp
+        return requestRepo.adminFilterAll(departmentId, categoryId, status, pageable);
+    }
 }
 
 
