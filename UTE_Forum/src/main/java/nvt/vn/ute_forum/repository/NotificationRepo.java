@@ -20,6 +20,10 @@ public interface NotificationRepo extends JpaRepository<Notification, String> {
 	boolean existsByIdAndUsers_Id(String notificationId, String userId);
 
 	@Modifying
+	@Query("UPDATE Notification n SET n.isRead = true WHERE n.id = :notificationId AND EXISTS (SELECT u FROM n.users u WHERE u.id = :userId)")
+	int markAsReadForUser(@Param("notificationId") String notificationId, @Param("userId") String userId);
+
+	@Modifying
 	@Query(value = "DELETE FROM userreceivenotification WHERE notificationid = :notificationId AND userid = :userId", nativeQuery = true)
 	int unlinkNotificationFromUser(@Param("notificationId") String notificationId, @Param("userId") String userId);
 

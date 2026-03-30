@@ -19,4 +19,14 @@ public interface CommentRepo extends JpaRepository<Comment, String> {
 
     @Query("SELECT c FROM Comment c WHERE c.request.id = :requestId AND (c.isActive = true OR c.isActive IS NULL)")
     List<Comment> findActiveByRequestId(@Param("requestId") String requestId);
+
+    @Query("""
+            SELECT c.id, c.request.id, c.user.id, c.user.fullName, c.date
+            FROM Comment c
+            WHERE c.request.user.id = :ownerUserId
+              AND c.user.id <> :ownerUserId
+              AND (c.isActive = true OR c.isActive IS NULL)
+            ORDER BY c.date DESC
+            """)
+    List<Object[]> findCommentNotificationDataByOwnerId(@Param("ownerUserId") String ownerUserId);
 }
