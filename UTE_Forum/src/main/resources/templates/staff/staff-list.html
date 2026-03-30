@@ -53,18 +53,21 @@
 
             <div class="toolbar">
                 <form th:action="@{/staff/search-feedbacks}" method="get">
+
                     <div class="search-wrapper">
                         <i class="fas fa-search"></i>
                         <input type="text" name="keyword"
                                placeholder="Tìm kiếm theo tiêu đề..."
                                onkeydown="if(event.key==='Enter'){this.form.submit();}">
                     </div>
+
+                    <!-- 🔥 GIỮ FILTER -->
                 </form>
 
                 <div>
                     <div class="filter-dropdown">
 
-                        <button class="filter-btn" id="statusBtn" onclick="toggleStatusDropdown()">
+                        <button class="filter-btn" id="statusBtn" onclick="toggleStatusDropdown(event)">
                             <i class="fas fa-filter"></i>
                             <span th:text="${selectedStatusName != null ? selectedStatusName : 'Trạng thái'}"></span>
                         </button>
@@ -135,7 +138,7 @@
 
                     <div class="filter-dropdown">
 
-                        <button class="filter-btn" id="categoryBtn" onclick="toggleDropdown()">
+                        <button class="filter-btn" id="categoryBtn" onclick="toggleDropdown(event)">
                             <i class="fas fa-th-large"></i>
                             <span th:text="${selectedCategoryName != null ? selectedCategoryName : 'Danh mục'}"></span>
                         </button>
@@ -197,10 +200,38 @@
                             </a>
                         </th>
                         <th><i class="fas fa-user"></i> NGƯỜI GỬI</th>
-                        <th><i class="fas fa-clock"></i> NGÀY GỬI</th>
+                        <th>
+                            <a th:href="@{/staff/list-feedbacks(
+                                page=${currentPage},
+                                sortField='timeCreate',
+                                sortDir=${sortDir == 'ASC' ? 'DESC' : 'ASC'}
+                            )}"
+                               class="sort-link">
+
+                                <i class="fas fa-clock"></i>
+                                NGÀY GỬI
+                                <!-- 🔥 ICON ĐỘNG -->
+                                <i th:if="${sortField == 'timeCreate' and sortDir == 'ASC'}"
+                                   class="fas fa-arrow-up"></i>
+
+                                <i th:if="${sortField == 'timeCreate' and sortDir == 'DESC'}"
+                                   class="fas fa-arrow-down"></i>
+
+                            </a>
+                        </th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="loadingRow">
+                    <tr>
+                        <td colspan="5">
+                            <div class="loading-box">
+                                <div class="spinner"></div>
+                                <p>Đang tải dữ liệu...</p>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tbody id="tableBody" style="display: none;">
                     <tr th:each="fb : ${feedbacks}">
 
                         <!-- TIÊU ĐỀ -->
@@ -243,7 +274,7 @@
                         </td>
 
                         <!-- NGƯỜI GỬI -->
-                        <td th:text="${fb.user != null ? fb.user.fullName : 'Ẩn danh'}"></td>
+                        <td th:text="${fb.postStatus == 'PRIVATE' ? 'Ẩn danh' : (fb.user != null ? fb.user.fullName : 'Ẩn danh')}"></td>
 
                         <!-- NGÀY GỬI -->
                         <td th:text="${#temporals.format(fb.timeCreate, 'HH:mm:ss dd/MM/yyyy')}"></td>
@@ -280,9 +311,14 @@
 
 </div>
 <script>
-    function toggleDropdown() {
+    function toggleDropdown(event) {
+        event.stopPropagation(); // 🔥 NGĂN BUBBLE
+
         const dropdown = document.getElementById("categoryDropdown");
+        const statusDropdown = document.getElementById("statusDropdown");
+
         dropdown.classList.toggle("show");
+        statusDropdown.classList.remove("show"); // 🔥 đóng cái kia
 
         if (dropdown.classList.contains("show")) {
             document.getElementById("categorySearch").value = "";
@@ -317,12 +353,21 @@
 </script>
 <script>
     document.addEventListener("click", function(e) {
-        const dropdown = document.getElementById("categoryDropdown");
-        const button = document.getElementById("categoryBtn");
 
-        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-            dropdown.classList.remove("show");
+        const categoryDropdown = document.getElementById("categoryDropdown");
+        const categoryBtn = document.getElementById("categoryBtn");
+
+        const statusDropdown = document.getElementById("statusDropdown");
+        const statusBtn = document.getElementById("statusBtn");
+
+        if (!categoryDropdown.contains(e.target) && !categoryBtn.contains(e.target)) {
+            categoryDropdown.classList.remove("show");
         }
+
+        if (!statusDropdown.contains(e.target) && !statusBtn.contains(e.target)) {
+            statusDropdown.classList.remove("show");
+        }
+
     });
 </script>
 <script>
@@ -385,9 +430,14 @@
             .replace(/Đ/g, "D")
             .toLowerCase();
     }
-    function toggleStatusDropdown() {
+    function toggleStatusDropdown(event) {
+        event.stopPropagation(); // 🔥 NGĂN BUBBLE
+
         const dropdown = document.getElementById("statusDropdown");
+        const categoryDropdown = document.getElementById("categoryDropdown");
+
         dropdown.classList.toggle("show");
+        categoryDropdown.classList.remove("show"); // 🔥 đóng cái kia
 
         if (dropdown.classList.contains("show")) {
             document.getElementById("statusSearch").value = "";
@@ -465,6 +515,17 @@
         }
     }
 </script>
+<script>
+    window.addEventListener("load", function () {
 
+        const loading = document.getElementById("loadingRow");
+        const table = document.getElementById("tableBody");
+
+        setTimeout(() => {
+            loading.style.display = "none";  // ẩn loading
+            table.style.display = "";        // hiện data
+        }, 500); // delay nhẹ cho mượt
+    });
+</script>
 </body>
 </html>

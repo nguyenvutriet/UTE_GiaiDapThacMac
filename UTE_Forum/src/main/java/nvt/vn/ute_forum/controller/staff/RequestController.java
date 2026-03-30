@@ -5,11 +5,13 @@ import nvt.vn.ute_forum.model.Category;
 import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.repository.CategoryRepo;
+import nvt.vn.ute_forum.repository.DepartmentRepo;
 import nvt.vn.ute_forum.service.CategoryService;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.UsersRepo;
+import nvt.vn.ute_forum.service.RequestStatusHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +24,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +41,9 @@ public class RequestController {
     private UsersRepo usersRepo;
 
     @Autowired
+    private DepartmentRepo departmentRepo;
+
+    @Autowired
     private CategoryRepo categoryRepo;
 
     @Autowired
@@ -44,6 +51,9 @@ public class RequestController {
 
     @Autowired
     private ClarificationConversationService clarificationConversationService;
+
+    @Autowired
+    private RequestStatusHistoryService requestStatusHistoryService;
 
     @GetMapping("/list-feedbacks")
     public String getAllFeedbacks(
@@ -99,13 +109,17 @@ public class RequestController {
         model.addAttribute("feedback", request);
         model.addAttribute("currentUser", user);
         model.addAttribute("forwardLogs", request.getForwardingLogs());
-
+        model.addAttribute("histories",
+                requestStatusHistoryService.getByRequestId(request.getId()));
+        model.addAttribute("departments", departmentRepo.findAll());
         return "staff/feedback-detail";
     }
 
     @GetMapping("/search-feedbacks")
     public String searchFeedbacks(
             @RequestParam("keyword") String keyword,
+            @RequestParam(required = false) String categoryId, // 🔥 thêm
+            @RequestParam(required = false) String status,     // 🔥 thêm
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "timeCreate") String sortField,
             @RequestParam(defaultValue = "DESC") String sortDir,
@@ -136,6 +150,12 @@ public class RequestController {
         model.addAttribute("totalPages", resultPage.getTotalPages());
         model.addAttribute("keyword", keyword);
         model.addAttribute("currentUser", user);
+
+        // 🔥 GIỮ STATE (THÊM 3 DÒNG NÀY LÀ ĐỦ)
+        model.addAttribute("selectedCategory", categoryId);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("categories",
+                categoryService.getCategoriesByDepartment(user));
 
         return "staff/staff-list";
     }
@@ -206,4 +226,31 @@ public class RequestController {
         return "staff/staff-list";
     }
 
+    @PostMapping("/update-status")
+    @ResponseBody
+    public ResponseEntity<?> updateStatus(
+            @RequestParam String requestId,
+            @RequestParam String status
+    ) {
+
+        requestService.updateStatus(requestId, status);
+
+        return ResponseEntity.ok("Updated");
+    }
+
+    @PostMapping("/forward")
+    @ResponseBody
+    public ResponseEntity<?> forward(
+            @RequestParam String requestId,
+            @RequestParam String toDeptId,
+            @RequestParam(required = false) String note,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+
+        Users user = usersRepo.findByEmail(userDetails.getUsername());
+
+        requestService.forwardRequest(requestId, toDeptId, note, user);
+
+        return ResponseEntity.ok("Forward success");
+    }
 }

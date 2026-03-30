@@ -69,173 +69,229 @@
     <main class="main-content">
 
         <!-- ====== HEADER ====== -->
-        <div class="table-card">
-            <h2 th:text="${feedback.subject}"></h2>
+        <div class="top-layout">
 
-            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+            <!-- LEFT -->
+            <div class="table-card">
+                <h2 th:text="${feedback.subject}"></h2>
 
-                <!-- STATUS -->
-                <span class="badge"
-                      th:classappend="
-                        ${feedback.currentStatus == 'PENDING'} ? ' pending' :
-                        (${feedback.currentStatus == 'FORWARDING'} ? ' forwarding' :
-                        (${feedback.currentStatus == 'APPROVED'} ? ' processing' :
-                        (${feedback.currentStatus == 'RESOLVED'} ? ' success' :
-                        (${feedback.currentStatus == 'REJECTED'} ? ' rejected' : ''))))
-                      ">
+                <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
 
-                    <!-- ICON -->
-                    <i th:if="${feedback.currentStatus == 'PENDING'}" class="fas fa-exclamation-circle"></i>
-                    <i th:if="${feedback.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
-                    <i th:if="${feedback.currentStatus == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
-                    <i th:if="${feedback.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
-                    <i th:if="${feedback.currentStatus == 'REJECTED'}" class="fas fa-times-circle"></i>
+                    <!-- STATUS -->
+                    <span class="badge"
+                          th:classappend="
+                            ${feedback.currentStatus == 'PENDING'} ? ' pending' :
+                            (${feedback.currentStatus == 'FORWARDING'} ? ' forwarding' :
+                            (${feedback.currentStatus == 'APPROVED'} ? ' processing' :
+                            (${feedback.currentStatus == 'RESOLVED'} ? ' success' :
+                            (${feedback.currentStatus == 'REJECTED'} ? ' rejected' : ''))))
+                          ">
 
-                    <!-- TEXT -->
-                    <span th:text="
-                        ${feedback.currentStatus == 'PENDING'} ? 'Đang chờ tiếp nhận' :
-                        (${feedback.currentStatus == 'APPROVED'} ? 'Đang xử lý' :
-                        (${feedback.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
-                        (${feedback.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
-                        (${feedback.currentStatus == 'REJECTED'} ? 'Từ chối' : 'Không xác định'))))
-                    "></span>
+                        <!-- ICON -->
+                        <i th:if="${feedback.currentStatus == 'PENDING'}" class="fas fa-exclamation-circle"></i>
+                        <i th:if="${feedback.currentStatus == 'FORWARDING'}" class="fas fa-share"></i>
+                        <i th:if="${feedback.currentStatus == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
+                        <i th:if="${feedback.currentStatus == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                        <i th:if="${feedback.currentStatus == 'REJECTED'}" class="fas fa-times-circle"></i>
 
-                </span>
+                        <!-- TEXT -->
+                        <span th:text="
+                            ${feedback.currentStatus == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                            (${feedback.currentStatus == 'APPROVED'} ? 'Đang xử lý' :
+                            (${feedback.currentStatus == 'RESOLVED'} ? 'Đã xử lý' :
+                            (${feedback.currentStatus == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                            (${feedback.currentStatus == 'REJECTED'} ? 'Từ chối' : 'Không xác định'))))
+                        "></span>
 
-                <!-- DATE -->
-                <span class="badge">
-                    <i class="fas fa-calendar"></i>
-                    <span th:text="${#temporals.format(feedback.timeCreate, 'dd/MM/yyyy')}"></span>
-                </span>
+                    </span>
 
-                <!-- USER -->
-                <span class="badge pink">
-                    <i class="fas fa-user"></i>
-                    <span th:text="${feedback.user.fullName}"></span>
-                </span>
+                    <!-- DATE -->
+                    <span class="badge">
+                        <i class="fas fa-calendar"></i>
+                        <span th:text="${#temporals.format(feedback.timeCreate, 'dd/MM/yyyy')}"></span>
+                    </span>
 
-                <!-- DEPARTMENT -->
-                <span class="badge blue">
-                    <i class="fas fa-building"></i>
-                    <span th:text="${feedback.department.name}"></span>
-                </span>
+                    <!-- USER -->
+                    <span class="badge pink">
+                        <i class="fas fa-user"></i>
+                        <span th:text="${feedback.postStatus == 'PRIVATE' ? 'Ẩn danh' : feedback.user.fullName}"></span>
+                    </span>
 
-                <!-- CATEGORY -->
-                <span class="badge orange" th:if="${feedback.categories != null}">
-                    <i class="fas fa-tag"></i>
-                    <span th:text="${#strings.listJoin(feedback.categories.![subject], ', ')}"></span>
-                </span>
+                    <!-- DEPARTMENT -->
+                    <span class="badge blue">
+                        <i class="fas fa-building"></i>
+                        <span th:text="${feedback.department.name}"></span>
+                    </span>
 
-                <!-- LOCATION (demo) -->
-                <span class="badge green">
-                    <i class="fas fa-map-marker-alt"></i>
-                    A101
-                </span>
+                    <!-- CATEGORY -->
+                    <span class="badge orange" th:if="${feedback.categories != null}">
+                        <i class="fas fa-tag"></i>
+                        <span th:text="${#strings.listJoin(feedback.categories.![subject], ', ')}"></span>
+                    </span>
 
+                    <!-- LOCATION (demo) -->
+                    <span class="badge green">
+                        <i class="fas fa-map-marker-alt"></i>
+                        A101
+                    </span>
+
+                </div>
+
+                <!-- CONTENT -->
+                <div style="margin-top:20px;">
+                    <h4>Nội dung:</h4>
+                    <p th:text="${feedback.description}"></p>
+                </div>
+            </div>
+            <!-- RIGHT: ACTION -->
+            <div class="action-card">
+                <h4>Hành động:</h4>
+
+                <div class="status-dd">
+
+                    <!-- SELECTED -->
+                    <div class="status-dd-selected" onclick="toggleDD()">
+                        <span id="ddText">Chọn trạng thái</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </div>
+
+                    <!-- LIST -->
+                    <div class="status-dd-list" id="ddList">
+
+                        <div data-value="APPROVED">
+                            <i class="fas fa-clock icon-blue"></i>
+                            <span>Đang xử lý</span>
+                            <i class="fas fa-check check"></i>
+                        </div>
+
+                        <div data-value="RESOLVED">
+                            <i class="fas fa-check icon-green"></i>
+                            <span>Đã giải quyết</span>
+                            <i class="fas fa-check check"></i>
+                        </div>
+
+                        <div data-value="REJECTED">
+                            <i class="fas fa-times icon-red"></i>
+                            <span>Từ chối</span>
+                            <i class="fas fa-check check"></i>
+                        </div>
+
+                    </div>
+                </div>
+
+                <textarea id="statusNote"
+                          placeholder="Ghi chú (Không bắt buộc)"
+                          class="form-textarea"></textarea>
+
+                <button class="btn-update" onclick="updateStatus()">
+                    <i class="fas fa-paper-plane"></i>
+                    Cập nhật trạng thái
+                </button>
+
+                <button class="btn-forward" onclick="openForwardModal()">
+                    <i class="fas fa-share"></i>
+                    Chuyển tiếp phản hồi
+                </button>
             </div>
 
-            <!-- CONTENT -->
-            <div style="margin-top:20px;">
-                <h4>Nội dung:</h4>
-                <p th:text="${feedback.description}"></p>
-            </div>
-        </div>
+        </div> <!-- 🔥 đóng top-layout -->
 
         <div class="detail-grid">
 
             <!-- LEFT: LỊCH SỬ -->
             <div class="table-card">
                 <h3><i class="fas fa-history"></i> Lịch sử trạng thái</h3>
+                <div class="timeline-wrapper">
+                    <div class="timeline">
 
-                <div class="timeline">
+                        <div th:each="his : ${histories}" class="timeline-item">
 
-                    <div th:each="his : ${feedback.statusHistory}" class="timeline-item">
+                            <div class="timeline-dot"></div>
 
-                        <div class="timeline-dot"></div>
+                            <div class="timeline-content">
 
-                        <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <!-- STATUS -->
+                                    <span class="badge"
+                                          th:classappend="
+                                        ${his.status == 'PENDING'} ? ' pending' :
+                                        (${his.status == 'FORWARDING'} ? ' forwarding' :
+                                        (${his.status == 'APPROVED'} ? ' approved' :
+                                        (${his.status == 'RESOLVED'} ? ' success' :
+                                        (${his.status == 'REJECTED'} ? ' rejected' : ''))))
+                                      ">
 
-                            <div class="timeline-header">
-                                <!-- STATUS -->
-                                <span class="badge"
-                                      th:classappend="
-                                    ${his.status == 'PENDING'} ? ' pending' :
-                                    (${his.status == 'FORWARDING'} ? ' forwarding' :
-                                    (${his.status == 'APPROVED'} ? ' approved' :
-                                    (${his.status == 'RESOLVED'} ? ' success' :
-                                    (${his.status == 'REJECTED'} ? ' rejected' : ''))))
-                                  ">
+                                        <!-- ICON -->
+                                        <i th:if="${his.status == 'PENDING'}" class="fas fa-exclamation-circle"></i>
+                                        <i th:if="${his.status == 'FORWARDING'}" class="fas fa-share"></i>
+                                        <i th:if="${his.status == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
+                                        <i th:if="${his.status == 'RESOLVED'}" class="fas fa-check-circle"></i>
+                                        <i th:if="${his.status == 'REJECTED'}" class="fas fa-times-circle"></i>
 
-                                    <!-- ICON -->
-                                    <i th:if="${his.status == 'PENDING'}" class="fas fa-exclamation-circle"></i>
-                                    <i th:if="${his.status == 'FORWARDING'}" class="fas fa-share"></i>
-                                    <i th:if="${his.status == 'APPROVED'}" class="fas fa-spinner fa-spin"></i>
-                                    <i th:if="${his.status == 'RESOLVED'}" class="fas fa-check-circle"></i>
-                                    <i th:if="${his.status == 'REJECTED'}" class="fas fa-times-circle"></i>
+                                        <!-- TEXT -->
+                                        <span th:text="
+                                            ${his.status == 'PENDING'} ? 'Đang chờ tiếp nhận' :
+                                            (${his.status == 'FORWARDING'} ? 'Được chuyển tiếp' :
+                                            (${his.status == 'APPROVED'} ? 'Đang xử lý' :
+                                            (${his.status == 'RESOLVED'} ? 'Đã xử lý' :
+                                            (${his.status == 'REJECTED'} ? 'Từ chối' : his.status))))
+                                        "></span>
 
-                                    <!-- TEXT -->
-                                    <span th:text="
-                                        ${his.status == 'PENDING'} ? 'Đang chờ tiếp nhận' :
-                                        (${his.status == 'FORWARDING'} ? 'Được chuyển tiếp' :
-                                        (${his.status == 'APPROVED'} ? 'Đang xử lý' :
-                                        (${his.status == 'RESOLVED'} ? 'Đã xử lý' :
-                                        (${his.status == 'REJECTED'} ? 'Từ chối' : his.status))))
-                                    "></span>
+                                    </span>
 
-                                </span>
+                                    <!-- TIME -->
+                                    <span class="time"
+                                          th:text="${#temporals.format(his.createAt, 'HH:mm dd/MM/yyyy')}">
+                                    </span>
+                                </div>
 
-                                <!-- TIME -->
-                                <span class="time"
-                                      th:text="${#temporals.format(his.createAt, 'HH:mm dd/MM/yyyy')}">
-                                </span>
-                            </div>
+                                <!-- DESCRIPTION -->
+                                <p th:switch="${his.status}">
 
-                            <!-- DESCRIPTION -->
-                            <p th:switch="${his.status}">
+                                    <!-- PENDING -->
+                                    <span th:case="'PENDING'">
+                                        Góp ý đã được tiếp nhận bởi bộ phận
+                                        <span th:text="${feedback.department.name}"></span>.
+                                        Chúng tôi sẽ xử lý trong thời gian sớm nhất.
+                                    </span>
 
-                                <!-- PENDING -->
-                                <span th:case="'PENDING'">
-                                    Góp ý đã được tiếp nhận bởi bộ phận
-                                    <span th:text="${feedback.department.name}"></span>.
-                                    Chúng tôi sẽ xử lý trong thời gian sớm nhất.
-                                </span>
-
-                                <!-- FORWARDING -->
-                                <span th:case="'FORWARDING'">
-                                    <span th:if="${feedback.forwardingLogs != null and !feedback.forwardingLogs.isEmpty()}">
-                                        <span th:with="log=${feedback.forwardingLogs[0]}">
-                                            Góp ý đã được chuyển từ
-                                            <span th:text="${log.fromdepartment.name}"></span>
-                                            đến
-                                            <span th:text="${log.todepartment.name}"></span>
-                                            để tiếp tục xử lý.
+                                    <!-- FORWARDING -->
+                                    <span th:case="'FORWARDING'">
+                                        <span th:if="${feedback.forwardingLogs != null and !feedback.forwardingLogs.isEmpty()}">
+                                            <span th:with="log=${feedback.forwardingLogs[0]}">
+                                                Góp ý đã được chuyển từ
+                                                <span th:text="${log.fromdepartment.name}"></span>
+                                                đến
+                                                <span th:text="${log.todepartment.name}"></span>
+                                                để tiếp tục xử lý.
+                                            </span>
                                         </span>
                                     </span>
-                                </span>
 
-                                <!-- APPROVED -->
-                                <span th:case="'APPROVED'">
-                                    Góp ý đã được tiếp nhận và đang được xử lý bởi bộ phận
-                                    <span th:text="${feedback.department.name}"></span>.
-                                </span>
+                                    <!-- APPROVED -->
+                                    <span th:case="'APPROVED'">
+                                        Góp ý đã được tiếp nhận và đang được xử lý bởi bộ phận
+                                        <span th:text="${feedback.department.name}"></span>.
+                                    </span>
 
-                                <!-- RESOLVED -->
-                                <span th:case="'RESOLVED'">
-                                    Góp ý đã được xử lý hoàn tất bởi bộ phận
-                                    <span th:text="${feedback.department.name}"></span>.
-                                </span>
+                                    <!-- RESOLVED -->
+                                    <span th:case="'RESOLVED'">
+                                        Góp ý đã được xử lý hoàn tất bởi bộ phận
+                                        <span th:text="${feedback.department.name}"></span>.
+                                    </span>
 
-                                <!-- REJECTED -->
-                                <span th:case="'REJECTED'">
-                                    Góp ý đã bị từ chối bởi bộ phận
-                                    <span th:text="${feedback.department.name}"></span>.
-                                </span>
+                                    <!-- REJECTED -->
+                                    <span th:case="'REJECTED'">
+                                        Góp ý đã bị từ chối bởi bộ phận
+                                        <span th:text="${feedback.department.name}"></span>.
+                                    </span>
 
-                            </p>
+                                </p>
 
+                            </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </div>
 
@@ -257,8 +313,7 @@
             </div>
 
 
-            <div th:if="${feedback.getPostStatus() == 'PRIVATE'}">
-                <div class="table-card" >
+            <div class="table-card" th:if="${feedback.getPostStatus() == 'PRIVATE'}">
                     <!-- HEADER CÓ NÚT "+ MỚI" -->
                     <div class="chat-section-header">
                         <h3><i class="far fa-comment-dots"></i> Trao đổi</h3>
@@ -1100,6 +1155,331 @@
         }
     });
 </script>
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // ✅ LẤY STATUS CHUẨN
+        let currentStatus = [[${feedback.currentStatus}]];
+        console.log("STATUS =", currentStatus);
+
+        function getAllowedStatuses(current) {
+            if (current === "PENDING") return ["APPROVED", "RESOLVED", "REJECTED"];
+            if (current === "APPROVED") return ["RESOLVED", "REJECTED"];
+            return [];
+        }
+
+        let allowed = getAllowedStatuses(currentStatus);
+
+        // ✅ DROPDOWN
+        window.toggleDD = function () {
+            const list = document.getElementById("ddList");
+            list.style.display =
+                list.style.display === "block" ? "none" : "block";
+        };
+
+        // ✅ FILTER + CLICK
+        document.querySelectorAll("#ddList > div").forEach(item => {
+
+            let val = item.getAttribute("data-value");
+
+            // reset
+            item.style.opacity = 1;
+            item.style.pointerEvents = "auto";
+
+            if (!allowed.includes(val)) {
+                item.style.opacity = 0.3;
+                item.style.pointerEvents = "none";
+            }
+
+            item.addEventListener("click", function () {
+
+                if (!allowed.includes(val)) return;
+
+                selectedStatus = val;
+
+                const icon = this.querySelector("i:not(.check)").outerHTML;
+                const text = this.querySelector("span").innerText;
+
+                document.getElementById("ddText").innerHTML =
+                    icon + " " + text;
+
+                document.getElementById("ddList").style.display = "none";
+
+                console.log("SELECTED =", selectedStatus);
+            });
+        });
+
+        // ✅ DISABLE BUTTON
+        const updateBtn = document.querySelector(".btn-update");
+        const forwardBtn = document.querySelector(".btn-forward");
+
+        if (["RESOLVED", "REJECTED"].includes(currentStatus)) {
+            updateBtn.disabled = true;
+            forwardBtn.disabled = true;
+
+            updateBtn.style.opacity = 0.5;
+            forwardBtn.style.opacity = 0.5;
+            updateBtn.style.cursor = "not-allowed";
+            forwardBtn.style.cursor = "not-allowed";
+        }
+
+        // click ngoài đóng
+        document.addEventListener("click", function(e) {
+            if (!e.target.closest(".status-dd")) {
+                document.getElementById("ddList").style.display = "none";
+            }
+        });
+
+    });
+</script>
+<script th:inline="javascript">
+    function updateStatus() {
+
+        if (!selectedStatus) {
+            showToast("Vui lòng chọn trạng thái!", "warning");
+            return;
+        }
+
+        let requestId = [[${feedback.id}]];
+        let note = document.getElementById("statusNote").value;
+
+        console.log("SEND:", requestId, selectedStatus, note);
+
+        fetch("/staff/update-status", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `requestId=${requestId}&status=${selectedStatus}&note=${encodeURIComponent(note)}`
+        })
+            .then(res => {
+                if (res.ok) {
+                    showToast("Cập nhật trạng thái thành công!", "success");
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000); // delay chút cho user thấy toast
+                } else {
+                    alert("Lỗi cập nhật!");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Lỗi server!");
+            });
+    }
+</script>
+<script>
+    let selectedStatus = null; // ✅ THÊM DÒNG NÀY
+</script>
+<script>
+    function openForwardModal() {
+        document.getElementById("forwardModal").style.display = "flex";
+    }
+
+    function closeForwardModal() {
+        document.getElementById("forwardModal").style.display = "none";
+    } // ✅ THÊM DÒNG NÀY
+
+    let selectedDeptId = null;
+
+    function toggleForwardDD() {
+        document.getElementById("fwdList").classList.toggle("show");
+    }
+
+    // thêm CSS show
+    document.head.insertAdjacentHTML("beforeend", `
+<style>
+.fwd-dd-list.show { display: block; }
+</style>
+`);
+
+    function selectDept(el) {
+
+        selectedDeptId = el.getAttribute("data-id");
+        let name = el.getAttribute("data-name");
+
+        let textEl = document.getElementById("fwdText");
+
+        // set text
+        textEl.innerText = name;
+
+        // 🔥 thêm class in đậm
+        textEl.classList.add("fwd-selected-text");
+
+        // remove selected cũ
+        document.querySelectorAll("#fwdList div").forEach(item => {
+            item.classList.remove("fwd-item-selected");
+        });
+
+        // add selected mới
+        el.classList.add("fwd-item-selected");
+
+        // đóng dropdown
+        document.getElementById("fwdList").classList.remove("show");
+    }
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".fw-dd")) {
+            document.getElementById("fwList").style.display = "none";
+        }
+    });
+
+    /*Nút nhảy*/
+    const list = document.getElementById("fwdList");
+
+    list.addEventListener("scroll", function () {
+
+        const topBtn = document.querySelector(".fwd-jump-top");
+        const bottomBtn = document.querySelector(".fwd-jump-bottom");
+
+        // ở đầu → ẩn nút ↑
+        if (list.scrollTop === 0) {
+            topBtn.style.opacity = "0";
+        } else {
+            topBtn.style.opacity = "1";
+        }
+
+        // ở cuối → ẩn nút ↓
+        if (list.scrollTop + list.clientHeight >= list.scrollHeight) {
+            bottomBtn.style.opacity = "0";
+        } else {
+            bottomBtn.style.opacity = "1";
+        }
+    });
+    function scrollTopFwd() {
+        document.getElementById("fwdList").scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+    function scrollBottomFwd() {
+        let list = document.getElementById("fwdList");
+        list.scrollTo({
+            top: list.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+
+    function submitForward() {
+
+        let requestId = new URLSearchParams(window.location.search).get("id");
+        let note = document.getElementById("forwardNote").value;
+
+        // ✅ nếu chưa chọn → auto DEP_DT
+        let finalDeptId = selectedDeptId || "DEP_CTSV";
+
+        fetch("/staff/forward", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                requestId: requestId,
+                toDeptId: finalDeptId,
+                note: note
+            })
+        })
+            .then(res => {
+                if (res.ok) {
+                    showToast("Chuyển tiếp thành công!", "success");
+
+                    setTimeout(() => {
+                        window.location.href = "/staff/list-feedbacks";
+                    }, 500);
+                }
+            });
+    }
+
+    function showToast(message, type = "success") {
+        const container = document.getElementById("toast-container");
+
+        const toast = document.createElement("div");
+        toast.className = "toast " + type;
+
+        // 🎯 ICON THEO TYPE
+        const icons = {
+            success: '<i class="fas fa-check-circle"></i>',
+            error: '<i class="fas fa-times-circle"></i>',
+            warning: '<i class="fas fa-exclamation-triangle"></i>',
+            info: '<i class="fas fa-info-circle"></i>'
+        };
+
+        toast.innerHTML = `
+        <div class="toast-content">
+            ${icons[type] || ""}
+            <span>${message}</span>
+        </div>
+        <span class="close-btn">&times;</span>
+    `;
+
+        container.appendChild(toast);
+
+        let duration = 2000;
+        if (type === "warning") duration = 2000;
+        if (type === "error") duration = 2000;
+
+        setTimeout(() => {
+            toast.classList.add("fade-out");
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+
+        toast.querySelector(".close-btn").onclick = () => {
+            toast.remove();
+        };
+    }
+</script>
+<!-- ===== FORWARD MODAL ===== -->
+<div id="forwardModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Chuyển tiếp phản hồi</h3>
+            <span class="modal-close" onclick="closeForwardModal()">✕</span>
+        </div>
+
+        <p class="modal-desc">
+            Chọn phòng ban muốn chuyển tiếp phản hồi này đến
+        </p>
+
+        <div class="fwd-dd">
+
+            <div class="fwd-dd-selected" onclick="toggleForwardDD()">
+                <span id="fwdText">Chọn phòng ban</span>
+                <i class="fas fa-chevron-down fwd-arrow"></i>
+            </div>
+
+            <div class="fwd-dd-list" id="fwdList">
+
+                <div th:each="d : ${departments}"
+                     th:if="${d.id != feedback.department.id}"
+                     th:attr="data-id=${d.id}, data-name=${d.name}"
+                     onclick="selectDept(this)">
+
+                    <span th:text="${d.name}"></span>
+                    <i class="fas fa-check fwd-check"></i>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- NOTE -->
+        <textarea id="forwardNote"
+                  class="modal-textarea"
+                  placeholder="Ghi chú (Không bắt buộc)"></textarea>
+
+        <!-- ACTION -->
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeForwardModal()">Hủy</button>
+            <button class="btn-submit" onclick="submitForward()">Gửi</button>
+        </div>
+
+    </div>
+
+</div>
+<div id="toast-container"></div>
 </body>
 </html>
 

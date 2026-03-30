@@ -32,8 +32,21 @@ public class RequestService {
 
     @Autowired
     private VoteRepo voteRepo;
+
     @Autowired
     private UsersRepo usersRepo;
+
+    @Autowired
+    private DepartmentRepo departmentRepo;
+
+    @Autowired
+    private RequestStatusHistoryRepo requestStatushistoryRepo;
+
+    @Autowired
+    private ForwardingLogService forwardingLogService;
+
+    @Autowired
+    private RequestStatusHistoryService statusHistoryService;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -533,6 +546,77 @@ public class RequestService {
 
         return List.of();
     }
+
+    @Transactional
+    public void updateStatus(String requestId, String newStatus) {
+
+        Request request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        String current = request.getCurrentStatus();
+
+        // 🚫 RULE: Không cho update nếu đã kết thúc
+        if (current.equals("RESOLVED") || current.equals("REJECTED")) {
+            throw new RuntimeException("Không thể cập nhật trạng thái này nữa!");
+        }
+
+        // ✅ RULE chuyển trạng thái hợp lệ
+        boolean valid = switch (current) {
+            case "PENDING" ->
+                    newStatus.equals("APPROVED") ||
+                            newStatus.equals("RESOLVED") ||
+                            newStatus.equals("REJECTED");
+            case "APPROVED" -> newStatus.equals("RESOLVED") || newStatus.equals("REJECTED") || newStatus.equals("FORWARDING");
+            default -> false;
+        };
+
+        if (!valid) {
+            throw new RuntimeException("Chuyển trạng thái không hợp lệ!");
+        }
+
+        // 🔥 1. update current status
+        request.setCurrentStatus(newStatus);
+        requestRepo.save(request);
+
+        // 🔥 2. lưu history
+        RequestStatusHistory history = new RequestStatusHistory();
+        history.setId("RSH_" + System.nanoTime());
+        history.setStatus(newStatus);
+        history.setCreateAt(LocalDateTime.now());
+        history.setRequest(request);
+
+        requestStatushistoryRepo.save(history);
+    }
+
+    @Transactional
+    public void forwardRequest(String requestId,
+                               String toDeptId,
+                               String note,
+                               Users user) {
+
+        Request request = requestRepo.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        Department fromDept = request.getDepartment();
+
+        Department toDept = departmentRepo.findById(toDeptId)
+                .orElseThrow(() -> new RuntimeException("Department not found"));
+
+        if (fromDept.getId().equals(toDeptId)) {
+            throw new RuntimeException("Không thể chuyển cùng phòng");
+        }
+
+        request.setDepartment(toDept);
+        request.setCurrentStatus("PENDING");
+
+        requestRepo.save(request);
+
+        forwardingLogService.createLog(request, fromDept, toDept, note, user);
+
+        statusHistoryService.createForwardStatus(request);
+    }
+
+
 }
 
 

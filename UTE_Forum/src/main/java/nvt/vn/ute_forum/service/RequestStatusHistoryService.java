@@ -36,4 +36,15 @@ public class RequestStatusHistoryService {
         requestStatushistoryRepo.save(history);
     }
 
+    public void createForwardStatus(Request request) {
+
+        RequestStatusHistory history = new RequestStatusHistory();
+        history.setId("RSH_" + System.nanoTime());
+        history.setStatus("FORWARDING");
+        history.setCreateAt(LocalDateTime.now());
+        history.setRequest(request);
+
+        requestStatushistoryRepo.save(history);
+    }
+
 }
