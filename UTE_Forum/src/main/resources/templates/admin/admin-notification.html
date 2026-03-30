@@ -61,7 +61,10 @@
         </div>
 
         <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
-            <article class="notification-item" th:classappend="${item.read} ? ' read' : ' unread'" th:each="item : ${notifications}">
+            <article class="notification-item"
+                     th:classappend="${item.read} ? ' read' : ' unread'"
+                     th:attr="data-read-form-id='read-notification-' + ${item.id}"
+                     th:each="item : ${notifications}">
                 <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
                 <div class="item-content">
                     <div class="item-head">
@@ -81,6 +84,12 @@
                     </div>
                     <p th:text="${item.content}">Noi dung thong bao</p>
                 </div>
+                <form method="post" th:action="@{/admin/notifications/read}" class="read-form"
+                      th:id="'read-notification-' + ${item.id}">
+                    <input type="hidden" name="notificationId" th:value="${item.id}">
+                    <input type="hidden" name="tab" th:value="${activeTab}">
+                    <input type="hidden" name="filter" th:value="${activeFilter}">
+                </form>
             </article>
         </section>
 
@@ -89,6 +98,26 @@
         </div>
     </main>
 </div>
+<script>
+    document.addEventListener('click', function (event) {
+        if (event.target.closest('.delete-form, .delete-noti-btn')) {
+            return;
+        }
+
+        const item = event.target.closest('.notification-item[data-read-form-id]');
+        if (!item) {
+            return;
+        }
+
+        const formId = item.getAttribute('data-read-form-id');
+        const form = document.getElementById(formId);
+        if (form) {
+            item.classList.remove('unread');
+            item.classList.add('read', 'pending-read');
+            form.submit();
+        }
+    });
+</script>
 </body>
 </html>
 

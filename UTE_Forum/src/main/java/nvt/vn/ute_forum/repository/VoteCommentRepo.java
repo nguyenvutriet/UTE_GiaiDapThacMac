@@ -24,6 +24,16 @@ GROUP BY v.type
     @Query("SELECT v.user.id, v.user.fullName, v.type, v.user.role " +
             "FROM VoteComment v WHERE v.comment.id = :commentId")
     List<Object[]> findAllByCommentId(@Param("commentId") String commentId);
+
+    @Query("""
+            SELECT v.comment.id, v.comment.request.id, v.user.id, v.user.fullName, v.type, v.voteAt
+            FROM VoteComment v
+            WHERE v.comment.request.user.id = :ownerUserId
+              AND v.user.id <> :ownerUserId
+            ORDER BY v.voteAt DESC
+            """)
+    List<Object[]> findVoteCommentNotificationDataByOwnerId(@Param("ownerUserId") String ownerUserId);
+
     // Tìm reaction của 1 user cụ thể trên 1 comment cụ thể
     Optional<VoteComment> findByIdUserIdAndIdCommentId(String userId, String commentId);
     List<VoteComment> findAllByComment_Id(String commentId);

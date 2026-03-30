@@ -27,7 +27,7 @@
             <a class="nav-item" th:href="@{/api/history}"><span class="nav-icon">&#8635;</span><span>Lịch sử góp ý</span></a>
             <a class="nav-item" th:href="@{/api/submit}"><span class="nav-icon">&#9998;</span><span>Gửi góp ý</span></a>
             <a class="nav-item" th:href="@{/api/forum/view}"><span class="nav-icon">&#9783;</span><span>Diễn đàn</span></a>
-            <a class="nav-item  active" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item  active" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span><span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
         <a class="logout-btn" href="/logout">Đăng xuất</a>
@@ -75,6 +75,7 @@
             <div class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
                 <article class="notification-item"
                          th:classappend="${item.read} ? ' read' : ' unread'"
+                         th:attr="data-read-form-id='read-notification-' + ${item.id}"
                          th:each="item : ${notifications}">
                     <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
                     <div class="item-content">
@@ -95,6 +96,12 @@
                         </div>
                         <p th:text="${item.content}">Nội dung thông báo</p>
                     </div>
+                    <form method="post" th:action="@{/api/notifications/read}" class="read-form"
+                          th:id="'read-notification-' + ${item.id}">
+                        <input type="hidden" name="notificationId" th:value="${item.id}">
+                        <input type="hidden" name="tab" th:value="${activeTab}">
+                        <input type="hidden" name="filter" th:value="${activeFilter}">
+                    </form>
                 </article>
             </div>
 
@@ -105,6 +112,26 @@
         </section>
     </main>
 </div>
+<script>
+    document.addEventListener('click', function (event) {
+        if (event.target.closest('.delete-form, .delete-noti-btn')) {
+            return;
+        }
+
+        const item = event.target.closest('.notification-item[data-read-form-id]');
+        if (!item) {
+            return;
+        }
+
+        const formId = item.getAttribute('data-read-form-id');
+        const form = document.getElementById(formId);
+        if (form) {
+            item.classList.remove('unread');
+            item.classList.add('read', 'pending-read');
+            form.submit();
+        }
+    });
+</script>
 </body>
 </html>
 

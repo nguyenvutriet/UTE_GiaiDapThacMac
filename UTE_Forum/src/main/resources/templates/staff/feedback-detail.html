@@ -49,6 +49,7 @@
 
             <a th:href="@{/staff/notifications}" class="nav-item">
                 <i class="fas fa-bell"></i> Thông báo
+                <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span>
             </a>
 
             <a href="/staff/dashboard" class="nav-item">
@@ -305,7 +306,7 @@
                     <div class="empty-chat">
                         <i class="far fa-comment-dots"></i>
                         <p>Góp ý đã được công khai, vui lòng tham gia trao đổi tại diễn đàn.</p>
-                        <a th:href="@{/api/forum/staff}" class="open-chat-btn">
+                        <a th:href="@{'/api/forum/staff/' + ${feedback.id}}" class="open-chat-btn">
                             Đi đến diễn đàn
                         </a>
                     </div>

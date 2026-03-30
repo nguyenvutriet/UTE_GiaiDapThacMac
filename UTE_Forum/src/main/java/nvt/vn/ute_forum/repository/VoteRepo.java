@@ -13,6 +13,18 @@ import java.util.Optional;
 public interface VoteRepo extends JpaRepository<Vote, VoteId> {
     List<Vote> findByRequest_Id(String requestId);
     Optional<Vote> findById_UserIdAndId_RequestId(String userId, String requestId);
+
+    @Query("""
+            SELECT v.id.requestId, v.id.userId, u.fullName, v.type, v.voteAt
+            FROM Vote v
+            JOIN v.user u
+            JOIN v.request r
+            WHERE r.user.id = :ownerUserId
+              AND v.user.id <> :ownerUserId
+            ORDER BY v.voteAt DESC
+            """)
+    List<Object[]> findVoteNotificationDataByOwnerId(@Param("ownerUserId") String ownerUserId);
+
     @Query("SELECT new nvt.vn.ute_forum.dto.ReactionDetailDTO(u.id, u.fullName, v.type, u.role) " +
             "FROM Vote v " +
             "JOIN v.user u " +

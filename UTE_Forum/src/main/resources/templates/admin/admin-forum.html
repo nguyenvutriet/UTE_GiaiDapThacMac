@@ -100,7 +100,7 @@
             <a class="nav-item" href="/admin/reports"><span class="nav-icon">&#128683;</span><span>Quản lý bình luận vi phạm</span></a>
             <a class="nav-item" href="/admin/category"><span class="nav-icon">&#9783;</span><span>Quản lý danh mục</span></a>
             <a class="nav-item active" href="/admin/forum/view"><span class="nav-icon">&#128172;</span><span>Diễn đàn</span></a>
-            <a class="nav-item" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span></a>
+            <a class="nav-item" th:href="@{/admin/notifications}"><span class="nav-icon">&#128276;</span><span>Thông báo</span><span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
 

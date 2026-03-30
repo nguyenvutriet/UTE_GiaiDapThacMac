@@ -530,18 +530,18 @@ body {
 }
 
 .forum-post-btn {
-  display: inline-flex;
+  display: block;
   align-items: center;
   justify-content: center;
   border: 1px solid #bfdbfe;
   background: #eff6ff;
   color: #1d4ed8;
-  text-decoration: none;
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
+  text-decoration: underline;
 }
 
 .forum-post-btn:hover {
@@ -704,6 +704,8 @@ body {
   border: 1px dashed #cbd5e1;
   border-radius: 10px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
   color: #64748b;
@@ -762,7 +764,7 @@ body {
 
 .conversation-item-main h4 {
   margin: 0;
-  font-size: 32px;
+  font-size: 20px;
   color: #0f172a;
   line-height: 1.25;
 }
@@ -832,7 +834,7 @@ body {
 
 .chat-drawer-header h3 {
   margin: 0;
-  font-size: 34px;
+  font-size: 20px;
   color: #0f172a;
   line-height: 1.3;
 }
