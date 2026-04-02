@@ -16,4 +16,6 @@ public interface FileAttachmentRepo extends JpaRepository<FileAttachment, String
 	List<FileAttachment> findByAnnouncement_IdAndIdIn(String announcementId, Collection<String> ids);
 
 	List<FileAttachment> findByAnnouncement_Id(String announcementId);
+
+	List<FileAttachment> findByRequest_Id(String requestId);
 }

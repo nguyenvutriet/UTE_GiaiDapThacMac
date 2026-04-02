@@ -8,6 +8,7 @@ import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 
 @Service
 public class RequestService {
+
+    private static final String DEFAULT_DEPARTMENT_ID = "DEP_CTSV";
 
     @Autowired
     private RequestRepo requestRepo;
@@ -46,6 +49,18 @@ public class RequestService {
 
     @Autowired
     private RequestStatusHistoryService statusHistoryService;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private FileAttachmentService fileAttachmentService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private IdGeneratorService idGeneratorService;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -285,6 +300,100 @@ public class RequestService {
         return requestRepo.findByUser_IdOrderByTimeCreateDesc(userId);
     }
 
+    public List<Request> filterStudentRequests(List<Request> source,
+                                               String keyword,
+                                               String departmentId,
+                                               String status,
+                                               String categoryId) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String normalizedKeyword = normalize(keyword);
+        String normalizedDepartmentId = normalize(departmentId);
+        String normalizedStatus = normalize(status);
+        String normalizedCategoryId = normalize(categoryId);
+
+        return source.stream()
+                .filter(req -> normalizedKeyword.isEmpty() || containsIgnoreCase(req.getSubject(), normalizedKeyword))
+                .filter(req -> normalizedDepartmentId.isEmpty() || hasDepartment(req, normalizedDepartmentId))
+                .filter(req -> normalizedStatus.isEmpty() || sameStatus(req, normalizedStatus))
+                .filter(req -> normalizedCategoryId.isEmpty() || hasCategory(req, normalizedCategoryId))
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, String> buildDepartmentOptionMap(List<Request> requests) {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (requests == null) {
+            return options;
+        }
+
+        for (Request req : requests) {
+            if (req.getDepartment() != null && req.getDepartment().getId() != null && req.getDepartment().getName() != null) {
+                options.put(req.getDepartment().getId(), req.getDepartment().getName());
+            }
+        }
+        return options;
+    }
+
+    public Map<String, String> buildCategoryOptionMap(List<Request> requests) {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (requests == null) {
+            return options;
+        }
+
+        for (Request req : requests) {
+            if (req.getCategories() == null) {
+                continue;
+            }
+            req.getCategories().stream()
+                    .filter(Objects::nonNull)
+                    .filter(cat -> cat.getId() != null && cat.getSubject() != null)
+                    .forEach(cat -> options.put(cat.getId(), cat.getSubject()));
+        }
+        return options;
+    }
+
+    public Map<String, String> buildStatusOptionMap(List<Request> requests) {
+        Map<String, String> options = new LinkedHashMap<>();
+        if (requests == null) {
+            return options;
+        }
+
+        List<String> order = Arrays.asList("PENDING", "PROCESSING", "FORWARDING", "APPROVED", "REJECTED", "RESOLVED");
+        for (String key : order) {
+            boolean exists = requests.stream()
+                    .map(Request::getCurrentStatus)
+                    .anyMatch(raw -> sameStatus(raw, key));
+            if (exists) {
+                options.put(key, translateStatus(key));
+            }
+        }
+
+        requests.stream()
+                .map(Request::getCurrentStatus)
+                .filter(raw -> raw != null && !raw.isBlank())
+                .forEach(raw -> options.putIfAbsent(raw.trim().toUpperCase(Locale.ROOT), translateStatus(raw)));
+
+        return options;
+    }
+
+    public String resolveCurrentDepartment(Request selectedRequest, List<ForwardingLog> forwardingLogs) {
+        if (selectedRequest == null) {
+            return "Chưa xác định";
+        }
+        if (forwardingLogs != null && !forwardingLogs.isEmpty()) {
+            ForwardingLog lastLog = forwardingLogs.getLast();
+            if (lastLog.getTodepartment() != null && lastLog.getTodepartment().getName() != null) {
+                return lastLog.getTodepartment().getName();
+            }
+        }
+        if (selectedRequest.getDepartment() != null && selectedRequest.getDepartment().getName() != null) {
+            return selectedRequest.getDepartment().getName();
+        }
+        return "Chưa xác định";
+    }
+
     public Optional<Request> getRequestByIdAndUserId(String requestId, String userId) {
         if (requestId == null || requestId.isBlank() || userId == null || userId.isBlank()) {
             return Optional.empty();
@@ -294,6 +403,92 @@ public class RequestService {
 
     public Request saveOrUpdate(Request request) {
         return requestRepo.save(request);
+    }
+
+    @Transactional
+    public void submitStudentFeedback(String subject,
+                                      String description,
+                                      List<String> categoryIds,
+                                      String departmentId,
+                                      String privacy,
+                                      MultipartFile[] attachments,
+                                      Users user) {
+        validatePrivacyMode(privacy);
+
+        Department department = resolveTargetDepartment(departmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Phòng ban không tồn tại (mặc định: DEP_CTSV)."));
+
+        Request request = new Request();
+        request.setId(idGeneratorService.nextRequestId());
+        request.setCurrentStatus("PENDING");
+        request.setTimeCreate(LocalDateTime.now());
+        request.setUser(user);
+        request.setSubject(subject);
+        request.setDescription(description);
+        request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
+        request.setDepartment(department);
+        request.getCategories().clear();
+        request.getCategories().addAll(resolveCategories(categoryIds));
+
+        Request savedRequest = requestRepo.save(request);
+        statusHistoryService.createInitialStatus(savedRequest, savedRequest.getCurrentStatus());
+
+        saveRequestAttachments(savedRequest, attachments);
+
+        List<Users> deptUsers = department.getUsers() == null ? Collections.emptyList() : department.getUsers();
+        List<Users> deptStaffs = deptUsers.stream()
+                .filter(u -> "ROLE_DEPARTMENT".equals(u.getRole()))
+                .toList();
+
+        notificationService.createNotificationForUsers(
+                "NEW_FEEDBACK_RECEIVED",
+                "Góp ý mới gửi đến phòng ban",
+                "Góp ý: " + savedRequest.getSubject(),
+                deptStaffs
+        );
+
+        notificationService.createNotificationForUsers(
+                "FEEDBACK_SUBMITTED_NOTIFICATION",
+                "Gửi phản hồi thành công",
+                "Bạn đã gửi phản hồi \"" + savedRequest.getSubject() + "\" thành công.",
+                List.of(user)
+        );
+    }
+
+    @Transactional
+    public void updateStudentFeedback(String requestId,
+                                      String subject,
+                                      String description,
+                                      List<String> categoryIds,
+                                      String departmentId,
+                                      String privacy,
+                                      MultipartFile[] attachments,
+                                      String userId) {
+        if (requestId == null || requestId.isBlank()) {
+            throw new IllegalArgumentException("Mã góp ý không hợp lệ.");
+        }
+
+        validatePrivacyMode(privacy);
+
+        Department department = resolveTargetDepartment(departmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Phòng ban không tồn tại (mặc định: DEP_CTSV)."));
+
+        Request request = getRequestByIdAndUserId(requestId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy góp ý để cập nhật."));
+
+        if (!"PENDING".equals(request.getCurrentStatus())) {
+            throw new IllegalArgumentException("Chỉ được sửa góp ý ở trạng thái chờ tiếp nhận.");
+        }
+
+        request.getCategories().clear();
+        request.setSubject(subject);
+        request.setDescription(description);
+        request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
+        request.setDepartment(department);
+        request.getCategories().addAll(resolveCategories(categoryIds));
+
+        Request savedRequest = requestRepo.save(request);
+        replaceRequestAttachments(savedRequest, attachments);
     }
 
     @Transactional
@@ -381,6 +576,130 @@ public class RequestService {
 
         // 🔥 fallback (bắt buộc phải có)
         return Page.empty();
+    }
+
+    private void saveRequestAttachments(Request request, MultipartFile[] attachments) {
+        if (!hasAnyAttachment(attachments)) {
+            return;
+        }
+
+        try {
+            fileAttachmentService.saveRequestAttachments(request, attachments);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Không thể lưu tệp đính kèm.", e);
+        }
+    }
+
+    private void replaceRequestAttachments(Request request, MultipartFile[] attachments) {
+        if (!hasAnyAttachment(attachments)) {
+            return;
+        }
+
+        try {
+            fileAttachmentService.replaceRequestAttachments(request, attachments);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Không thể cập nhật tệp đính kèm.", e);
+        }
+    }
+
+    private void validatePrivacyMode(String privacy) {
+        if (!"public".equals(privacy) && !"department".equals(privacy)) {
+            throw new IllegalArgumentException("Vui lòng chọn chế độ gửi: Công khai hoặc Gửi đến phòng ban.");
+        }
+    }
+
+    private Optional<Department> resolveTargetDepartment(String departmentId) {
+        if (departmentId == null || departmentId.isBlank()) {
+            return departmentRepo.findById(DEFAULT_DEPARTMENT_ID);
+        }
+
+        Optional<Department> foundDepartment = departmentRepo.findById(departmentId);
+        return foundDepartment.isPresent() ? foundDepartment : departmentRepo.findById(DEFAULT_DEPARTMENT_ID);
+    }
+
+    private List<Category> resolveCategories(List<String> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> cleanedIds = categoryIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .toList();
+
+        if (cleanedIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return categoryService.getAllCategories().stream()
+                .filter(category -> cleanedIds.contains(category.getId()))
+                .toList();
+    }
+
+    private boolean hasAnyAttachment(MultipartFile[] attachments) {
+        if (attachments == null) {
+            return false;
+        }
+
+        for (MultipartFile attachment : attachments) {
+            if (attachment != null && !attachment.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasDepartment(Request request, String departmentId) {
+        return request.getDepartment() != null
+                && request.getDepartment().getId() != null
+                && request.getDepartment().getId().equalsIgnoreCase(departmentId);
+    }
+
+    private boolean hasCategory(Request request, String categoryId) {
+        if (request.getCategories() == null || request.getCategories().isEmpty()) {
+            return false;
+        }
+        return request.getCategories().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(cat -> cat.getId() != null && cat.getId().equalsIgnoreCase(categoryId));
+    }
+
+    private boolean sameStatus(Request request, String status) {
+        return sameStatus(request.getCurrentStatus(), status);
+    }
+
+    private boolean sameStatus(String rawStatus, String statusFilter) {
+        if (rawStatus == null || statusFilter == null) {
+            return false;
+        }
+        return rawStatus.trim().equalsIgnoreCase(statusFilter.trim());
+    }
+
+    private boolean containsIgnoreCase(String source, String keyword) {
+        if (source == null) {
+            return false;
+        }
+        return source.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
+    }
+
+    private String normalize(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String translateStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return "Đang chờ tiếp nhận";
+        }
+        return switch (status.trim().toUpperCase(Locale.ROOT)) {
+            case "PENDING" -> "Đang chờ tiếp nhận";
+            case "PROCESSING", "APPROVED" -> "Đang xử lý";
+            case "FORWARDING" -> "Đã được chuyển tiếp";
+            case "RESOLVED" -> "Đã xử lý";
+            case "REJECTED" -> "Từ chối";
+            default -> status;
+        };
     }
 
     @Transactional
