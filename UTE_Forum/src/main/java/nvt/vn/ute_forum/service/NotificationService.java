@@ -291,6 +291,19 @@ public class NotificationService {
         return n;
     }
 
+    public void createNotificationForUsers(String type,
+                                           String title,
+                                           String content,
+                                           List<Users> receivers) {
+        if (receivers == null || receivers.isEmpty()) {
+            return;
+        }
+
+        Notification notification = buildNoti(content, type, title);
+        notification.setUsers(receivers);
+        notificationRepo.save(notification);
+    }
+
 
     // ================== 1. FORWARD ==================
     public void createForwardNotifications(Request request,
