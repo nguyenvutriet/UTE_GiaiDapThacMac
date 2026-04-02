@@ -1,3 +1,4 @@
+                     th:attr="data-read-form-id='read-notification-' + ${item.id}"
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -26,7 +27,7 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar">
             <div class="user-info">
-                <span th:text="${staff != null ? staff.fullName : 'Can bo'}">Can bo</span>
+                <span th:text="${#strings.replace(#strings.replace(#strings.replace(staff.department.name, 'Khoa ', ''), 'Phòng ban ', ''), 'Phòng ', '')}">Phòng ban</span>
                 <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
@@ -56,45 +57,46 @@
                 <input type="hidden" name="tab" th:value="${activeTab}">
                 <label class="sr-only" for="staff-filter">Loc theo trang thai doc</label>
                 <select id="staff-filter" name="filter" onchange="this.form.submit()">
-                    <option value="all" th:selected="${activeFilter == 'all'}">Tat ca</option>
-                    <option value="read" th:selected="${activeFilter == 'read'}">Da doc</option>
-                    <option value="unread" th:selected="${activeFilter == 'unread'}">Chua doc</option>
+                    <option value="all" th:selected="${activeFilter == 'all'}">Tất cả</option>
+                    <option value="read" th:selected="${activeFilter == 'read'}">Đã đọc</option>
+                    <option value="unread" th:selected="${activeFilter == 'unread'}">Chưa đọc</option>
                 </select>
             </form>
         </header>
 
         <div class="tab-row">
             <a class="tab-item" th:classappend="${activeTab == 'all'} ? ' active'"
-               th:href="@{/staff/notifications(tab='all',filter=${activeFilter})}">Tat ca <span th:text="${countAll}">0</span></a>
+               th:href="@{/staff/notifications(tab='all',filter=${activeFilter})}">Tất cả <span th:text="${countAll}">0</span></a>
             <a class="tab-item" th:classappend="${activeTab == 'feedback'} ? ' active'"
-               th:href="@{/staff/notifications(tab='feedback',filter=${activeFilter})}">Gop y <span th:text="${countFeedback}">0</span></a>
+               th:href="@{/staff/notifications(tab='feedback',filter=${activeFilter})}">Góp ý <span th:text="${countFeedback}">0</span></a>
             <a class="tab-item" th:classappend="${activeTab == 'forum'} ? ' active'"
-               th:href="@{/staff/notifications(tab='forum',filter=${activeFilter})}">Dien dan <span th:text="${countForum}">0</span></a>
+               th:href="@{/staff/notifications(tab='forum',filter=${activeFilter})}">Diễn đàn <span th:text="${countForum}">0</span></a>
         </div>
 
         <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
             <article class="notification-item"
                      th:classappend="${item.read} ? ' read' : ' unread'"
-                     th:attr="data-read-form-id='read-notification-' + ${item.id}"
+                     th:attr="data-read-form-id='read-notification-' + ${item.id},
+                              data-notification-id=${item.id}"
                      th:each="item : ${notifications}">
                 <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
                 <div class="item-content">
                     <div class="item-head">
-                        <h3 th:text="${item.title}">Thong bao</h3>
+                        <h3 th:text="${item.title}">Thông báo</h3>
                         <div class="item-actions">
-                            <span th:text="${item.timeLabel}">hom nay</span>
+                            <span th:text="${item.timeLabel}">Hôm nay</span>
                             <form method="post" th:action="@{/staff/notifications/delete}" class="delete-form"
-                                  onsubmit="return confirm('Ban co chac muon xoa thong bao nay?');">
+                                  onsubmit="return confirm('Ban có chắc muốn xoá thông báo này?');">
                                 <input type="hidden" name="notificationId" th:value="${item.id}">
                                 <input type="hidden" name="tab" th:value="${activeTab}">
                                 <input type="hidden" name="filter" th:value="${activeFilter}">
-                                <button type="submit" class="delete-noti-btn" title="Xoa thong bao">
+                                <button type="submit" class="delete-noti-btn" title="Xoá thông báo">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                         </div>
                     </div>
-                    <p th:text="${item.content}">Noi dung thong bao</p>
+                    <p th:text="${item.content}">Nội dung thông báo</p>
                 </div>
                 <form method="post" th:action="@{/staff/notifications/read}" class="read-form"
                       th:id="'read-notification-' + ${item.id}">
@@ -106,12 +108,18 @@
         </section>
 
         <div class="empty-state" th:if="${#lists.isEmpty(notifications)}">
-            Khong co thong bao phu hop.
+            Không có thông báo phù hợp.
         </div>
     </main>
 </div>
 <script>
+    /**
+     * Xử lý click vào notification item
+     * - Đánh dấu là đã đọc
+     * - Chuyển tới trang chi tiết bài viết
+     */
     document.addEventListener('click', function (event) {
+        // Bỏ qua nút delete
         if (event.target.closest('.delete-form, .delete-noti-btn')) {
             return;
         }
@@ -121,6 +129,7 @@
             return;
         }
 
+        // Đánh dấu là đã đọc
         const formId = item.getAttribute('data-read-form-id');
         const form = document.getElementById(formId);
         if (form) {
@@ -128,9 +137,19 @@
             item.classList.add('read', 'pending-read');
             form.submit();
         }
+
+        // Lấy requestId từ data attribute và navigate tới trang chi tiết
+        const requestId = item.getAttribute('data-request-id');
+        if (requestId && requestId !== 'null' && requestId !== '') {
+            // Delay nhỏ để cho form submit trước khi navigate
+            setTimeout(() => {
+                window.location.href = `/api/forum/staff/${requestId}`;
+            }, 100);
+        }
     });
 </script>
 </body>
 </html>
+
 
 

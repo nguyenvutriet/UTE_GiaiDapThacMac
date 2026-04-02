@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Can bo - Quan ly thong bao</title>
+    <title>Cán bộ - Quản lý thông báo</title>
     <link rel="stylesheet" th:href="@{/css/staff/staff-style.css}">
     <link rel="stylesheet" th:href="@{/css/staff/staff-announcement-management.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,21 +19,21 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar" alt="avatar">
             <div class="user-info">
-                <span class="user-role" th:text="${user.department.name}">Phong ban</span>
-                <span class="user-dept">Nhan vien phong ban</span>
+                <span class="user-role" th:text="${user.department.name}">Phòng ban</span>
+                <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
 
         <nav class="sidebar-nav">
-            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
-            <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
-            <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
-            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thong bao <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
-            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
-            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
         </nav>
 
-        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
     </aside>
 
     <main class="main-content">
@@ -41,18 +41,18 @@
             <div class="toolbar announcement-toolbar">
                 <div class="search-wrapper announcement-search">
                     <i class="fas fa-search"></i>
-                    <input id="searchInput" type="text" placeholder="Tim kiem theo tieu de hoac noi dung...">
+                    <input id="searchInput" type="text" placeholder="Tìm kiếm theo tiêu đề hoặc nội dung...">
                 </div>
 
                 <div class="toolbar-actions">
                     <select id="departmentFilter" class="filter-control">
-                        <option value="">Tat ca</option>
+                        <option value="">Tất cả</option>
                         <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"></option>
                     </select>
 
                     <select id="sortFilter" class="filter-control">
-                        <option value="newest">Moi nhat</option>
-                        <option value="oldest">Cu nhat</option>
+                        <option value="newest">Mới nhất</option>
+                        <option value="oldest">Cũ nhất</option>
                     </select>
 
                     <button id="newAnnouncementBtn" type="button" class="new-ann-btn">
@@ -66,16 +66,16 @@
                 <table class="staff-table announcement-table">
                     <thead>
                     <tr>
-                        <th>Tieu de</th>
-                        <th>Noi dung</th>
-                        <th>Ngay tao</th>
-                        <th class="action-col">Tac vu</th>
+                        <th>Tiêu đề</th>
+                        <th>Nội dung</th>
+                        <th>Ngày tạo</th>
+                        <th class="action-col">Tác vụ</th>
                     </tr>
                     </thead>
                     <tbody id="announcementTableBody">
                     <tr>
                         <td colspan="4" class="empty-cell">
-                            <i class="fas fa-spinner fa-spin"></i> Dang tai du lieu...
+                            <i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
                         </td>
                     </tr>
                     </tbody>
@@ -94,35 +94,35 @@
 <div id="editModal" class="edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
     <div class="edit-modal-content">
         <div class="edit-modal-head">
-            <h2 id="editModalTitle">Sua thong bao</h2>
-            <button type="button" id="closeEditModalBtn" class="modal-close-btn" aria-label="Dong">&times;</button>
+            <h2 id="editModalTitle">Sửa thông báo</h2>
+            <button type="button" id="closeEditModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
         </div>
 
         <form id="editAnnouncementForm" class="edit-form">
             <input type="hidden" id="editAnnouncementId">
 
-            <label for="editTitle">Tieu de</label>
+            <label for="editTitle">Tiêu đề</label>
             <input id="editTitle" type="text" maxlength="255" required>
 
-            <label for="editContent">Noi dung</label>
+            <label for="editContent">Nội dung</label>
             <textarea id="editContent" rows="7" required></textarea>
 
-            <label>Tep dinh kem hien tai</label>
+            <label>Tệp đính kèm hiện tại</label>
             <ul id="editExistingAttachmentList" class="edit-attachment-list"></ul>
 
-            <label for="editAttachmentInput">Them tep dinh kem</label>
+            <label for="editAttachmentInput">Thêm tệp đính kèm</label>
             <div id="editUploadZone" class="edit-upload-zone" role="button" tabindex="0">
                 <i class="fas fa-upload"></i>
-                <p>Chon tep hoac keo tha vao day</p>
-                <span>Kich thuoc toi da moi tep: 100 MB</span>
-                <button type="button" id="editChooseFileBtn" class="choose-file-btn">Chon tep</button>
+                <p>Chọn tệp hoặc kéo thả vào đây</p>
+                <span>Kích thước tối đa mỗi tệp: 100 MB</span>
+                <button type="button" id="editChooseFileBtn" class="choose-file-btn">Chọn tệp</button>
             </div>
             <input id="editAttachmentInput" type="file" multiple class="hidden-file-input">
             <ul id="editNewAttachmentList" class="edit-attachment-list"></ul>
 
             <div class="edit-form-actions">
-                <button type="button" id="cancelEditBtn" class="modal-btn secondary">Huy</button>
-                <button type="submit" id="saveEditBtn" class="modal-btn primary">Luu thay doi</button>
+                <button type="button" id="cancelEditBtn" class="modal-btn secondary">Hủy</button>
+                <button type="submit" id="saveEditBtn" class="modal-btn primary">Lưu thay đổi</button>
             </div>
         </form>
     </div>
@@ -180,7 +180,7 @@
 
     function renderExistingAttachments(attachments = []) {
         if (!attachments || attachments.length === 0) {
-            editExistingAttachmentList.innerHTML = '<li class="empty-attachment">Khong co tep dinh kem.</li>';
+            editExistingAttachmentList.innerHTML = '<li class="empty-attachment">Không có tệp đính kèm.</li>';
             return;
         }
 
@@ -188,11 +188,11 @@
             const fileId = file.id || "";
             const encodedId = encodeURIComponent(fileId);
             const removeClass = editRemoveAttachmentIds.has(fileId) ? " marked-remove" : "";
-            const buttonText = editRemoveAttachmentIds.has(fileId) ? "Huy xoa" : "Xoa";
+            const buttonText = editRemoveAttachmentIds.has(fileId) ? "Hủy xóa" : "Xóa";
 
             return `
                 <li class="attachment-item${removeClass}">
-                    <a href="${escapeHtml(file.fileUrl || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(file.fileName || "tep")}</a>
+                    <a href="${escapeHtml(file.fileUrl || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(file.fileName || "tệp")}</a>
                     <button type="button" class="attachment-action-btn" data-attachment-id="${encodedId}">${buttonText}</button>
                 </li>
             `;
@@ -210,7 +210,7 @@
             return `
                 <li class="attachment-item new-file-item">
                     <span>${escapeHtml(file.name)} (${sizeMb} MB)</span>
-                    <button type="button" class="attachment-action-btn remove-new-file-btn" data-new-index="${index}">Xoa</button>
+                    <button type="button" class="attachment-action-btn remove-new-file-btn" data-new-index="${index}">Xóa</button>
                 </li>
             `;
         }).join("");
@@ -230,7 +230,7 @@
             }
 
             if (file.size > maxFileSize) {
-                window.alert(`Tep ${file.name} vuot qua 100MB.`);
+                window.alert(`Tệp ${file.name} vượt quá 100MB.`);
                 continue;
             }
 
@@ -251,7 +251,7 @@
         if (!rows || rows.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="empty-cell">Khong co thong bao phu hop.</td>
+                    <td colspan="4" class="empty-cell">Không có thông báo phù hợp.</td>
                 </tr>
             `;
             return;
@@ -268,13 +268,13 @@
                 <td>${escapeHtml(ann.date || "-")}</td>
                 <td class="action-col">
                     <div class="action-buttons">
-                        <button class="icon-action edit-action" type="button" title="Sua" onclick="openEditModal('${safeId}')">
+                        <button class="icon-action edit-action" type="button" title="Sửa" onclick="openEditModal('${safeId}')">
                             <i class="fas fa-pen"></i>
                         </button>
-                        <a class="icon-action view-action" href="/announcement/detail/${safeId}" title="Xem chi tiet">
+                        <a class="icon-action view-action" href="/announcement/detail/${safeId}" title="Xem chi tiết">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <button class="icon-action delete-action" type="button" title="Xoa" onclick="deleteAnnouncement('${safeId}')">
+                        <button class="icon-action delete-action" type="button" title="Xóa" onclick="deleteAnnouncement('${safeId}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -287,7 +287,7 @@
     function setLoading() {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4" class="empty-cell"><i class="fas fa-spinner fa-spin"></i> Dang tai du lieu...</td>
+                <td colspan="4" class="empty-cell"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...</td>
             </tr>
         `;
     }
@@ -340,7 +340,7 @@
         } catch (error) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="empty-cell error-cell">Khong the tai du lieu. Vui long thu lai.</td>
+                    <td colspan="4" class="empty-cell error-cell">Không thể tải dữ liệu. Vui lòng thử lại.</td>
                 </tr>
             `;
             paginationContainer.classList.remove("hidden");
@@ -449,7 +449,7 @@
         const announcement = announcementStore.get(id);
 
         if (!announcement) {
-            window.alert("Khong tim thay thong bao de sua.");
+            window.alert("Không tìm thấy thông báo để sửa.");
             return;
         }
 
@@ -476,7 +476,7 @@
 
     async function deleteAnnouncement(encodedId) {
         const id = decodeURIComponent(encodedId);
-        const confirmed = window.confirm("Ban co chac chan muon xoa thong bao nay khong?");
+        const confirmed = window.confirm("Bạn có chắc chắn muốn xóa thông báo này không?");
         if (!confirmed) {
             return;
         }
@@ -493,7 +493,7 @@
 
             loadAnnouncements(state.keyword.length > 0 ? 0 : state.page);
         } catch (error) {
-            window.alert("Khong the xoa thong bao. " + (error.message || "Vui long thu lai."));
+            window.alert("Không thể xóa thông báo. " + (error.message || "Vui lòng thử lại."));
         }
     }
 
@@ -505,7 +505,7 @@
         const content = editContentInput.value.trim();
 
         if (!title || !content) {
-            window.alert("Tieu de va noi dung khong duoc de trong.");
+            window.alert("Tiêu đề và nội dung không được để trống.");
             return;
         }
 
@@ -537,7 +537,7 @@
             closeEditModal();
             loadAnnouncements(state.keyword.length > 0 ? 0 : state.page);
         } catch (error) {
-            window.alert("Khong the cap nhat thong bao. " + (error.message || "Vui long thu lai."));
+            window.alert("Không thể cập nhật thông báo. " + (error.message || "Vui lòng thử lại."));
         } finally {
             saveEditBtn.disabled = false;
         }

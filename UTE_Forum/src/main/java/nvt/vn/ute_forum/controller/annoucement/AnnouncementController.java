@@ -208,7 +208,7 @@ public class AnnouncementController {
 
         Notification notification = new Notification();
         notification.setId("NOTI_" + UUID.randomUUID().toString().replace("-", ""));
-        notification.setTitle("Thong bao moi");
+        notification.setTitle("Thông báo mới");
         notification.setContent(announcement.getTitle());
         notification.setNotificationType("SYSTEM_ANNOUNCEMENT_NOTIFICATION");
         notification.setRead(false);

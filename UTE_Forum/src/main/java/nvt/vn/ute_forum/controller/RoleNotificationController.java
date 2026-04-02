@@ -12,7 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -156,52 +156,117 @@ public class RoleNotificationController {
     }
 
     private NotificationItem toItem(Notification notification) {
-        String tabKey = tabByType(notification.getNotificationType());
-        String icon = iconByType(notification.getNotificationType());
-        String iconClass = iconClassByType(notification.getNotificationType());
+        String signal = normalizeSignal(notification);
+        String tabKey = tabBySignal(signal);
+        String icon = iconBySignal(signal);
+        String iconClass = iconClassBySignal(signal);
         String title = notification.getTitle() == null || notification.getTitle().isBlank()
-                ? "Thong bao"
-                : notification.getTitle();
-        String content = notification.getContent() == null ? "" : notification.getContent();
+                ? "Thông báo"
+                : beautifyVietnamese(notification.getTitle());
+        String content = notification.getContent() == null ? "" : beautifyVietnamese(notification.getContent());
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
         return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
     }
 
-    private String tabByType(String type) {
-        String normalized = normalizeType(type);
-        if (normalized.contains("FEEDBACK") || normalized.contains("REPORT")) {
+    private String beautifyVietnamese(String input) {
+        if (input == null || input.isBlank()) {
+            return "";
+        }
+
+        String text = input;
+        text = text.replaceAll("(?i)\\bGop y\\b", "Góp ý");
+        text = text.replaceAll("(?i)\\bThong bao\\b", "Thông báo");
+        text = text.replaceAll("(?i)\\bDien dan\\b", "Diễn đàn");
+        text = text.replaceAll("(?i)\\bBinh luan\\b", "Bình luận");
+        text = text.replaceAll("(?i)\\bBao cao\\b", "Báo cáo");
+        text = text.replaceAll("(?i)\\bHoan tat\\b", "Hoàn tất");
+        text = text.replaceAll("(?i)\\bXu ly\\b", "Xử lý");
+        text = text.replaceAll("(?i)\\bthanh cong\\b", "thành công");
+        text = text.replaceAll("(?i)\\bda\\b", "đã");
+        text = text.replaceAll("(?i)\\bduoc\\b", "được");
+        text = text.replaceAll("(?i)\\bgui\\b", "gửi");
+        text = text.replaceAll("(?i)\\bcua\\b", "của");
+        text = text.replaceAll("(?i)\\bban\\b", "bạn");
+        text = text.replaceAll("(?i)\\bmoi\\b", "mới");
+        text = text.replaceAll("(?i)\\btu\\b", "từ");
+        text = text.replaceAll("(?i)\\btoi\\b", "tới");
+        return text;
+    }
+
+    private String tabBySignal(String signal) {
+        if (containsAny(signal, "FEEDBACK", "GOP Y", "REPORT", "BAO CAO")) {
             return "feedback";
         }
-        if (normalized.contains("FORUM") || normalized.contains("COMMENT") || normalized.contains("VOTE")) {
+        if (containsAny(signal, "FORUM", "COMMENT", "BINH LUAN", "VOTE", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {
             return "forum";
         }
         return "all";
     }
 
-    private String iconByType(String type) {
-        String tab = tabByType(type);
-        if ("feedback".equals(tab)) {
-            return "!";
+    private String iconBySignal(String signal) {
+        if (containsAny(signal, "LIKE", "LOVE", "REACTION", "VOTE", "TIM", "THICH")) {
+            return "❤";
         }
-        if ("forum".equals(tab)) {
+        if (containsAny(signal, "COMMENT", "BINH LUAN")) {
             return "💬";
         }
-        return "✉";
+        if (containsAny(signal, "FORWARD", "CHUYEN TIEP")) {
+            return "🔁";
+        }
+        if (containsAny(signal, "RESOLVED", "APPROVED", "THANH CONG", "DA XU LY")) {
+            return "✅";
+        }
+        if (containsAny(signal, "FEEDBACK", "GOP Y")) {
+            return "📝";
+        }
+        if (containsAny(signal, "REPORT", "BAO CAO")) {
+            return "🚩";
+        }
+        if (containsAny(signal, "ANNOUNCE", "THONG BAO")) {
+            return "📢";
+        }
+        return "🔔";
     }
 
-    private String iconClassByType(String type) {
-        String normalized = normalizeType(type);
-        if (normalized.contains("RESOLVED") || normalized.contains("APPROVED")) {
+    private String iconClassBySignal(String signal) {
+        if (containsAny(signal, "RESOLVED", "APPROVED", "THANH CONG", "DA XU LY")) {
             return "icon-success";
         }
-        if (normalized.contains("PROCESSING") || normalized.contains("FORWARDED")) {
+        if (containsAny(signal, "PROCESSING", "FORWARDED", "FORWARD", "CHUYEN TIEP")) {
             return "icon-processing";
         }
-        if (normalized.contains("COMMENT") || normalized.contains("VOTE") || normalized.contains("FORUM")) {
+        if (containsAny(signal, "COMMENT", "VOTE", "FORUM", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {
             return "icon-forum";
         }
         return "icon-default";
+    }
+
+    private boolean containsAny(String source, String... keywords) {
+        for (String keyword : keywords) {
+            if (source.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeSignal(Notification notification) {
+        String merged = String.join(" ",
+                safe(notification.getNotificationType()),
+                safe(notification.getTitle()),
+                safe(notification.getContent())
+        );
+
+        // Remove accents so matching works for both "thông báo" and "thong bao".
+        String noAccent = Normalizer.normalize(merged, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+
+        return noAccent.toUpperCase(Locale.ROOT);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String normalizeType(String type) {
@@ -210,23 +275,23 @@ public class RoleNotificationController {
 
     private String humanTime(LocalDateTime createdAt) {
         if (createdAt == null) {
-            return "vua xong";
+            return "vừa xong";
         }
 
         long days = ChronoUnit.DAYS.between(createdAt, LocalDateTime.now());
         if (days <= 0) {
-            return "hom nay";
+            return "hôm nay";
         }
         if (days == 1) {
-            return "1 ngay";
+            return "1 ngày";
         }
         if (days < 30) {
-            return days + " ngay";
+            return days + " ngày";
         }
         if (days < 365) {
-            return (days / 30) + " thang";
+            return (days / 30) + " tháng";
         }
-        return (days / 365) + " nam";
+        return (days / 365) + " năm";
     }
 
     private boolean matchesTab(NotificationItem item, String tab) {

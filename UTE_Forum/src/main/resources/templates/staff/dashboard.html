@@ -28,7 +28,7 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar">
             <div class="user-info">
-                <span th:text="${user.department.name}"></span>
+                <span th:text="${#strings.replace(#strings.replace(#strings.replace(user.department.name, 'Khoa ', ''), 'Phòng ban ', ''), 'Phòng ', '')}"></span>
                 <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
