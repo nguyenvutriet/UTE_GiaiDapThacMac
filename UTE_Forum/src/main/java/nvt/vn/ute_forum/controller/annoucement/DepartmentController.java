@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/departments") // Thêm cái này cho chuẩn REST
 public class DepartmentController {
 
-    @Autowired // CỰC KỲ QUAN TRỌNG: Phải có cái này thì Repo mới chạy
+    @Autowired
     private DepartmentRepo departmentRepository;
 
 

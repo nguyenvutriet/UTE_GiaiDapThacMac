@@ -29,24 +29,24 @@ public class NavigationController {
     private DepartmentRepo departmentRepo;
 
 
-    // ĐÂY LÀ VÍ DỤ - Bà tìm cái hàm tương ứng trong code của mình nhé
-    @GetMapping("/announcement") // Đường dẫn bà dùng để mở trang web
-    public String showAnnouncementPage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
-
-        // 1. Fix lỗi "fullName null" (Lỗi đỏ lòm bà gửi nãy đó)
-        // Phải lấy user từ DB và nạp vào model thì Sidebar mới hiện tên được
-        if (userDetails != null) {
-            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
-            model.addAttribute("user", currentUser);
-        }
-
-        // 2. Fix lỗi "Ô Select trống trơn" (Mấy cái hình bà vừa gửi)
-        // Phải nạp categories và departments vào model thì ô Select mới có dữ liệu để lặp (th:each)
-        model.addAttribute("categories", categoryRepo.findAll());
-        model.addAttribute("departments", departmentRepo.findAll());
-
-        return "student/announcementView"; // Trả về đúng file HTML của bà
-    }
+//    // ĐÂY LÀ VÍ DỤ - Bà tìm cái hàm tương ứng trong code của mình nhé
+//    @GetMapping("/announcement") // Đường dẫn bà dùng để mở trang web
+//    public String showAnnouncementPage(Model model, @AuthenticationPrincipal UserDetails userDetails) {
+//
+//        // 1. Fix lỗi "fullName null" (Lỗi đỏ lòm bà gửi nãy đó)
+//        // Phải lấy user từ DB và nạp vào model thì Sidebar mới hiện tên được
+//        if (userDetails != null) {
+//            Users currentUser = usersRepo.findByEmail(userDetails.getUsername());
+//            model.addAttribute("user", currentUser);
+//        }
+//
+//        // 2. Fix lỗi "Ô Select trống trơn" (Mấy cái hình bà vừa gửi)
+//        // Phải nạp categories và departments vào model thì ô Select mới có dữ liệu để lặp (th:each)
+//        model.addAttribute("categories", categoryRepo.findAll());
+//        model.addAttribute("departments", departmentRepo.findAll());
+//
+//        return "student/announcementView"; // Trả về đúng file HTML của bà
+//    }
 
 
 }
