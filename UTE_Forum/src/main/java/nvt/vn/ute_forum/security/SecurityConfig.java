@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/reset-password",
                                 "/verify-otp",
+                                "/department/**",
 
                                 "/feedback/send",
                                 "/apoi/department/**"
