@@ -38,6 +38,15 @@ public class FileAttachmentService {
         saveAttachments(attachments, request.getId(), (attachment) -> attachment.setRequest(request));
     }
 
+    public void replaceRequestAttachments(Request request, MultipartFile[] attachments) throws IOException {
+        if (request == null || request.getId() == null || attachments == null || attachments.length == 0) {
+            return;
+        }
+
+        removeRequestAttachments(request.getId());
+        saveAttachments(attachments, request.getId(), (attachment) -> attachment.setRequest(request));
+    }
+
     public void saveAnnouncementAttachments(Announcement announcement, MultipartFile[] attachments) throws IOException {
         if (announcement == null || announcement.getId() == null || attachments == null || attachments.length == 0) {
             return;
@@ -52,6 +61,23 @@ public class FileAttachmentService {
         }
 
         List<FileAttachment> attachments = fileAttachmentRepo.findByAnnouncement_IdAndIdIn(announcementId, attachmentIds);
+        if (attachments.isEmpty()) {
+            return;
+        }
+
+        for (FileAttachment attachment : attachments) {
+            deleteStoredFileSafely(attachment.getFileUrl());
+        }
+
+        fileAttachmentRepo.deleteAll(attachments);
+    }
+
+    public void removeRequestAttachments(String requestId) {
+        if (requestId == null || requestId.isBlank()) {
+            return;
+        }
+
+        List<FileAttachment> attachments = fileAttachmentRepo.findByRequest_Id(requestId);
         if (attachments.isEmpty()) {
             return;
         }
