@@ -33,7 +33,9 @@
             </a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
-        <a class="logout-btn" href="/logout">Đăng xuất</a>
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
     </aside>
 
     <main class="main-content">
@@ -206,9 +208,9 @@
 
 
                 <div class="pagination" th:if="${totalPages > 0}">
-                    <a th:href="@{/api/forum/view(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> Trước </a>
+                    <a th:href="@{/api/forum/view(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> < </a>
                     <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}"></span>
-                    <a th:href="@{/api/forum/view(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> Sau </a>
+                    <a th:href="@{/api/forum/view(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> > </a>
                 </div>
             </div>
 
@@ -293,128 +295,6 @@
 <script th:inline="javascript">
     let activePostId = null;
 
-//     function renderCommentHTML(cmt) {
-//
-//         const reactionData = {
-//             'LIKE': {text: 'Thích', color: '#0866ff', icon: '👍'},
-//             'LOVE': {text: 'Yêu thích', color: '#f33e58', icon: '❤️'},
-//             'HAHA': {text: 'Haha', color: '#f7b125', icon: '😆'},
-//             'WOW': {text: 'Wow', color: '#f7b125', icon: '😮'},
-//             'SAD': {text: 'Buồn', color: '#f7b125', icon: '😢'},
-//             'ANGRY': {text: 'Phẫn nộ', color: '#e9710f', icon: '😡'}
-//         };
-//
-//
-//         const isVerified = cmt.userRole && cmt.userRole !== 'ROLE_STUDENT';
-//
-//         // 🔥 TEXT CỦA USER
-//         const reactConfig = reactionData[cmt.reactionType] || {
-//             text: "Thích",
-//             color: "#65676b",
-//             icon: ""
-//         };
-//
-//         // 🔥 BUILD ICON + COUNT
-//         let iconsHTML = "";
-//         let totalCount = 0;
-//
-//         if (cmt.reactions) {
-//             Object.entries(cmt.reactions).forEach(([key, value]) => {
-//                 if (value > 0) {
-//                     iconsHTML += reactionData[key].icon + " ";
-//                     totalCount += value;
-//                 }
-//             });
-//         }
-//
-//         return `
-//     <div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
-//         <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
-//         <div style="max-width: 85%; flex: 1;">
-//             <div style="background:#f0f2f5; padding:10px 14px; border-radius:18px;">
-// <div style="background: ${isVerified ? '#f0f7ff' : '#f8f9fa'};
-//                 /* Sinh viên thì padding nhỏ hơn, Cán bộ thì to hơn */
-//                 padding: ${isVerified ? '10px 14px' : '6px 12px'};
-//                 border-radius: 18px;
-//                 border: ${isVerified ? '1px solid #cfe4ff' : '1px solid #eee'};
-//                 /* Thu nhỏ chiều ngang tối đa của cmt sinh viên nếu muốn */
-//                 max-width: ${isVerified ? '100%' : '90%'};">
-//
-//         <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
-//             <b style="font-size: ${isVerified ? '13px' : '12px'}; color: ${isVerified ? '#00558b' : '#444'}; line-height: 1.2;">
-//                 ${cmt.userName}
-//             </b>
-//
-//             ${isVerified ? `
-//                 <svg viewBox="0 0 16 16" width="12" height="12">
-//                     <path fill="#1877F2" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0Zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05Z"/>
-//                 </svg>
-//             ` : ''}
-//         </div>
-//
-//         <div style="margin-top: 2px;">
-//             <span style="font-size: ${isVerified ? '14px' : '12.5px'}; color: #333; line-height: 1.4;">
-//                 ${cmt.content}
-//             </span>
-//         </div>
-//
-//         <div style="margin-top: 6px; display: flex; gap: 12px; border-top: 0.5px solid #eee; padding-top: 4px;">
-//              ${cmt.canDelete ? `
-//                 <span onclick="deleteComment('${cmt.id}')" style="cursor:pointer; color:#d32f2f; font-size:10px; font-weight:600;">
-//                     <i class="fas fa-trash-alt"></i> Xóa
-//                 </span>
-//             ` : ''}
-//             ${!cmt.canDelete ? `
-//                 <span onclick="reportComment('${cmt.id}')" style="cursor:pointer; color:#777; font-size:10px; font-weight:600;">
-//                     <i class="fas fa-flag"></i> Báo cáo
-//                 </span>
-//             ` : ''}
-//         </div>
-//     </div>
-//             </div>
-//
-//             <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items: center;">
-//                 <small style="color:#65676b; font-size:11px;">
-//                     ${formatDirectDate(cmt.date)}
-//                 </small>
-//
-//                 <!-- REACTION -->
-//                 <div class="reaction-container">
-//                     <div class="reaction-box">
-//                         <span onclick="sendReaction('${cmt.id}', 'LIKE')">👍</span>
-//                         <span onclick="sendReaction('${cmt.id}', 'LOVE')">❤️</span>
-//                         <span onclick="sendReaction('${cmt.id}', 'HAHA')">😆</span>
-//                         <span onclick="sendReaction('${cmt.id}', 'WOW')">😮</span>
-//                         <span onclick="sendReaction('${cmt.id}', 'SAD')">😢</span>
-//                         <span onclick="sendReaction('${cmt.id}', 'ANGRY')">😡</span>
-//                     </div>
-//
-//                     <small id="react-text-${cmt.id}"
-//                         style="color:${reactConfig.color}; font-weight:600; cursor:pointer;"
-//                         onclick="sendReaction('${cmt.id}', 'LIKE')">
-//                         ${reactConfig.text}
-//                     </small>
-//                 </div>
-//
-//                 <!-- COUNT -->
-//                 <div id="reaction-count-container-${cmt.id}"
-//      onclick="showReactionDetail('${cmt.id}')"
-//      style="cursor:pointer; display:${totalCount > 0 ? 'flex' : 'none'};" align-items:center; gap:4px; background:#f0f2f5; padding:1px 6px; border-radius:10px;">
-//
-//                     <span id="reaction-icons-${cmt.id}" style="font-size:12px;">
-//                         ${iconsHTML}
-//                     </span>
-//
-//                     <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">
-//                         ${totalCount}
-//                     </small>
-//                 </div>
-//
-//
-//             </div>
-//         </div>
-//     </div>`;
-//     }
 
     function renderCommentHTML(cmt) {
         const reactionData = {
