@@ -39,20 +39,36 @@ public class CommentController {
     @Autowired
     private CommentReportRepo reportRepo;
 
+//    @GetMapping("/{requestId}")
+//    public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
+//        String currentUserId = "";
+//
+//        if (principal != null) {
+//            // Lấy user từ DB dựa trên email trong Principal
+//            Users user = usersService.getByEmail(principal.getName());
+//            if (user != null) {
+//                currentUserId = String.valueOf(user.getId());
+//            }
+//            System.out.println("Role thực tế trong DB: " + user.getRole()); // Kiểm tra hàm getRole() này
+//        }
+//
+//        return commentService.getCommentsByRequestId(requestId, currentUserId);
+//    }
+
     @GetMapping("/{requestId}")
     public List<CommentDTO> getComments(@PathVariable String requestId, Principal principal) {
         String currentUserId = "";
+        boolean isAdmin = false;
 
         if (principal != null) {
-            // Lấy user từ DB dựa trên email trong Principal
             Users user = usersService.getByEmail(principal.getName());
             if (user != null) {
                 currentUserId = String.valueOf(user.getId());
+                isAdmin = "ROLE_ADMIN".equalsIgnoreCase(user.getRole());
             }
-            System.out.println("Role thực tế trong DB: " + user.getRole()); // Kiểm tra hàm getRole() này
         }
 
-        return commentService.getCommentsByRequestId(requestId, currentUserId);
+        return commentService.getCommentsByRequestId(requestId, currentUserId, isAdmin);
     }
 
     @Autowired
