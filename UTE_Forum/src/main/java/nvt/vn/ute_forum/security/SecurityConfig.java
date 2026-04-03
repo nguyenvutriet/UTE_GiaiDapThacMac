@@ -64,15 +64,26 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/reset-password",
                                 "/verify-otp",
-                                "/api/forum/**",
-                                "/api/comments/**",
-                                "/api/vote-comment/**",
-                                "/api/forum/view",
-                                "/staff/list-feedbacks",
+                                "/department/**",
+
                                 "/feedback/send",
-                                "/api/forum/staff",
                                 "/apoi/department/**"
                         ).permitAll()
+                        .requestMatchers("/admin/forum/**", "/adannouncement/**",
+                                "/admin/category", "/admin/category/search", "/admin/category/create", "/admin/category/update",
+                                "/admin/category/activate/**", "/admin/category/deactivate/**", "/admin/reports",
+                                "/admin/reports/**", "/admin/list-feedbacks", "/admin/feedback-detail", "/admin/search-feedbacks",
+                                "/admin/filter-feedbacks", "/admin/forum/view", "/admin/forum/*", "/admin/forum/search-list",
+                                "/api/comments/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/staff/list-feedbacks", "/api/forum/staff", "/staff/create-conversation",
+                                "/chat.send/*", "/staff/close-conversation/*", "/staff/conversation/*/messages", "/staff/feedback-detail",
+                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
+                        .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
+                                "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
+                                "/api/forum/search-list", "/announcement", "/announcement/detail/**").hasRole("STUDENT")
+                        .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
+                        .requestMatchers("/api/departments/**", "/department/**").hasAnyRole("ADMIN", "STUDENT")
+                        .requestMatchers("/ws", "/topic/**", "/app/**", "/api/history/chat/upload", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
                         .anyRequest().authenticated())
                 .formLogin(
                         form ->  form.loginPage("/login")
@@ -99,8 +110,8 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .headers(headers -> headers
-                .frameOptions(frame -> frame.sameOrigin()) // CHO PHÉP HIỂN THỊ FRAME TỪ CÙNG NGUỒN
-        );
+                        .frameOptions(frame -> frame.sameOrigin())
+                );
 
 
         return http.build();
@@ -128,7 +139,7 @@ public class SecurityConfig {
             request.getSession().setMaxInactiveInterval(0);
 
             if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-                response.sendRedirect("/admin/dashboard");
+                response.sendRedirect("/admin/list-feedbacks");
             }else if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
                 response.sendRedirect("/staff/list-feedbacks");
             }else{
@@ -159,7 +170,7 @@ public class SecurityConfig {
             var authorities = authentication.getAuthorities();
 
             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-                response.sendRedirect("/admin/dashboard");
+                response.sendRedirect("/admin/list-feedbacks");
             }else if(authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
                 response.sendRedirect("/staff/list-feedbacks");
             } else {

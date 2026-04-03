@@ -267,32 +267,58 @@
     }
     const initialComments = /*[[${post.comments}]]*/ [];
 
+    // document.addEventListener("DOMContentLoaded", function() {
+    //     // Lấy danh sách comment từ Thymeleaf
+    //     let comments = /*[[${post.comments}]]*/ [];
+    //     const postId = [[${post.id}]];
+    //     const container = document.getElementById(`comment-list-${postId}`);
+    //
+    //     if (comments && container) {
+    //         container.innerHTML = '';
+    //
+    //         // --- BẮT ĐẦU LOGIC SẮP XẾP ---
+    //         comments.sort((a, b) => {
+    //             const rolesPriority = ['ROLE_ADMIN', 'ROLE_DEPARTMENT'];
+    //             const aPriority = rolesPriority.includes(a.userRole) ? 1 : 0;
+    //             const bPriority = rolesPriority.includes(b.userRole) ? 1 : 0;
+    //
+    //             // Đưa ưu tiên (1) lên trước (0)
+    //             return bPriority - aPriority;
+    //         });
+    //         // --- KẾT THÚC LOGIC SẮP XẾP ---
+    //
+    //         comments.forEach(cmt => {
+    //             if(cmt) {
+    //                 container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+    //             }
+    //         });
+    //     }
+    // });
     document.addEventListener("DOMContentLoaded", function() {
-        // Lấy danh sách comment từ Thymeleaf
-        let comments = /*[[${post.comments}]]*/ [];
         const postId = [[${post.id}]];
         const container = document.getElementById(`comment-list-${postId}`);
 
-        if (comments && container) {
-            container.innerHTML = '';
+        if (!container) return;
 
-            // --- BẮT ĐẦU LOGIC SẮP XẾP ---
-            comments.sort((a, b) => {
-                const rolesPriority = ['ROLE_ADMIN', 'ROLE_DEPARTMENT'];
-                const aPriority = rolesPriority.includes(a.userRole) ? 1 : 0;
-                const bPriority = rolesPriority.includes(b.userRole) ? 1 : 0;
+        container.innerHTML = '<p style="text-align:center; color:gray;">Đang tải...</p>';
 
-                // Đưa ưu tiên (1) lên trước (0)
-                return bPriority - aPriority;
-            });
-            // --- KẾT THÚC LOGIC SẮP XẾP ---
+        fetch('/api/comments/' + postId)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
 
-            comments.forEach(cmt => {
-                if(cmt) {
-                    container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+                if (data.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:gray;">Chưa có bình luận.</p>';
+                    return;
                 }
+
+                data.forEach(cmt => {
+                    container.insertAdjacentHTML('beforeend', renderCommentHTML(cmt));
+                });
+            })
+            .catch(() => {
+                container.innerHTML = '<p style="color:red;">Lỗi tải bình luận</p>';
             });
-        }
     });
     let activePostId = null;
 
@@ -312,6 +338,7 @@
         const isAdmin = cmt.userRole === 'ROLE_ADMIN';
         const isDepartment = cmt.userRole === 'ROLE_DEPARTMENT';
         const isPriority = isAdmin || isDepartment;
+        const isHidden = cmt.isActive === false;
         // Định nghĩa Style cho khung comment dựa trên vai trò
         // Nếu là Admin/Phòng ban: có viền hồng, nền hồng nhạt
         const commentBoxStyle = isPriority
@@ -343,8 +370,10 @@
         }
 
         return `
-<div class="comment-item" id="cmt-${cmt.id}" style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start; animation: zoomIn 0.3s ease;">
-    <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+<div class="comment-item" id="cmt-${cmt.id}"
+     style="display:flex; gap:10px; margin-bottom:15px; align-items: flex-start;
+            animation: zoomIn 0.3s ease;
+            ${isHidden ? 'opacity:0.6;' : ''}">    <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
     <div style="max-width: 85%; flex: 1;">
         <div class="comment-bubble" style="${commentBoxStyle}">
 
@@ -361,7 +390,8 @@
             ` : ''}
         </div>
 
-        <div class="comment-text-content" style="font-size:15px; color:#050505; line-height:1.4; margin-bottom:8px;">
+        <div class="comment-text-content"
+             style="font-size:15px; color:#050505; line-height:1.4; margin-bottom:8px;">
             ${cmt.content}
         </div>
 
@@ -380,7 +410,7 @@
                         <i class="fas fa-eye-slash"></i> Ẩn bình luận
                     </button>
                 ` : `
-                    <span class="comment-hidden-badge">
+                    <span class="comment-hidden-badge" style="color:#94a3b8;">
                         <i class="fas fa-eye-slash"></i> Đã ẩn
                     </span>
                 `}

@@ -2,7 +2,6 @@ package nvt.vn.ute_forum.controller.student;
 
 
 import nvt.vn.ute_forum.model.ForwardingLog;
-import nvt.vn.ute_forum.model.Category;
 import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.RequestStatusHistory;
@@ -14,14 +13,12 @@ import nvt.vn.ute_forum.service.MessageService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.RequestStatusHistoryService;
 import nvt.vn.ute_forum.service.UsersService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
@@ -35,26 +32,26 @@ public class SubmittedFeedbackHistoryController {
     private static final int HISTORY_PAGE_SIZE = 9;
 
     enum RequestStatusEnum {
-        PENDING("Đang chờ tiếp nhận", "pending", "Đang chờ tiếp nhận"),
-        FORWARDING("Đã được chuyển tiếp", "forwarding", "Đã được chuyển tiếp"),
-        APPROVED("Đang xử lý", "approved", "Đang xử lý"),
-        RESOLVED("Đã xử lý", "done", "Đã xử lý"),
-        REJECTED("Từ chối", "rejected", "Từ chối");
-//        PROCESSING("Đang chờ xử lý", "approved", "Đang xử lý");
+        PENDING("Đang chờ tiếp nhận", "pending", "⏳"),
+        PROCESSING("Đang xử lý", "approved", "⚙️"),
+        FORWARDING("Đã được chuyển tiếp", "forwarding", "🔁"),
+        APPROVED("Đang xử lý", "approved", "⚙️"),
+        RESOLVED("Đã xử lý", "done", "✅"),
+        REJECTED("Từ chối", "rejected", "⛔");
 
-        private final String displayText;
+        private final String label;
         private final String cssClass;
-        private final String translateText;
+        private final String icon;
 
-        RequestStatusEnum(String displayText, String cssClass, String translateText) {
-            this.displayText = displayText;
+        RequestStatusEnum(String label, String cssClass, String icon) {
+            this.label = label;
             this.cssClass = cssClass;
-            this.translateText = translateText;
+            this.icon = icon;
         }
 
-        public String getDisplayText() { return displayText; }
+        public String getLabel() { return label; }
         public String getCssClass() { return cssClass; }
-        public String getTranslateText() { return translateText; }
+        public String getIcon() { return icon; }
 
         public static RequestStatusEnum fromStatus(String status) {
             if (status == null || status.isBlank()) {
@@ -68,26 +65,18 @@ public class SubmittedFeedbackHistoryController {
         }
     }
 
-    private final RequestService requestService;
-    private final ForwardingLogService forwardingLogService;
-    private final RequestStatusHistoryService requestStatusHistoryService;
-    private final UsersService usersService;
-    private final ClarificationConversationService clarificationConversationService;
-    private final MessageService messageService;
-
-    public SubmittedFeedbackHistoryController(RequestService requestService,
-                                              ForwardingLogService forwardingLogService,
-                                              RequestStatusHistoryService requestStatusHistoryService,
-                                              UsersService usersService,
-                                              ClarificationConversationService clarificationConversationService,
-                                              MessageService messageService) {
-        this.requestService = requestService;
-        this.forwardingLogService = forwardingLogService;
-        this.requestStatusHistoryService = requestStatusHistoryService;
-        this.usersService = usersService;
-        this.clarificationConversationService = clarificationConversationService;
-        this.messageService = messageService;
-    }
+    @Autowired
+    private RequestService requestService;
+    @Autowired
+    private ForwardingLogService forwardingLogService;
+    @Autowired
+    private RequestStatusHistoryService requestStatusHistoryService;
+    @Autowired
+    private UsersService usersService;
+    @Autowired
+    private ClarificationConversationService clarificationConversationService;
+    @Autowired
+    private MessageService messageService;
 
     @GetMapping("/api/history")
     public String show(@RequestParam(value = "requestId", required = false) String requestId,
@@ -104,7 +93,7 @@ public class SubmittedFeedbackHistoryController {
         }
 
         List<Request> allRequests = requestService.getRequestsByUserId(user.getId());
-        List<Request> filteredRequests = applyFilters(allRequests, keyword, departmentId, status, categoryId);
+        List<Request> filteredRequests = requestService.filterStudentRequests(allRequests, keyword, departmentId, status, categoryId);
         Request selectedRequest = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
         int totalItems = filteredRequests.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / HISTORY_PAGE_SIZE));
@@ -147,7 +136,7 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("requests", requests);
         model.addAttribute("selectedRequest", selectedRequest);
         model.addAttribute("selectedTimeline", buildTimeline(selectedRequest, statusHistories, forwardingLogs));
-        model.addAttribute("currentHandlingDepartment", resolveCurrentDepartment(selectedRequest, forwardingLogs));
+        model.addAttribute("currentHandlingDepartment", requestService.resolveCurrentDepartment(selectedRequest, forwardingLogs));
         model.addAttribute("chatEnabled", chatEnabled);
         model.addAttribute("chatConversationId", (chatEnabled && selectedConversation != null) ? selectedConversation.getId() : "");
         model.addAttribute("chatMessages", conversationMessages);
@@ -160,49 +149,13 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("totalPages", totalPages);
         model.addAttribute("hasPrevious", currentPage > 1);
         model.addAttribute("hasNext", currentPage < totalPages);
-        model.addAttribute("departmentOptions", buildDepartmentOptions(allRequests));
-        model.addAttribute("categoryOptions", buildCategoryOptions(allRequests));
-        model.addAttribute("statusOptions", buildStatusOptions(allRequests));
+        model.addAttribute("departmentOptions", buildOptionItems(requestService.buildDepartmentOptionMap(allRequests)));
+        model.addAttribute("categoryOptions", buildOptionItems(requestService.buildCategoryOptionMap(allRequests)));
+        model.addAttribute("statusOptions", buildOptionItems(requestService.buildStatusOptionMap(allRequests)));
 
         return "student/submitted-feedback-history";
     }
 
-    @GetMapping("/api/history/chat/messages")
-    @ResponseBody
-    public ResponseEntity<?> getConversationMessages(@RequestParam("conversationId") String conversationId,
-                                                     Authentication authentication) {
-        Users user = resolveAuthenticatedUser(authentication);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Chưa đăng nhập"));
-        }
-
-        Optional<ClarificationConversation> conversationOptional = clarificationConversationService
-                .findByConversationIdForStudent(conversationId, user.getId());
-
-        if (conversationOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Cuộc hội thoại không tồn tại hoặc bạn không có quyền truy cập"));
-        }
-
-        ClarificationConversation conversation = conversationOptional.get();
-        String requestId = conversation.getRequest() == null ? "" : safeValue(conversation.getRequest().getId());
-        String subject = safeValue(conversation.getSubject());
-        if (subject.isBlank() && conversation.getRequest() != null) {
-            subject = safeValue(conversation.getRequest().getSubject());
-        }
-        if (subject.isBlank()) {
-            subject = "Trao đổi";
-        }
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("conversationId", conversation.getId());
-        response.put("requestId", requestId);
-        response.put("subject", subject);
-        response.put("open", Boolean.TRUE.equals(conversation.getOpen()));
-        response.put("messages", messageService.getConversationMessages(conversation.getId(), user.getId()));
-        return ResponseEntity.ok(response);
-    }
 
     private List<OpenConversationItem> buildOpenConversations(String userId, String requestId) {
         if (requestId == null || requestId.isBlank()) {
@@ -259,118 +212,6 @@ public class SubmittedFeedbackHistoryController {
         return items;
     }
 
-    private List<Request> applyFilters(List<Request> source,
-                                       String keyword,
-                                       String departmentId,
-                                       String status,
-                                       String categoryId) {
-        if (source == null || source.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        String normalizedKeyword = normalize(keyword);
-        String normalizedDepartmentId = normalize(departmentId);
-        String normalizedStatus = normalize(status);
-        String normalizedCategoryId = normalize(categoryId);
-
-        return source.stream()
-                .filter(req -> normalizedKeyword.isEmpty() || containsIgnoreCase(req.getSubject(), normalizedKeyword))
-                .filter(req -> normalizedDepartmentId.isEmpty() || hasDepartment(req, normalizedDepartmentId))
-                .filter(req -> normalizedStatus.isEmpty() || sameStatus(req, normalizedStatus))
-                .filter(req -> normalizedCategoryId.isEmpty() || hasCategory(req, normalizedCategoryId))
-                .collect(Collectors.toList());
-    }
-
-    private List<OptionItem> buildDepartmentOptions(List<Request> requests) {
-        Map<String, String> options = new LinkedHashMap<>();
-        for (Request req : requests) {
-            if (req.getDepartment() != null && req.getDepartment().getId() != null && req.getDepartment().getName() != null) {
-                options.put(req.getDepartment().getId(), req.getDepartment().getName());
-            }
-        }
-        return options.entrySet().stream()
-                .map(entry -> new OptionItem(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(OptionItem::getLabel))
-                .collect(Collectors.toList());
-    }
-
-    private List<OptionItem> buildCategoryOptions(List<Request> requests) {
-        Map<String, String> options = new LinkedHashMap<>();
-        for (Request req : requests) {
-            if (req.getCategories() == null) {
-                continue;
-            }
-            req.getCategories().stream()
-                    .filter(Objects::nonNull)
-                    .filter(cat -> cat.getId() != null && cat.getSubject() != null)
-                    .forEach(cat -> options.put(cat.getId(), cat.getSubject()));
-        }
-        return options.entrySet().stream()
-                .map(entry -> new OptionItem(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparing(OptionItem::getLabel))
-                .collect(Collectors.toList());
-    }
-
-    private List<OptionItem> buildStatusOptions(List<Request> requests) {
-        List<String> order = Arrays.asList("PENDING", "PROCESSING", "FORWARDING", "APPROVED", "REJECTED", "RESOLVED");
-        Map<String, String> options = new LinkedHashMap<>();
-
-        for (String key : order) {
-            boolean exists = requests.stream()
-                    .map(Request::getCurrentStatus)
-                    .anyMatch(raw -> sameStatus(raw, key));
-            if (exists) {
-                options.put(key, translateStatus(key));
-            }
-        }
-
-        requests.stream()
-                .map(Request::getCurrentStatus)
-                .filter(raw -> raw != null && !raw.isBlank())
-                .forEach(raw -> options.putIfAbsent(raw.trim().toUpperCase(Locale.ROOT), translateStatus(raw)));
-
-        return options.entrySet().stream()
-                .map(entry -> new OptionItem(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
-    }
-
-    private boolean hasDepartment(Request request, String departmentId) {
-        return request.getDepartment() != null
-                && request.getDepartment().getId() != null
-                && request.getDepartment().getId().equalsIgnoreCase(departmentId);
-    }
-
-    private boolean hasCategory(Request request, String categoryId) {
-        if (request.getCategories() == null || request.getCategories().isEmpty()) {
-            return false;
-        }
-        return request.getCategories().stream()
-                .filter(Objects::nonNull)
-                .anyMatch(cat -> cat.getId() != null && cat.getId().equalsIgnoreCase(categoryId));
-    }
-
-    private boolean sameStatus(Request request, String status) {
-        return sameStatus(request.getCurrentStatus(), status);
-    }
-
-    private boolean sameStatus(String rawStatus, String statusFilter) {
-        if (rawStatus == null || statusFilter == null) {
-            return false;
-        }
-        return rawStatus.trim().equalsIgnoreCase(statusFilter.trim());
-    }
-
-    private boolean containsIgnoreCase(String source, String keyword) {
-        if (source == null) {
-            return false;
-        }
-        return source.toLowerCase(Locale.ROOT).contains(keyword.toLowerCase(Locale.ROOT));
-    }
-
-    private String normalize(String value) {
-        return value == null ? "" : value.trim();
-    }
-
     private String safeValue(String value) {
         return value == null ? "" : value;
     }
@@ -408,7 +249,6 @@ public class SubmittedFeedbackHistoryController {
         }
 
         String handlingDepartment = safeDepartmentName(selectedRequest.getDepartment() == null ? null : selectedRequest.getDepartment().getName());
-        String categoryContext = buildCategoryContext(selectedRequest);
         List<ForwardingLog> sortedForwardingLogs = forwardingLogs == null
                 ? Collections.emptyList()
                 : forwardingLogs.stream()
@@ -418,68 +258,48 @@ public class SubmittedFeedbackHistoryController {
 
         for (RequestStatusHistory history : statusHistories) {
             LocalDateTime occurredAt = history.getCreateAt();
-            String rawStatus = normalizeStatus(history.getStatus());
-            String resolvedStatus = translateStatus(history.getStatus());
-            String message = buildTimelineMessage(rawStatus, resolvedStatus, occurredAt, selectedRequest, sortedForwardingLogs, categoryContext);
+            RequestStatusEnum statusEnum = RequestStatusEnum.fromStatus(history.getStatus());
+            String resolvedStatus = statusEnum.getLabel();
+            String message = buildTimelineMessage(statusEnum, occurredAt, selectedRequest, sortedForwardingLogs);
 
             timeline.add(new TimelineItem(
                     resolvedStatus,
                     message,
                     formatDateTime(occurredAt),
                     toCssClass(history.getStatus()),
-                    handlingDepartment,
-                    null,
-                    "Trạng thái"
+                    handlingDepartment
             ));
         }
 
         return timeline;
     }
 
-    private String buildTimelineMessage(String rawStatus,
-                                        String resolvedStatus,
+    private String buildTimelineMessage(RequestStatusEnum statusEnum,
                                         LocalDateTime occurredAt,
                                         Request request,
-                                        List<ForwardingLog> sortedForwardingLogs,
-                                        String categoryContext) {
+                                        List<ForwardingLog> sortedForwardingLogs) {
         ForwardingLog matchedLog = findLatestForwardingAtOrBefore(occurredAt, sortedForwardingLogs);
         String handlingDepartmentAtTime = resolveDepartmentAt(occurredAt, request, sortedForwardingLogs);
 
-        if ("PENDING".equals(rawStatus)) {
-            return "Đang chờ tiếp nhận" + categoryContext + ".";
-        }
-
-        if ("FORWARDING".equals(rawStatus)) {
-            if (matchedLog != null) {
-                String fromDepartment = safeDepartmentName(matchedLog.getFromdepartment() == null ? null : matchedLog.getFromdepartment().getName());
-                String toDepartment = safeDepartmentName(matchedLog.getTodepartment() == null ? null : matchedLog.getTodepartment().getName());
-                String note = safeValue(matchedLog.getNote()).trim();
-                String forwardingMessage = "Đã được chuyển tiếp đến " + toDepartment + " (từ " + fromDepartment + ")."+'\n';
-                if (!note.isBlank()) {
-                    forwardingMessage += " Ghi chú: " + note + ".";
+        return switch (statusEnum) {
+            case PENDING -> "Đang chờ tiếp nhận";
+            case PROCESSING, APPROVED -> "Đang được " + handlingDepartmentAtTime + " xử lý.";
+            case FORWARDING -> {
+                if (matchedLog != null) {
+                    String fromDepartment = safeDepartmentName(matchedLog.getFromdepartment() == null ? null : matchedLog.getFromdepartment().getName());
+                    String toDepartment = safeDepartmentName(matchedLog.getTodepartment() == null ? null : matchedLog.getTodepartment().getName());
+                    String note = safeValue(matchedLog.getNote()).trim();
+                    String forwardingMessage = "Đã được chuyển tiếp đến " + toDepartment + " (từ " + fromDepartment + ")." + '\n';
+                    if (!note.isBlank()) {
+                        forwardingMessage += " Ghi chú: " + note + ".";
+                    }
+                    yield forwardingMessage;
                 }
-                return forwardingMessage;
+                yield "Đang được chuyển tiếp, chưa xác định phòng ban đích.";
             }
-            return "Đang được chuyển tiếp, chưa xác định phòng ban đích.";
-        }
-
-        if ("RESOLVED".equals(rawStatus)) {
-            return "Đã được " + handlingDepartmentAtTime + " giải quyết.";
-        }
-
-        if ("PROCESSING".equals(rawStatus)) {
-            return "Đang được " + handlingDepartmentAtTime + " xử lý.";
-        }
-
-        if ("APPROVED".equals(rawStatus)) {
-            return "Đã được " + handlingDepartmentAtTime + " tiếp nhận và duyệt.";
-        }
-
-        if ("REJECTED".equals(rawStatus)) {
-            return "Yêu cầu bị từ chối tại " + handlingDepartmentAtTime + ".";
-        }
-
-        return "Cập nhật trạng thái: " + resolvedStatus + ".";
+            case RESOLVED -> "Đã được " + handlingDepartmentAtTime + " giải quyết.";
+            case REJECTED -> "Yêu cầu bị từ chối tại " + handlingDepartmentAtTime + ".";
+        };
     }
 
     private String formatDateTime(LocalDateTime value) {
@@ -518,50 +338,6 @@ public class SubmittedFeedbackHistoryController {
         return latest;
     }
 
-    private String buildCategoryContext(Request request) {
-        if (request == null || request.getCategories() == null || request.getCategories().isEmpty()) {
-            return "";
-        }
-
-        String categories = request.getCategories().stream()
-                .filter(Objects::nonNull)
-                .map(Category::getSubject)
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(value -> !value.isBlank())
-                .distinct()
-                .collect(Collectors.joining(", "));
-
-        return categories.isBlank() ? "" : " (Danh mục: " + categories + ")";
-    }
-
-    private String normalizeStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return "";
-        }
-        return status.trim().toUpperCase(Locale.ROOT);
-    }
-
-    private String translateStatus(String status) {
-        return RequestStatusEnum.fromStatus(status).getTranslateText();
-    }
-
-    private String resolveCurrentDepartment(Request selectedRequest, List<ForwardingLog> forwardingLogs) {
-        if (selectedRequest == null) {
-            return "Chưa xác định";
-        }
-        if (forwardingLogs != null && !forwardingLogs.isEmpty()) {
-            ForwardingLog lastLog = forwardingLogs.get(forwardingLogs.size() - 1);
-            if (lastLog.getTodepartment() != null && lastLog.getTodepartment().getName() != null) {
-                return lastLog.getTodepartment().getName();
-            }
-        }
-        if (selectedRequest.getDepartment() != null && selectedRequest.getDepartment().getName() != null) {
-            return selectedRequest.getDepartment().getName();
-        }
-        return "Chưa xác định";
-    }
-
     private String safeDepartmentName(String name) {
         return name == null || name.isBlank() ? "Chưa xác định phòng ban" : name;
     }
@@ -576,27 +352,13 @@ public class SubmittedFeedbackHistoryController {
         private final String time;
         private final String cssClass;
         private final String department;
-        private final String fromDepartment;
-        private final String typeLabel;
 
-        public TimelineItem(String status, String message, String time, String cssClass, String department, String fromDepartment, String typeLabel) {
+        public TimelineItem(String status, String message, String time, String cssClass, String department) {
             this.status = status;
             this.message = message;
             this.time = time;
             this.cssClass = cssClass;
             this.department = department;
-            this.fromDepartment = fromDepartment;
-            this.typeLabel = typeLabel;
-        }
-
-        public TimelineItem(String status, String message, String time, String cssClass, String department, String fromDepartment) {
-            this.status = status;
-            this.message = message;
-            this.time = time;
-            this.cssClass = cssClass;
-            this.department = department;
-            this.fromDepartment = fromDepartment;
-            this.typeLabel = null;
         }
 
         public String getStatus() {
@@ -618,14 +380,6 @@ public class SubmittedFeedbackHistoryController {
         public String getDepartment() {
             return department;
         }
-
-        public String getFromDepartment() {
-            return fromDepartment;
-        }
-
-        public String getTypeLabel() {
-            return typeLabel;
-        }
     }
 
     public static class OptionItem {
@@ -644,6 +398,16 @@ public class SubmittedFeedbackHistoryController {
         public String getLabel() {
             return label;
         }
+    }
+
+    private List<OptionItem> buildOptionItems(Map<String, String> options) {
+        if (options == null || options.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return options.entrySet().stream()
+                .map(entry -> new OptionItem(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparing(OptionItem::getLabel))
+                .collect(Collectors.toList());
     }
 
     public static class OpenConversationItem {

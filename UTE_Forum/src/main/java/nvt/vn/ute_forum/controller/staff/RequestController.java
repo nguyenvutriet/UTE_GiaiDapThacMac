@@ -1,17 +1,12 @@
 package nvt.vn.ute_forum.controller.staff;
 
 import nvt.vn.ute_forum.dto.ForumPostDTO;
-import nvt.vn.ute_forum.model.Category;
-import nvt.vn.ute_forum.model.ClarificationConversation;
-import nvt.vn.ute_forum.model.Request;
+import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.CategoryRepo;
 import nvt.vn.ute_forum.repository.DepartmentRepo;
-import nvt.vn.ute_forum.service.CategoryService;
-import nvt.vn.ute_forum.service.ClarificationConversationService;
-import nvt.vn.ute_forum.service.RequestService;
-import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.repository.RequestRepo;
+import nvt.vn.ute_forum.service.*;
 import nvt.vn.ute_forum.repository.UsersRepo;
-import nvt.vn.ute_forum.service.RequestStatusHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -50,10 +45,16 @@ public class RequestController {
     private CategoryService categoryService;
 
     @Autowired
+    private RequestRepo requestRepo;
+
+    @Autowired
     private ClarificationConversationService clarificationConversationService;
 
     @Autowired
     private RequestStatusHistoryService requestStatusHistoryService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping("/list-feedbacks")
     public String getAllFeedbacks(
@@ -235,6 +236,13 @@ public class RequestController {
 
         requestService.updateStatus(requestId, status);
 
+        // 🔥 lấy lại request
+        Request request = requestRepo.findById(requestId).orElseThrow();
+
+        // 🔥 tạo notification
+        notificationService.createStatusNotification(request, status);
+
+
         return ResponseEntity.ok("Updated");
     }
 
@@ -247,12 +255,32 @@ public class RequestController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
 
-        Users user = usersRepo.findByEmail(userDetails.getUsername());
+        // 🔥 user hiện tại
+        Users staffUser = usersRepo.findByEmail(userDetails.getUsername());
 
-        requestService.forwardRequest(requestId, toDeptId, note, user);
+        // 🔥 xử lý forward
+        requestService.forwardRequest(requestId, toDeptId, note, staffUser);
+
+        // 🔥 lấy lại request
+        Request request = requestRepo.findById(requestId).orElseThrow();
+
+        // 🔥 phòng hiện tại
+        Department currentDept = staffUser.getDepartment();
+
+        // 🔥 phòng được chuyển đến
+        Department toDept = departmentRepo.findById(toDeptId).orElseThrow();
+
+        // 🔥 tạo notification
+        notificationService.createForwardNotifications(
+                request,
+                currentDept,
+                toDept,
+                staffUser
+        );
 
         return ResponseEntity.ok("Forward success");
     }
+
     @GetMapping("/dashboard")
     public String showDashboardPage(Model model, @AuthenticationPrincipal UserDetails currentUser) {
         // 1. Kiểm tra nếu chưa đăng nhập

@@ -4,8 +4,10 @@ import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
 import org.springframework.stereotype.Service;
+import nvt.vn.ute_forum.model.Message;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,10 +115,25 @@ public class ClarificationConversationService {
     }
 
 
+//    public ClarificationConversation getConversationById(String conversationId) {
+//        if (conversationId == null || conversationId.isBlank()) {
+//            return null;
+//        }
+//        return clarificationConversationRepo.findById(conversationId).orElse(null);
+//    }
+
     public ClarificationConversation getConversationById(String conversationId) {
         if (conversationId == null || conversationId.isBlank()) {
             return null;
         }
-        return clarificationConversationRepo.findById(conversationId).orElse(null);
+
+        ClarificationConversation conversation =
+                clarificationConversationRepo.findById(conversationId).orElse(null);
+
+        if (conversation != null && conversation.getMessages() != null) {
+            conversation.getMessages().sort(Comparator.comparing(Message::getCreateAt));
+        }
+
+        return conversation;
     }
 }
