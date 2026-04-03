@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.controller;
 import nvt.vn.ute_forum.model.Notification;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.repository.CommentRepo;
 import nvt.vn.ute_forum.service.NotificationService;
 import nvt.vn.ute_forum.service.UsersService;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -21,12 +24,16 @@ import java.util.Locale;
 @Controller
 public class RoleNotificationController {
 
+    private static final Logger log = LoggerFactory.getLogger(RoleNotificationController.class);
+
     private final UsersService usersService;
     private final NotificationService notificationService;
+    private final CommentRepo commentRepo;
 
-    public RoleNotificationController(UsersService usersService, NotificationService notificationService) {
+    public RoleNotificationController(UsersService usersService, NotificationService notificationService, CommentRepo commentRepo) {
         this.usersService = usersService;
         this.notificationService = notificationService;
+        this.commentRepo = commentRepo;
     }
 
     @GetMapping("/staff/notifications")
@@ -66,6 +73,7 @@ public class RoleNotificationController {
 
     @PostMapping("/staff/notifications/read")
     public String markStaffNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                              @RequestParam(value = "requestId", required = false) String requestId,
                                               @RequestParam(value = "tab", defaultValue = "all") String tab,
                                               @RequestParam(value = "filter", defaultValue = "all") String filter,
                                               Authentication authentication) {
@@ -78,6 +86,15 @@ public class RoleNotificationController {
         }
 
         notificationService.markAsReadForUser(notificationId, user.getId());
+        String normalizedRequestId = normalizeRequestId(requestId);
+        if (normalizedRequestId == null) {
+            normalizedRequestId = normalizeRequestId(extractRequestId(notificationId));
+        }
+        if (normalizedRequestId != null) {
+            return "redirect:/api/forum/staff/" + normalizedRequestId;
+        }
+        log.warn("[NOTI-DEBUG][STAFF] Cannot resolve requestId for notificationId={} rawRequestId={} userId={}",
+                notificationId, requestId, user.getId());
         return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
@@ -118,6 +135,7 @@ public class RoleNotificationController {
 
     @PostMapping("/admin/notifications/read")
     public String markAdminNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                              @RequestParam(value = "requestId", required = false) String requestId,
                                               @RequestParam(value = "tab", defaultValue = "all") String tab,
                                               @RequestParam(value = "filter", defaultValue = "all") String filter,
                                               Authentication authentication) {
@@ -130,6 +148,15 @@ public class RoleNotificationController {
         }
 
         notificationService.markAsReadForUser(notificationId, user.getId());
+        String normalizedRequestId = normalizeRequestId(requestId);
+        if (normalizedRequestId == null) {
+            normalizedRequestId = normalizeRequestId(extractRequestId(notificationId));
+        }
+        if (normalizedRequestId != null) {
+            return "redirect:/admin/forum/" + normalizedRequestId;
+        }
+        log.warn("[NOTI-DEBUG][ADMIN] Cannot resolve requestId for notificationId={} rawRequestId={} userId={}",
+                notificationId, requestId, user.getId());
         return "redirect:/admin/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
@@ -157,7 +184,8 @@ public class RoleNotificationController {
 
     private NotificationItem toItem(Notification notification) {
         String signal = normalizeSignal(notification);
-        String tabKey = tabBySignal(signal);
+        String requestId = extractRequestId(notification.getId());
+        String tabKey = tabBySignal(signal, requestId);
         String icon = iconBySignal(signal);
         String iconClass = iconClassBySignal(signal);
         String title = notification.getTitle() == null || notification.getTitle().isBlank()
@@ -166,7 +194,11 @@ public class RoleNotificationController {
         String content = notification.getContent() == null ? "" : beautifyVietnamese(notification.getContent());
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
+        if ("all".equals(tabKey) && containsAny(signal, "FORUM", "COMMENT", "BINH LUAN", "VOTE", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {
+            log.debug("[NOTI-DEBUG] Forum-like notification without requestId. notificationId={} type={} title={}",
+                    notification.getId(), notification.getNotificationType(), notification.getTitle());
+        }
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead, requestId);
     }
 
     private String beautifyVietnamese(String input) {
@@ -194,12 +226,68 @@ public class RoleNotificationController {
         return text;
     }
 
-    private String tabBySignal(String signal) {
+    private String extractRequestId(String notificationId) {
+        if (notificationId == null || notificationId.isBlank()) {
+            return null;
+        }
+
+        // Synthetic IDs from NotificationService:
+        // VOTE_POST_<actorUserId>_<requestId>
+        // COMMENT_POST_<commentId>
+        // VOTE_COMMENT_<actorUserId>_<commentId>
+        if (notificationId.startsWith("VOTE_POST_")) {
+            int reqMarker = notificationId.lastIndexOf("_REQ_");
+            if (reqMarker >= 0) {
+                return notificationId.substring(reqMarker + 1);
+            }
+
+            // Fallback: use trailing token if it already looks like request id.
+            int lastUnderscore = notificationId.lastIndexOf('_');
+            if (lastUnderscore >= 0 && lastUnderscore + 1 < notificationId.length()) {
+                String tail = notificationId.substring(lastUnderscore + 1);
+                if (tail.startsWith("REQ")) {
+                    return tail;
+                }
+            }
+            return null;
+        }
+
+        if (notificationId.startsWith("COMMENT_POST_")) {
+            String commentId = notificationId.substring("COMMENT_POST_".length());
+            return commentRepo.findById(commentId)
+                    .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                    .orElse(null);
+        }
+
+        if (notificationId.startsWith("VOTE_COMMENT_")) {
+            int cmtMarker = notificationId.lastIndexOf("_CMT_");
+            if (cmtMarker >= 0) {
+                String commentId = notificationId.substring(cmtMarker + 1);
+                return commentRepo.findById(commentId)
+                        .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                        .orElse(null);
+            }
+
+            // Fallback: some IDs may store comment id in the trailing token.
+            int lastUnderscore = notificationId.lastIndexOf('_');
+            if (lastUnderscore >= 0 && lastUnderscore + 1 < notificationId.length()) {
+                String commentId = notificationId.substring(lastUnderscore + 1);
+                return commentRepo.findById(commentId)
+                        .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                        .orElse(null);
+            }
+        }
+
+        return null;
+    }
+
+    private String tabBySignal(String signal, String requestId) {
         if (containsAny(signal, "FEEDBACK", "GOP Y", "REPORT", "BAO CAO")) {
             return "feedback";
         }
         if (containsAny(signal, "FORUM", "COMMENT", "BINH LUAN", "VOTE", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {
-            return "forum";
+            // Only keep in forum tab when it can navigate to a concrete post detail.
+            return normalizeRequestId(requestId) != null ? "forum" : "all";
         }
         return "all";
     }
@@ -335,6 +423,17 @@ public class RoleNotificationController {
         };
     }
 
+    private String normalizeRequestId(String requestId) {
+        if (requestId == null) {
+            return null;
+        }
+        String normalized = requestId.trim();
+        if (normalized.isEmpty() || "null".equalsIgnoreCase(normalized)) {
+            return null;
+        }
+        return normalized;
+    }
+
     private Users resolveAuthenticatedUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
@@ -365,7 +464,8 @@ public class RoleNotificationController {
                                     String icon,
                                     String iconClass,
                                     String tabKey,
-                                    boolean read) {
+                                    boolean read,
+                                    String requestId) {
     }
 }
 
