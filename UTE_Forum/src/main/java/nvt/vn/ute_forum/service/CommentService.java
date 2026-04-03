@@ -87,8 +87,56 @@ public class CommentService {
 //                .collect(Collectors.toList());
 //    }
 
-    public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
-        return commentRepo.findActiveByRequestId(requestId).stream()
+//    public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId) {
+//        return commentRepo.findActiveByRequestId(requestId).stream()
+//                .map(c -> {
+//                    String commentOwnerId = c.getUser() != null ? String.valueOf(c.getUser().getId()) : null;
+//                    boolean canDelete = currentUserId != null && currentUserId.equals(commentOwnerId);
+//
+//                    CommentDTO dto = new CommentDTO(
+//                            c.getUser() != null ? c.getUser().getFullName() : "Ẩn danh",
+//                            c.getContent(),
+//                            c.getDate(),
+//                            c.getId(),
+//                            canDelete,
+//                            c.getUser() != null ? c.getUser().getRole() : "ROLE_STUDENT"
+//                    );
+//
+//                    Optional<VoteComment> userVote = Optional.empty();
+//                    if (currentUserId != null && !currentUserId.isEmpty()) {
+//                        userVote = voteCommentRepo.findByIdUserIdAndIdCommentId(currentUserId, c.getId());
+//                    }
+//
+//                    dto.setReactionType(userVote.map(v -> v.getType().name()).orElse(null));
+//
+//                    List<Object[]> raw = voteCommentRepo.countReactionsByCommentId(c.getId());
+//                    Map<String, Long> reactions = new HashMap<>();
+//                    for (Object[] row : raw) {
+//                        reactions.put(row[0].toString(), (Long) row[1]);
+//                    }
+//                    dto.setReactions(reactions);
+//
+//                    // ===== FIX GỐC Ở ĐÂY =====
+//                    boolean reportedByCurrentUser = false;
+//                    if (currentUserId != null && !currentUserId.isEmpty()) {
+//                        reportedByCurrentUser = reportRepo.existsByComment_IdAndStudent_Id(c.getId(), currentUserId);
+//                    }
+//                    dto.setReportedByCurrentUser(reportedByCurrentUser);
+//
+//                    // Nếu DTO đã có field isActive thì set luôn
+//                    dto.setIsActive(c.getIsActive());
+//
+//                    return dto;
+//                })
+//                .collect(Collectors.toList());
+//    }
+
+    public List<CommentDTO> getCommentsByRequestId(String requestId, String currentUserId, boolean isAdmin) {
+        List<Comment> comments = isAdmin
+                ? commentRepo.findByRequestId(requestId)
+                : commentRepo.findActiveByRequestId(requestId);
+
+        return comments.stream()
                 .map(c -> {
                     String commentOwnerId = c.getUser() != null ? String.valueOf(c.getUser().getId()) : null;
                     boolean canDelete = currentUserId != null && currentUserId.equals(commentOwnerId);
@@ -116,14 +164,12 @@ public class CommentService {
                     }
                     dto.setReactions(reactions);
 
-                    // ===== FIX GỐC Ở ĐÂY =====
                     boolean reportedByCurrentUser = false;
                     if (currentUserId != null && !currentUserId.isEmpty()) {
                         reportedByCurrentUser = reportRepo.existsByComment_IdAndStudent_Id(c.getId(), currentUserId);
                     }
                     dto.setReportedByCurrentUser(reportedByCurrentUser);
 
-                    // Nếu DTO đã có field isActive thì set luôn
                     dto.setIsActive(c.getIsActive());
 
                     return dto;

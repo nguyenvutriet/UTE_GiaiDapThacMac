@@ -159,9 +159,9 @@ public class NotificationService {
 
                     return new Notification(
                             "VOTE_POST_" + actorUserId + "_" + requestId,
-                            actorName + " da tha " + reaction + " cho bai viet cua ban.",
+                            actorName + " đã thả " + reaction + " cho bài viết của bạn.",
                             "VOTE_FORUM_POST_NOTIFICATION",
-                            "Bai viet cua ban vua co tuong tac",
+                            "Bài viết của bạn vừa có tương tác",
                             false,
                             createdAt
                     );
@@ -178,9 +178,9 @@ public class NotificationService {
 
                     return new Notification(
                             "COMMENT_POST_" + commentId,
-                            actorName + " da binh luan vao bai viet cua ban.",
+                            actorName + " đã bình luận vào bài viết của bạn.",
                             "COMMENT_FORUM_POST_NOTIFICATION",
-                            "Bai viet cua ban co binh luan moi",
+                            "Bài viết của bạn có bình luận mới",
                             false,
                             createdAt
                     );
@@ -199,9 +199,9 @@ public class NotificationService {
 
                     return new Notification(
                             "VOTE_COMMENT_" + actorUserId + "_" + commentId,
-                            actorName + " da tha " + reaction + " cho mot binh luan trong bai viet cua ban.",
+                            actorName + " đã thả " + reaction + " cho một bình luận trong bài viết của bạn.",
                             "VOTE_FORUM_POST_NOTIFICATION",
-                            "Binh luan trong bai viet cua ban co tuong tac moi",
+                            "Bình luận trong bài viết của bạn có tương tác mới",
                             false,
                             createdAt
                     );
@@ -210,7 +210,7 @@ public class NotificationService {
     }
 
     private String safeActorName(String name) {
-        return (name == null || name.isBlank()) ? "Nguoi dung" : name;
+        return (name == null || name.isBlank()) ? "Người dùng" : name;
     }
 
     private String toStringValue(Object value) {
@@ -218,10 +218,21 @@ public class NotificationService {
     }
 
     private String toReactionLabel(Object value) {
+        String raw;
         if (value instanceof ReactionType reactionType) {
-            return reactionType.name();
+            raw = reactionType.name();
+        } else {
+            raw = value == null ? "LIKE" : value.toString();
         }
-        return value == null ? "LIKE" : value.toString();
+
+        return switch (raw.toUpperCase(java.util.Locale.ROOT)) {
+            case "LOVE" -> "yêu thích";
+            case "HAHA" -> "haha";
+            case "WOW" -> "wow";
+            case "SAD" -> "buồn";
+            case "ANGRY" -> "phẫn nộ";
+            default -> "thích";
+        };
     }
 
     private LocalDateTime toDateTime(Object value) {

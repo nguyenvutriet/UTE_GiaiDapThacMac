@@ -206,7 +206,7 @@ public class RequestService {
         long totalReactions = reactionsMap.values().stream().mapToLong(Long::longValue).sum();
         dto.setTotalReactions(totalReactions);
 
-        // Reaction của user hiện tại (Để tô màu nút Like chẳng hạn)
+        // Reaction của user hiện tại
         if (currentUserId != null) {
             votes.stream()
                     .filter(v -> v.getUser().getId().equals(currentUserId))
@@ -511,52 +511,8 @@ public class RequestService {
         // 1. Gọi Repo trả về Page<Request>
         Page<Request> requests = requestRepo.searchPublicPosts(keyword.trim(), pageable);
 
-        // 2. Dùng hàm .map() của Page để chuyển đổi từng phần tử
-        // Lưu ý: Page.map() trả về một Page mới, không cần dùng stream() hay collect()
-        return requests.map(r -> {
-            ForumPostDTO dto = new ForumPostDTO();
-            dto.setId(r.getId());
-            dto.setSubject(r.getSubject());
-            dto.setDescription(r.getDescription());
-            dto.setDate(r.getTimeCreate());
-            dto.setStatus(r.getCurrentStatus());
-            dto.setDepartmentName(r.getDepartment() != null ? r.getDepartment().getName() : "N/A");
-            dto.setUserName(r.getUser() != null ? r.getUser().getFullName() : "Ẩn danh");
-            dto.setAttachments(mapAttachments(r));
-
-            dto.setCategories(r.getCategories().stream()
-                    .map(c -> c.getSubject())
-                    .collect(Collectors.toList()));
-
-            // Count comments
-            dto.setCommentCount(commentRepo.countByRequest_Id(r.getId()));
-
-            // Xử lý Reactions
-            List<Vote> votes = voteRepo.findByRequest_Id(r.getId());
-            Map<String, Long> reactionsMap = Map.of(
-                    "LIKE", votes.stream().filter(v -> v.getType() == ReactionType.LIKE).count(),
-                    "LOVE", votes.stream().filter(v -> v.getType() == ReactionType.LOVE).count(),
-                    "HAHA", votes.stream().filter(v -> v.getType() == ReactionType.HAHA).count(),
-                    "WOW", votes.stream().filter(v -> v.getType() == ReactionType.WOW).count(),
-                    "SAD", votes.stream().filter(v -> v.getType() == ReactionType.SAD).count(),
-                    "ANGRY", votes.stream().filter(v -> v.getType() == ReactionType.ANGRY).count()
-            );
-            dto.setReactions(reactionsMap);
-            dto.setTotalReactions(reactionsMap.values().stream().mapToLong(Long::longValue).sum());
-
-            // Reaction của user hiện tại
-            if (currentUserId != null) {
-                votes.stream()
-                        .filter(v -> v.getUser().getId().equals(currentUserId))
-                        .findFirst()
-                        .ifPresent(v -> {
-                            dto.setReactionType(v.getType().name());
-                            dto.setReactionTypeLower(v.getType().name().toLowerCase());
-                        });
-            }
-
-            return dto;
-        });
+        // 2. Sử dụng hàm map và gọi tới hàm convertToFullDTO đã viết ở dưới
+        return requests.map(r -> convertToFullDTO(r, currentUserId));
     }
 
     public Page<Request> getAllFeedbacks(Pageable pageable, Users user) {

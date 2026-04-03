@@ -30,7 +30,9 @@
             <a class="nav-item  active" href="#"><span class="nav-icon">&#128276;</span><span>Thông báo</span><span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
             <a class="nav-item" href="/change-password"><span class="nav-icon">&#128273;</span><span>Đổi mật khẩu</span></a>
         </nav>
-        <a class="logout-btn" href="/logout">Đăng xuất</a>
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Đăng xuất
+        </a>
     </aside>
 
     <main class="main-content">
@@ -75,7 +77,8 @@
             <div class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
                 <article class="notification-item"
                          th:classappend="${item.read} ? ' read' : ' unread'"
-                         th:attr="data-read-form-id='read-notification-' + ${item.id}"
+                         th:attr="data-read-form-id='read-notification-' + ${item.id},
+                                  data-request-id=${item.requestId}"
                          th:each="item : ${notifications}">
                     <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
                     <div class="item-content">
@@ -129,6 +132,13 @@
             item.classList.remove('unread');
             item.classList.add('read', 'pending-read');
             form.submit();
+        }
+
+        const requestId = item.getAttribute('data-request-id');
+        if (requestId && requestId !== 'null' && requestId !== '') {
+            setTimeout(() => {
+                window.location.href = `/api/forum/${requestId}`;
+            }, 100);
         }
     });
 </script>

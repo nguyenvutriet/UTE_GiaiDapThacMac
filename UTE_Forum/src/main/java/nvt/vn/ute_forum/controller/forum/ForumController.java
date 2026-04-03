@@ -98,7 +98,7 @@ public class ForumController {
 
     @PostMapping("/react")
     @ResponseBody
-    public ResponseEntity<?> reactPost( // Đổi sang ResponseEntity cho chuyên nghiệp má ơi
+    public ResponseEntity<?> reactPost(
                                         @RequestParam String postId,
                                         @RequestParam String type, // Nhận String rồi ép kiểu trong Service cho an toàn, tránh lỗi 400
                                         @AuthenticationPrincipal UserDetails userDetails
