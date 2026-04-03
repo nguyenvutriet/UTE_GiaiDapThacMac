@@ -28,6 +28,7 @@ public class ClarificationConversation {
     private Request request;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "clarificationConversation")
+    @OrderBy("createAt ASC")
     private List<Message> messages = new ArrayList<>();
 
     public ClarificationConversation() {
