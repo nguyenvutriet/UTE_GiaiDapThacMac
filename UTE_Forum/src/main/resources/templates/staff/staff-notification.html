@@ -113,6 +113,26 @@
     </main>
 </div>
 <script>
+    function decrementUnreadBadge() {
+        const badge = document.querySelector('.sidebar .badge-count');
+        if (!badge) {
+            return;
+        }
+
+        const current = Number.parseInt((badge.textContent || '0').trim(), 10);
+        if (Number.isNaN(current)) {
+            return;
+        }
+
+        const next = Math.max(current - 1, 0);
+        if (next === 0) {
+            badge.remove();
+            return;
+        }
+
+        badge.textContent = String(next);
+    }
+
     /**
      * Xử lý click vào notification item
      * - Đánh dấu là đã đọc
@@ -131,6 +151,7 @@
             return;
         }
 
+        const wasUnread = item.classList.contains('unread');
         console.debug('[NOTI-DEBUG][STAFF] Notification clicked', {
             notificationId: item.getAttribute('data-read-form-id'),
             requestId: item.getAttribute('data-request-id')
@@ -140,8 +161,13 @@
         const formId = item.getAttribute('data-read-form-id');
         const form = document.getElementById(formId);
         if (form) {
-            item.classList.remove('unread');
-            item.classList.add('read', 'pending-read');
+            if (wasUnread) {
+                item.classList.remove('unread');
+                item.classList.add('read', 'pending-read');
+                decrementUnreadBadge();
+            } else {
+                item.classList.add('read', 'pending-read');
+            }
             console.debug('[NOTI-DEBUG][STAFF] Submit read form', { formId: formId });
             form.submit();
         } else {
@@ -151,12 +177,9 @@
         // Lấy requestId từ data attribute và navigate tới trang chi tiết
         const requestId = item.getAttribute('data-request-id');
         if (requestId && requestId !== 'null' && requestId !== '') {
-            const targetUrl = `/api/forum/staff/${requestId}`;
-            console.debug('[NOTI-DEBUG][STAFF] Redirecting to post detail', { targetUrl: targetUrl });
-            // Delay nhỏ để cho form submit trước khi navigate
-            setTimeout(() => {
-                window.location.href = targetUrl;
-            }, 100);
+            console.debug('[NOTI-DEBUG][STAFF] Waiting for backend redirect to post detail', {
+                targetUrl: `/api/forum/staff/${requestId}`
+            });
         } else {
             console.warn('[NOTI-DEBUG][STAFF] Missing requestId -> cannot redirect', {
                 requestId: requestId,
