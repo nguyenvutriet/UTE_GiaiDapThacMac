@@ -74,13 +74,20 @@ public class SecurityConfig {
                                 "/admin/category/activate/**", "/admin/category/deactivate/**", "/admin/reports",
                                 "/admin/reports/**", "/admin/list-feedbacks", "/admin/feedback-detail", "/admin/search-feedbacks",
                                 "/admin/filter-feedbacks", "/admin/forum/view", "/admin/forum/*", "/admin/forum/search-list",
+                                "/admin/notifications", "/admin/notifications/**",
                                 "/api/comments/admin/**").hasRole("ADMIN")
                         .requestMatchers("/staff/list-feedbacks", "/api/forum/staff", "/staff/create-conversation",
                                 "/chat.send/*", "/staff/close-conversation/*", "/staff/conversation/*/messages", "/staff/feedback-detail",
-                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
+                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**",
+                                "/staff/notifications", "/staff/notifications/**").hasRole("DEPARTMENT")
                         .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
                                 "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
+<<<<<<< HEAD
+                                "/api/forum/search-list").hasRole("STUDENT")
+                        .requestMatchers("/announcement", "/announcement/**").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
+=======
                                 "/api/forum/search-list", "/announcement").hasRole("STUDENT")
+>>>>>>> 840f2357070b82f38a189e616f25a031f49f59dd
                         .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
                         .requestMatchers("/api/departments/**", "/department/**", "/announcement/detail/**").hasAnyRole("ADMIN", "STUDENT")
                         .requestMatchers("/ws", "/topic/**", "/app/**", "/api/history/chat/upload", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")

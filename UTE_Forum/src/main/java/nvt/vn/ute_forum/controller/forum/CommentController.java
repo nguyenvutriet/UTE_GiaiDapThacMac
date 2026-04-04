@@ -107,7 +107,7 @@ public class CommentController {
                     newComment.getDate(),               // date
                     String.valueOf(newComment.getId()), // id (String)
                     true,                               // status
-                    user.getRole()                      // 🔥 TRUYỀN THÊM ROLE Ở ĐÂY (Giả sử hàm là getRole())
+                    user.getRole()
 
             ));
 

@@ -157,14 +157,19 @@ public class StudentNotificationController {
     }
 
     private String iconByType(String type) {
+        String normalized = normalizeType(type);
+        if (normalized.contains("FORWARDED") || normalized.contains("FORWARD") || normalized.contains("FORWARDING")) {
+            return "📤";
+        }
+
         String tab = tabByType(type);
         if ("feedback".equals(tab)) {
-            return "✓";
+            return "📢";
         }
         if ("forum".equals(tab)) {
             return "💬";
         }
-        return "✉";
+        return "🔔";
     }
 
     private String iconClassByType(String type) {

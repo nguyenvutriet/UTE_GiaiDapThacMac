@@ -136,7 +136,7 @@
                                        target="_blank"
                                        rel="noopener noreferrer"
                                        onclick="event.stopPropagation()">attachment</a>
-                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>
+<!--                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>-->
                                 </li>
                             </ul>
                         </div>
@@ -541,8 +541,9 @@
                 );
             } else {
                 fileLinks.push(
-                    `<li><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` +
-                    `<span> (${safeType})</span></li>`
+                    `<li>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+    </li>`
                 );
             }
         });
