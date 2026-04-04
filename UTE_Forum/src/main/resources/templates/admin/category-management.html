@@ -189,17 +189,7 @@
   </div>
 </div>
 
-<!-- ===== POPUP: MESSAGE ===== -->
-<div id="messagePopup" class="popup-overlay">
-  <div class="popup-box" style="text-align:center; max-width:360px;">
-    <div class="msg-icon" id="messageIcon">ℹ️</div>
-    <h3 id="messageTitle" style="text-align:center;"></h3>
-    <p id="messageText" style="text-align:center;"></p>
-    <div class="popup-actions" style="justify-content:center;">
-      <button class="save-btn" onclick="closeMessagePopup()">Đóng</button>
-    </div>
-  </div>
-</div>
+<div id="toast" class="toast"></div>
 
 
 <script>
@@ -373,16 +363,15 @@
     document.querySelectorAll('.popup-menu').forEach(m => m.style.display = 'none');
   }
 
-  /* ===== MESSAGE POPUP ===== */
-  function showMessagePopup(title, message, isError) {
-    document.getElementById('messageIcon').textContent = isError ? '❌' : '✅';
-    document.getElementById('messageTitle').textContent = title;
-    document.getElementById('messageText').textContent = message;
-    document.getElementById('messagePopup').style.display = 'flex';
-  }
+  function showToast(message, isError) {
+    const toast = document.getElementById('toast');
 
-  function closeMessagePopup() {
-    document.getElementById('messagePopup').style.display = 'none';
+    toast.textContent = message;
+    toast.className = 'toast show ' + (isError ? 'error' : 'success');
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2500);
   }
 
   /* Close popup on overlay click */
@@ -402,13 +391,12 @@
   });
 </script>
 
-<!-- Thymeleaf flash messages -->
-<script th:inline="javascript" th:if="${error}">
-  showMessagePopup("Lỗi", /*[[${error}]]*/ "", true);
+<script th:inline="javascript" th:if="${error != null}">
+  showToast(/*[[${error}]]*/ "", true);
 </script>
 
-<script th:inline="javascript" th:if="${success}">
-  showMessagePopup("Thành công", /*[[${success}]]*/ "", false);
+<script th:inline="javascript" th:if="${success != null}">
+  showToast(/*[[${success}]]*/ "", false);
 </script>
 
 </body>

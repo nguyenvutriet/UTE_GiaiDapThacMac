@@ -135,6 +135,7 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("roleLabel", "Sinh vien");
         model.addAttribute("requests", requests);
         model.addAttribute("selectedRequest", selectedRequest);
+        model.addAttribute("selectedRequestId", selectedRequest == null ? "" : safeValue(selectedRequest.getId()));
         model.addAttribute("selectedTimeline", buildTimeline(selectedRequest, statusHistories, forwardingLogs));
         model.addAttribute("currentHandlingDepartment", requestService.resolveCurrentDepartment(selectedRequest, forwardingLogs));
         model.addAttribute("chatEnabled", chatEnabled);
