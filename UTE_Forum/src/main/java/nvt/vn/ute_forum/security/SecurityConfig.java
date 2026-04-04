@@ -80,9 +80,9 @@ public class SecurityConfig {
                                 "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
                         .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
                                 "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
-                                "/api/forum/search-list").hasRole("STUDENT")
-                        .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
-                        .requestMatchers("/api/departments/**", "/department/**", "/announcement", "/announcement/detail/**").hasAnyRole("ADMIN", "STUDENT")
+                                "/api/forum/search-list", "/announcement").hasRole("STUDENT")
+                        .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search", "/announcement/detail/**").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
+                        .requestMatchers("/api/departments/**", "/department/**").hasAnyRole("ADMIN", "STUDENT")
                         .requestMatchers("/ws", "/topic/**", "/app/**", "/api/history/chat/upload", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
                         .anyRequest().authenticated())
                 .formLogin(
