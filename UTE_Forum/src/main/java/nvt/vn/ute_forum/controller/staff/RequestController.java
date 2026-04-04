@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @Controller
@@ -55,6 +57,9 @@ public class RequestController {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @GetMapping("/list-feedbacks")
     public String getAllFeedbacks(
@@ -242,6 +247,8 @@ public class RequestController {
         // 🔥 tạo notification
         notificationService.createStatusNotification(request, status);
 
+        publishRequestStatusSyncEvent(requestId, status, "STATUS_UPDATED");
+
 
         return ResponseEntity.ok("Updated");
     }
@@ -278,7 +285,22 @@ public class RequestController {
                 staffUser
         );
 
+        publishRequestStatusSyncEvent(requestId, "FORWARDING", "FORWARDED");
+
         return ResponseEntity.ok("Forward success");
+    }
+
+    private void publishRequestStatusSyncEvent(String requestId, String status, String eventType) {
+        if (requestId == null || requestId.isBlank()) {
+            return;
+        }
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("requestId", requestId);
+        payload.put("status", status == null ? "" : status);
+        payload.put("eventType", eventType == null ? "STATUS_UPDATED" : eventType);
+
+        messagingTemplate.convertAndSend("/topic/request-status/" + requestId, payload);
     }
 
     @GetMapping("/dashboard")

@@ -1,5 +1,8 @@
 package nvt.vn.ute_forum.service;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import nvt.vn.ute_forum.dto.AnnouncementResponse;
 import nvt.vn.ute_forum.model.Announcement;
 import nvt.vn.ute_forum.repository.AnnouncementRepo;
@@ -57,26 +60,47 @@ public class AnnoucementService {
                 LocalDateTime startDate,
                 LocalDateTime endDate) {
 
-            return (root, query, cb) -> {
-                List<Predicate> predicates = new ArrayList<>();
+            return new Specification<Announcement>() {
 
-                // 1. Lọc theo Department (thông qua User)
-                if (departmentId != null && !departmentId.isEmpty()) {
-                    predicates.add(cb.equal(root.get("user").get("department").get("id"), departmentId));
+                @Override
+                public Predicate toPredicate(Root<Announcement> root,
+                                             CriteriaQuery<?> query,
+                                             CriteriaBuilder cb) {
+
+                    List<Predicate> predicates = new ArrayList<>();
+
+                    // 1. Lọc theo department
+                    if (departmentId != null && !departmentId.isEmpty()) {
+                        Predicate departmentPredicate = cb.equal(
+                                root.get("user").get("department").get("id"),
+                                departmentId
+                        );
+                        predicates.add(departmentPredicate);
+                    }
+
+                    // 2. Lọc theo startDate
+                    if (startDate != null) {
+                        Predicate startDatePredicate = cb.greaterThanOrEqualTo(
+                                root.get("date"),
+                                startDate
+                        );
+                        predicates.add(startDatePredicate);
+                    }
+
+                    // 3. Lọc theo endDate
+                    if (endDate != null) {
+                        Predicate endDatePredicate = cb.lessThanOrEqualTo(
+                                root.get("date"),
+                                endDate
+                        );
+                        predicates.add(endDatePredicate);
+                    }
+
+
+                    return cb.and(predicates.toArray(new Predicate[0]));
                 }
-
-
-
-                // 3. Lọc trong khoảng thời gian
-                if (startDate != null) {
-                    predicates.add(cb.greaterThanOrEqualTo(root.get("date"), startDate));
-                }
-                if (endDate != null) {
-                    predicates.add(cb.lessThanOrEqualTo(root.get("date"), endDate));
-                }
-
-                return cb.and(predicates.toArray(new Predicate[0]));
             };
+
         }
     }
 

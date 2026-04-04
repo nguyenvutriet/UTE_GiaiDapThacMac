@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -59,12 +60,16 @@ public class SubmitFeedbackController {
     }
 
     @PostMapping("/api/delete-request")
-    public String deleteFeedback(@RequestParam("id") String id, Authentication authentication) {
+    public String deleteFeedback(@RequestParam("id") String id,
+                                 Authentication authentication,
+                                 RedirectAttributes redirectAttributes) {
         Users user = resolveAuthenticatedUser(authentication);
         if (user != null) {
             Request request = requestService.getRequestByIdAndUserId(id, user.getId()).orElse(null);
             if (request != null && request.getCurrentStatus().equals("PENDING")) {
                 requestService.deleteRequest(id, user.getId());
+                redirectAttributes.addFlashAttribute("successTitle", "Đã xóa");
+                redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu của bạn đã xóa thành công");
             }
         }
         return "redirect:/api/history";
@@ -78,7 +83,8 @@ public class SubmitFeedbackController {
                                @RequestParam(value = "privacy", required = false) String privacy,
                                @RequestParam(value = "attachments", required = false) MultipartFile[] attachments,
                                Authentication authentication,
-                               Model model) {
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
         try {
             Users user = resolveAuthenticatedUser(authentication);
             if (user == null) {
@@ -95,6 +101,8 @@ public class SubmitFeedbackController {
                     user
             );
 
+            redirectAttributes.addFlashAttribute("successTitle", "Gửi thành công");
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu của bạn đã được gửi thành công");
             return "redirect:/api/history";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
@@ -124,7 +132,8 @@ public class SubmitFeedbackController {
                                  @RequestParam(value = "privacy", required = false) String privacy,
                                  @RequestParam(value = "attachments", required = false) MultipartFile[] attachments,
                                  Authentication authentication,
-                                 Model model) {
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
         try {
             Users user = resolveAuthenticatedUser(authentication);
             if (user == null) {
@@ -141,6 +150,8 @@ public class SubmitFeedbackController {
                     attachments,
                     user.getId()
             );
+            redirectAttributes.addFlashAttribute("successTitle", "Đã chỉnh sửa");
+            redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu của bạn đã cập nhật thành công");
             return "redirect:/api/history";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());

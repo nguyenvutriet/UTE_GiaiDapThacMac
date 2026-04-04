@@ -17,7 +17,7 @@
         <div>
           <p class="student-name" th:text="${user.fullName}">Nguyễn Văn An</p>
           <p class="student-id" th:text="${'MSSV: ' + user.id}">MSSV: U_STU_10</p>
-          <p class="student-role" th:text="${roleLabel}">Sinh vien</p>
+          <p class="student-role" th:text="${user.role == 'ROLE_STUDENT' ? 'Sinh viên' : 'Giảng viên'}">Sinh viên</p>
         </div>
       </div>
     </div>
@@ -136,6 +136,7 @@
     var categoryPicker = document.getElementById('category-picker');
     var categoriesSelect = document.getElementById('categories');
     var categoryChipList = document.getElementById('category-chip-list');
+    var submitForm = document.querySelector('.send-grid');
     var selectedFiles = [];
 
     if (!fileInput || !pickButton || !fileList || !attachmentBox) {
@@ -298,6 +299,51 @@
     if (categoryPicker) {
       categoryPicker.addEventListener('change', addCategoryFromPicker);
     }
+
+    function clearRadioGroupValidity(name) {
+      if (!submitForm || !name) {
+        return;
+      }
+      var radioGroup = submitForm.querySelectorAll('input[type="radio"][name="' + name + '"]');
+      for (var i = 0; i < radioGroup.length; i++) {
+        radioGroup[i].setCustomValidity('');
+      }
+    }
+
+    function setupVietnameseValidation() {
+      if (!submitForm) {
+        return;
+      }
+
+      var requiredFields = submitForm.querySelectorAll('[required]');
+      for (var i = 0; i < requiredFields.length; i++) {
+        (function (field) {
+          field.addEventListener('invalid', function () {
+            if (field.type === 'radio') {
+              field.setCustomValidity('Vui lòng chọn một quyền riêng tư.');
+              return;
+            }
+
+            if (field.validity && field.validity.valueMissing) {
+              field.setCustomValidity('Vui lòng điền thông tin này.');
+            }
+          });
+
+          field.addEventListener('input', function () {
+            field.setCustomValidity('');
+          });
+
+          field.addEventListener('change', function () {
+            field.setCustomValidity('');
+            if (field.type === 'radio' && field.name) {
+              clearRadioGroupValidity(field.name);
+            }
+          });
+        })(requiredFields[i]);
+      }
+    }
+
+    setupVietnameseValidation();
   })();
 </script>
 </body>
