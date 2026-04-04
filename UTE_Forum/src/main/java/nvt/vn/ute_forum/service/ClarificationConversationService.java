@@ -1,5 +1,6 @@
 package nvt.vn.ute_forum.service;
 
+import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.model.ClarificationConversation;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
@@ -122,6 +123,7 @@ public class ClarificationConversationService {
 //        return clarificationConversationRepo.findById(conversationId).orElse(null);
 //    }
 
+    @Transactional
     public ClarificationConversation getConversationById(String conversationId) {
         if (conversationId == null || conversationId.isBlank()) {
             return null;

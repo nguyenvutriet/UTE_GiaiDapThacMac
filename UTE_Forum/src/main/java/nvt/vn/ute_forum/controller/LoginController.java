@@ -159,7 +159,7 @@ public class LoginController {
         usersService.loadUserByUsername(userPrincipal.getUsername());
 
         if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return "redirect:/admin/dashboard";
+            return "redirect:/admin/list-feedbacks";
         }else if(userPrincipal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DEPARTMENT"))){
             return "redirect:/staff/list-feedbacks";
         }else {
