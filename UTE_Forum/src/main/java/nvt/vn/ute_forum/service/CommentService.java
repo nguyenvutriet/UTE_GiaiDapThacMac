@@ -191,7 +191,7 @@ public class CommentService {
         comment.setId(UUID.randomUUID().toString());
         comment.setContent(content);
         comment.setUser(user);
-        comment.setRequest(postRequest); // Giả sử trong Entity Comment bạn đặt tên field là request
+        comment.setRequest(postRequest);
         comment.setDate(LocalDateTime.now());
 
         // 3. Lưu xuống database
