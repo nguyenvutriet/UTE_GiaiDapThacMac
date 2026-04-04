@@ -9,6 +9,7 @@ import nvt.vn.ute_forum.repository.DepartmentRepo;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
 import nvt.vn.ute_forum.service.RequestService;
+import nvt.vn.ute_forum.service.RequestStatusHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,6 +44,9 @@ public class AdminRequestController {
 
     @Autowired
     private ClarificationConversationService clarificationConversationService;
+
+    @Autowired
+    private RequestStatusHistoryService requestStatusHistoryService;
 
     // ===================================================================
     // 1. DANH SÁCH TẤT CẢ GÓP Ý (admin thấy hết, kể cả ẩn danh)
@@ -102,6 +106,9 @@ public class AdminRequestController {
         model.addAttribute("feedback", request);
         model.addAttribute("currentUser", admin);
         model.addAttribute("forwardLogs", request.getForwardingLogs());
+
+        model.addAttribute("histories",
+                requestStatusHistoryService.getByRequestId(request.getId()));
 
         return "admin/feedback-detail";
     }
