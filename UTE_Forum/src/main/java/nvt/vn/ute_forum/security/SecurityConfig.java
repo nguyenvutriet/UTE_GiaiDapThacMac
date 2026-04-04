@@ -74,12 +74,10 @@ public class SecurityConfig {
                                 "/admin/category/activate/**", "/admin/category/deactivate/**", "/admin/reports",
                                 "/admin/reports/**", "/admin/list-feedbacks", "/admin/feedback-detail", "/admin/search-feedbacks",
                                 "/admin/filter-feedbacks", "/admin/forum/view", "/admin/forum/*", "/admin/forum/search-list",
-                                "/admin/notifications", "/admin/notifications/**",
                                 "/api/comments/admin/**").hasRole("ADMIN")
                         .requestMatchers("/staff/list-feedbacks", "/api/forum/staff", "/staff/create-conversation",
                                 "/chat.send/*", "/staff/close-conversation/*", "/staff/conversation/*/messages", "/staff/feedback-detail",
-                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**",
-                                "/staff/notifications", "/staff/notifications/**").hasRole("DEPARTMENT")
+                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
                         .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
                                 "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
                                 "/api/forum/search-list", "/announcement").hasRole("STUDENT")
