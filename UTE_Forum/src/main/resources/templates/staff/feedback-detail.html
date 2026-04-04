@@ -413,7 +413,10 @@
                     </div>
 
                     <!-- 3. Input Area -->
-                    <div class="chat-input" id="chatInput" th:style="${conversation != null && !conversation.getOpen()} ? 'display: none;' : ''">
+                    <div class="chat-input-wrapper" id="chatInputWrapper" th:style="${conversation != null && !conversation.getOpen()} ? 'display: none;' : ''">
+                    <!-- Khu vực preview file đã chọn -->
+                    <div id="filePreviewArea" style="display:none; padding: 6px 12px; background: #f1f5f9; border-radius: 8px; margin: 6px 12px; display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                    <div class="chat-input" id="chatInput">
                         <!-- Input file ẩn để gọi hàm chọn tệp -->
                         <input type="file" id="chatFileInput" style="display:none" multiple>
 
@@ -426,6 +429,7 @@
                         <button type="button" class="btn-send" id="btnSendChat" onclick="sendMessage()">
                             <i class="fas fa-paper-plane"></i>
                         </button>
+                    </div>
                     </div>
 
                 </div>
@@ -515,6 +519,8 @@
 
     /* ================= ĐÓNG TRAO ĐỔI ================= */
     function closeConversation() {
+        let chatInputWrapper = document.getElementById("chatInputWrapper");
+        if (chatInputWrapper) chatInputWrapper.style.display = "none";
         let chatInput = document.getElementById("chatInput");
         if (chatInput) chatInput.style.display = "none";
 
@@ -638,7 +644,12 @@
         })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error("Tải file lên thất bại");
+                    return response.json().then(errBody => {
+                        let msg = (errBody && errBody.message) ? errBody.message : "Lỗi khi tải tệp lên";
+                        throw new Error(msg);
+                    }).catch(parseErr => {
+                        throw new Error("Lỗi khi tải tệp lên (HTTP " + response.status + ")");
+                    });
                 }
                 return response.json();
             })
@@ -649,6 +660,48 @@
                 return payload.attachments;
             });
     }
+
+    /* ================= FILE PREVIEW ================= */
+    function updateFilePreview() {
+        let fileInput = document.getElementById("chatFileInput");
+        let previewArea = document.getElementById("filePreviewArea");
+        if (!previewArea) return;
+
+        previewArea.innerHTML = "";
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            previewArea.style.display = "none";
+            return;
+        }
+
+        previewArea.style.display = "flex";
+        Array.from(fileInput.files).forEach((file, idx) => {
+            let tag = document.createElement("div");
+            tag.style.cssText = "display:flex;align-items:center;gap:4px;background:#e2e8f0;border-radius:6px;padding:3px 8px;font-size:12px;max-width:180px;";
+            tag.innerHTML = `<i class="fas fa-paperclip" style="color:#64748b"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span><button type="button" onclick="removeFile(${idx})" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:0;font-size:14px;line-height:1;">×</button>`;
+            previewArea.appendChild(tag);
+        });
+    }
+
+    window.removeFile = function(indexToRemove) {
+        let fileInput = document.getElementById("chatFileInput");
+        if (!fileInput || !fileInput.files) return;
+
+        // Tạo DataTransfer mới bỏ file tại index
+        let dt = new DataTransfer();
+        Array.from(fileInput.files).forEach((f, i) => {
+            if (i !== indexToRemove) dt.items.add(f);
+        });
+        fileInput.files = dt.files;
+        updateFilePreview();
+    };
+
+    // Gắn sự kiện khi chọn file
+    document.addEventListener("DOMContentLoaded", () => {
+        let fileInput = document.getElementById("chatFileInput");
+        if (fileInput) {
+            fileInput.addEventListener("change", updateFilePreview);
+        }
+    });
 
     /* ================= BUILD CHAT_V1 CONTENT (staff) ================= */
     function buildChatV1Content(text, attachments) {
@@ -726,11 +779,12 @@
 
                 input.value = "";
                 if (fileInput) fileInput.value = "";
+                updateFilePreview();
                 input.focus();
             })
             .catch(err => {
                 console.error("Upload error:", err);
-                alert("Lỗi khi tải tệp đính kèm!");
+                alert("Lỗi khi tải tệp đính kèm: " + (err.message || "Vui lòng thử lại!"));
             })
             .finally(() => {
                 if (btnSend) btnSend.disabled = false;
@@ -998,7 +1052,7 @@
                     if (title) title.textContent = data.subject;
                 }
                 if (data && data.requestId) {
-                    requestId = data.requestId;
+                    requestId = String(data.requestId); // chỉ cập nhật nếu server trả về giá trị hợp lệ
                 }
 
                 scrollToBottom();
@@ -1321,32 +1375,36 @@
     }
 
     document.addEventListener("click", function(e) {
-        if (!e.target.closest(".fw-dd")) {
-            document.getElementById("fwList").style.display = "none";
+        if (!e.target.closest(".fwd-dd")) {
+            let fwdListEl = document.getElementById("fwdList");
+            if (fwdListEl) fwdListEl.classList.remove("show");
         }
     });
 
     /*Nút nhảy*/
-    const list = document.getElementById("fwdList");
+    document.addEventListener("DOMContentLoaded", function() {
+        const list = document.getElementById("fwdList");
+        if (!list) return; // guard: nếu element không tồn tại thì bỏ qua
 
-    list.addEventListener("scroll", function () {
+        list.addEventListener("scroll", function () {
 
-        const topBtn = document.querySelector(".fwd-jump-top");
-        const bottomBtn = document.querySelector(".fwd-jump-bottom");
+            const topBtn = document.querySelector(".fwd-jump-top");
+            const bottomBtn = document.querySelector(".fwd-jump-bottom");
 
-        // ở đầu → ẩn nút ↑
-        if (list.scrollTop === 0) {
-            topBtn.style.opacity = "0";
-        } else {
-            topBtn.style.opacity = "1";
-        }
+            // ở đầu → ẩn nút ↑
+            if (list.scrollTop === 0) {
+                if (topBtn) topBtn.style.opacity = "0";
+            } else {
+                if (topBtn) topBtn.style.opacity = "1";
+            }
 
-        // ở cuối → ẩn nút ↓
-        if (list.scrollTop + list.clientHeight >= list.scrollHeight) {
-            bottomBtn.style.opacity = "0";
-        } else {
-            bottomBtn.style.opacity = "1";
-        }
+            // ở cuối → ẩn nút ↓
+            if (list.scrollTop + list.clientHeight >= list.scrollHeight) {
+                if (bottomBtn) bottomBtn.style.opacity = "0";
+            } else {
+                if (bottomBtn) bottomBtn.style.opacity = "1";
+            }
+        });
     });
     function scrollTopFwd() {
         document.getElementById("fwdList").scrollTo({
