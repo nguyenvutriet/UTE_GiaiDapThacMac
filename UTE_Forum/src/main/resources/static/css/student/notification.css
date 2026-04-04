@@ -218,3 +218,42 @@
     }
 }
 
+/* Notification text hierarchy: title stronger than content */
+.notification-item .item-title-row h3,
+.notification-item .item-head h3 {
+    font-weight: 800;
+    color: #1d4ed8;
+    letter-spacing: 0.1px;
+}
+
+.notification-item .item-content p {
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.notification-item.unread .item-title-row h3,
+.notification-item.unread .item-head h3 {
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.notification-item.unread .item-content p {
+    font-weight: 600;
+    color: #334155;
+}
+
+.notification-item.read .item-title-row h3,
+.notification-item.read .item-head h3,
+.notification-item.pending-read .item-title-row h3,
+.notification-item.pending-read .item-head h3 {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.notification-item.read .item-content p,
+.notification-item.pending-read .item-content p {
+    font-weight: 500;
+    color: #64748b;
+}
+
