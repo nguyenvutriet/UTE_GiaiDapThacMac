@@ -56,8 +56,8 @@
         <section class="forum-container">
             <div class="post-list">
                 <div class="quick-search-container">
-                    <div class="quick-search-box">
-                        <i class="fas fa-search search-icon"></i>
+                    <div class="quick-search-boxx">
+                        <i class="fas fa-search search-iconn"></i>
                         <input id="globalSearchInput"
                                type="text"
                                placeholder="Tìm bài viết..."
@@ -142,7 +142,7 @@
                                        target="_blank"
                                        rel="noopener noreferrer"
                                        onclick="event.stopPropagation()">attachment</a>
-                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>
+<!--                                    <span th:text="${' (' + file.fileType + ')'}">(application/octet-stream)</span>-->
                                 </li>
                             </ul>
                         </div>
@@ -520,8 +520,9 @@
                 );
             } else {
                 fileLinks.push(
-                    `<li><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>` +
-                    `<span> (${safeType})</span></li>`
+                    `<li>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeName}</a>
+    </li>`
                 );
             }
         });

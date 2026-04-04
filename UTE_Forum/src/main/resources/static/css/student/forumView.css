@@ -390,6 +390,7 @@ html {
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
 }
 
 .tag {
@@ -398,11 +399,28 @@ html {
     border-radius: 999px;
     background: #f1f5f9;
     font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* Dept tag */
 .dept-tag {
     background: #dbeafe;
     color: #1d4ed8;
+}
+
+.dept-tag:hover {
+    background: #bfdbfe;
+}
+
+/* Category tag */
+.cat-tag {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.cat-tag:hover {
+    background: #fde68a;
 }
 
 /* ===== ACTION ===== */
@@ -1363,7 +1381,9 @@ html {
 .quick-search-container {
     position: relative;
     width: 100%;
-    padding: 12px 0;
+    padding: 0;        /* bỏ padding trên dưới */
+    margin-top: -10px; /* kéo lên */
+    margin-bottom: 12px; /* tăng lên nếu muốn xa hơn */
 }
 
 .quick-search-box {
