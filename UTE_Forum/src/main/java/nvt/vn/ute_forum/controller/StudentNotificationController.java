@@ -3,6 +3,7 @@ package nvt.vn.ute_forum.controller;
 import nvt.vn.ute_forum.model.Notification;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.repository.CommentRepo;
 import nvt.vn.ute_forum.service.NotificationService;
 import nvt.vn.ute_forum.service.UsersService;
 import org.springframework.security.core.Authentication;
@@ -23,10 +24,14 @@ public class StudentNotificationController {
 
     private final UsersService usersService;
     private final NotificationService notificationService;
+    private final CommentRepo commentRepo;
 
-    public StudentNotificationController(UsersService usersService, NotificationService notificationService) {
+    public StudentNotificationController(UsersService usersService,
+                                         NotificationService notificationService,
+                                         CommentRepo commentRepo) {
         this.usersService = usersService;
         this.notificationService = notificationService;
+        this.commentRepo = commentRepo;
     }
 
     @GetMapping("/api/notifications")
@@ -101,7 +106,43 @@ public class StudentNotificationController {
         String content = notification.getContent() == null ? "" : notification.getContent();
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead);
+        String requestId = extractRequestId(notification.getId());
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead, requestId);
+    }
+
+    private String extractRequestId(String notificationId) {
+        if (notificationId == null || notificationId.isBlank()) {
+            return null;
+        }
+
+        // Synthetic IDs from NotificationService:
+        // VOTE_POST_<actorUserId>_<requestId>
+        // COMMENT_POST_<commentId>
+        // VOTE_COMMENT_<actorUserId>_<commentId>
+        if (notificationId.startsWith("VOTE_POST_")) {
+            int reqMarker = notificationId.lastIndexOf("_REQ_");
+            return reqMarker >= 0 ? notificationId.substring(reqMarker + 1) : null;
+        }
+
+        if (notificationId.startsWith("COMMENT_POST_")) {
+            String commentId = notificationId.substring("COMMENT_POST_".length());
+            return commentRepo.findById(commentId)
+                    .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                    .orElse(null);
+        }
+
+        if (notificationId.startsWith("VOTE_COMMENT_")) {
+            int cmtMarker = notificationId.lastIndexOf("_CMT_");
+            if (cmtMarker < 0) {
+                return null;
+            }
+            String commentId = notificationId.substring(cmtMarker + 1);
+            return commentRepo.findById(commentId)
+                    .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                    .orElse(null);
+        }
+
+        return null;
     }
 
     private String tabByType(String type) {
@@ -237,7 +278,8 @@ public class StudentNotificationController {
                                     String icon,
                                     String iconClass,
                                     String tabKey,
-                                    boolean read) {
+                                    boolean read,
+                                    String requestId) {
     }
 }
 

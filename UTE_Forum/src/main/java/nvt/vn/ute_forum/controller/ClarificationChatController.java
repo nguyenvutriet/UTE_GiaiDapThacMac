@@ -224,7 +224,20 @@ public class ClarificationChatController {
         message.setClarificationConversation(conversation);
         messService.save(message);
 
+        publishRequestSyncEvent(request.getId());
+
         return Map.of("id", conversation.getId());
+    }
+
+    private void publishRequestSyncEvent(String requestId) {
+        if (requestId == null || requestId.isBlank()) {
+            return;
+        }
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("requestId", requestId);
+        payload.put("eventType", "CONVERSATION_OPENED");
+        messagingTemplate.convertAndSend("/topic/request-status/" + requestId, payload);
     }
 
     @MessageMapping("/chat.send/{conversationId}")

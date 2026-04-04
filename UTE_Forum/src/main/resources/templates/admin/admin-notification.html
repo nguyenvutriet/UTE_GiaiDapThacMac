@@ -77,7 +77,8 @@
         <section class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
             <article class="notification-item"
                      th:classappend="${item.read} ? ' read' : ' unread'"
-                     th:attr="data-read-form-id='read-notification-' + ${item.id}"
+                     th:attr="data-read-form-id='read-notification-' + ${item.id},
+                              data-request-id=${item.requestId}"
                      th:each="item : ${notifications}">
                 <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">!</div>
                 <div class="item-content">
@@ -101,6 +102,7 @@
                 <form method="post" th:action="@{/admin/notifications/read}" class="read-form"
                       th:id="'read-notification-' + ${item.id}">
                     <input type="hidden" name="notificationId" th:value="${item.id}">
+                    <input type="hidden" name="requestId" th:value="${item.requestId}">
                     <input type="hidden" name="tab" th:value="${activeTab}">
                     <input type="hidden" name="filter" th:value="${activeFilter}">
                 </form>
@@ -115,20 +117,44 @@
 <script>
     document.addEventListener('click', function (event) {
         if (event.target.closest('.delete-form, .delete-noti-btn')) {
+            console.debug('[NOTI-DEBUG][ADMIN] Click delete button/form -> skip redirect');
             return;
         }
 
         const item = event.target.closest('.notification-item[data-read-form-id]');
         if (!item) {
+            console.debug('[NOTI-DEBUG][ADMIN] Click outside notification item -> skip');
             return;
         }
+
+        console.debug('[NOTI-DEBUG][ADMIN] Notification clicked', {
+            notificationId: item.getAttribute('data-read-form-id'),
+            requestId: item.getAttribute('data-request-id')
+        });
 
         const formId = item.getAttribute('data-read-form-id');
         const form = document.getElementById(formId);
         if (form) {
             item.classList.remove('unread');
             item.classList.add('read', 'pending-read');
+            console.debug('[NOTI-DEBUG][ADMIN] Submit read form', { formId: formId });
             form.submit();
+        } else {
+            console.warn('[NOTI-DEBUG][ADMIN] Read form not found', { formId: formId });
+        }
+
+        const requestId = item.getAttribute('data-request-id');
+        if (requestId && requestId !== 'null' && requestId !== '') {
+            const targetUrl = `/admin/forum/${requestId}`;
+            console.debug('[NOTI-DEBUG][ADMIN] Redirecting to post detail', { targetUrl: targetUrl });
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 100);
+        } else {
+            console.warn('[NOTI-DEBUG][ADMIN] Missing requestId -> cannot redirect', {
+                requestId: requestId,
+                html: item.outerHTML
+            });
         }
     });
 </script>

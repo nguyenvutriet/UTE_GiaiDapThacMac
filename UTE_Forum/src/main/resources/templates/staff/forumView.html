@@ -27,7 +27,7 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar">
             <div class="user-info">
-                <span th:text="${user.department.name}"></span>
+                <span th:text="${#strings.replace(#strings.replace(#strings.replace(user.department.name, 'Khoa ', ''), 'Phòng ban ', ''), 'Phòng ', '')}"></span>
                 <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
@@ -68,7 +68,7 @@
                 </div>
 
 
-                <article class="post-card" th:each="post : ${requests}">
+                <article class="post-card" th:each="post : ${requests}" th:attr="data-post-id=${post.id}">
                     <div th:onclick="openPostModal([[${post}]])" style="cursor: pointer;">
                         <div class="post-header">
                             <div class="user-meta">
@@ -1522,5 +1522,10 @@
     }
 
 </script>
+
+<!-- Script xử lý click vào bài viết để navigate tới detail -->
+<script src="/js/staff/forum-post-handler.js"></script>
+<script src="/js/staff/notification-handler.js"></script>
+
 </body>
 </html>

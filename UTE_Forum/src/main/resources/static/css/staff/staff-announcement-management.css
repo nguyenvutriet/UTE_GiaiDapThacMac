@@ -2,6 +2,11 @@
     min-height: calc(100vh - 60px);
 }
 
+/* Keep department name style consistent with other staff pages (not bold) */
+.sidebar .user-profile .user-info .user-role {
+    font-weight: 400;
+}
+
 .announcement-toolbar {
     align-items: center;
     gap: 12px;
