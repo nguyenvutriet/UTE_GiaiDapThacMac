@@ -46,7 +46,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         populateNotificationModel(model, user, tab, filter);
@@ -64,7 +64,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         notificationService.deleteForUser(notificationId, user.getId());
@@ -82,7 +82,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_DEPARTMENT".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         notificationService.markAsReadForUser(notificationId, user.getId());
@@ -108,7 +108,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         populateNotificationModel(model, user, tab, filter);
@@ -126,7 +126,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         notificationService.deleteForUser(notificationId, user.getId());
@@ -144,7 +144,7 @@ public class RoleNotificationController {
             return "redirect:/login";
         }
         if (!"ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
-            return "redirect:/api/forum/view";
+            return redirectHomeByRole(user);
         }
 
         notificationService.markAsReadForUser(notificationId, user.getId());
@@ -299,11 +299,11 @@ public class RoleNotificationController {
         if (containsAny(signal, "COMMENT", "BINH LUAN")) {
             return "💬";
         }
-        if (containsAny(signal, "FORWARD", "CHUYEN TIEP")) {
+        if (containsAny(signal, "FORWARD", "FORWARDED", "FORWARDING", "CHUYEN TIEP", "CHUYEN_TIEP")) {
             return "🔁";
         }
-        if (containsAny(signal, "RESOLVED", "APPROVED", "THANH CONG", "DA XU LY")) {
-            return "✅";
+        if (containsAny(signal, "RESOLVED", "APPROVED", "THANH CONG", "DA XU LY", "HOAN TAT")) {
+            return "✔︎";
         }
         if (containsAny(signal, "FEEDBACK", "GOP Y")) {
             return "📝";
@@ -321,7 +321,7 @@ public class RoleNotificationController {
         if (containsAny(signal, "RESOLVED", "APPROVED", "THANH CONG", "DA XU LY")) {
             return "icon-success";
         }
-        if (containsAny(signal, "PROCESSING", "FORWARDED", "FORWARD", "CHUYEN TIEP")) {
+        if (containsAny(signal, "PROCESSING", "FORWARDED", "FORWARD", "FORWARDING", "CHUYEN TIEP", "CHUYEN_TIEP")) {
             return "icon-processing";
         }
         if (containsAny(signal, "COMMENT", "VOTE", "FORUM", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {
@@ -455,6 +455,20 @@ public class RoleNotificationController {
         }
 
         return usersService.getByEmail(email.trim());
+    }
+
+    private String redirectHomeByRole(Users user) {
+        if (user == null || user.getRole() == null) {
+            return "redirect:/login";
+        }
+
+        String role = user.getRole().trim().toUpperCase(Locale.ROOT);
+        return switch (role) {
+            case "ROLE_ADMIN" -> "redirect:/admin/list-feedbacks";
+            case "ROLE_DEPARTMENT" -> "redirect:/staff/list-feedbacks";
+            case "ROLE_STUDENT" -> "redirect:/api/forum/view";
+            default -> "redirect:/login";
+        };
     }
 
     private record NotificationItem(String id,
