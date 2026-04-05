@@ -21,6 +21,9 @@ public class Request {
     @Column(name = "description", nullable = false)
     private String description;
 
+    @Column(name = "location")
+    private String location;
+
     @Column(name = "currentstatus", nullable = false)
     private String currentStatus;
 
@@ -145,6 +148,14 @@ public class Request {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getCurrentStatus() {

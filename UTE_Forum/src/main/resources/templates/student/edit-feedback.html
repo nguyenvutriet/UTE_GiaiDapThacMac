@@ -96,7 +96,8 @@
             </select>
 
             <label for="location">Địa điểm (nếu có)</label>
-            <input id="location" name="location" type="text" placeholder="VD: Tầng 2, Phòng A101">
+            <input id="location" name="location" type="text" placeholder="VD: Tầng 2, Phòng A101"
+                   th:value="${request != null ? request.location : ''}">
           </article>
 
           <article class="panel">

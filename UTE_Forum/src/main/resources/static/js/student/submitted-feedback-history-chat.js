@@ -18,6 +18,7 @@
   var form = document.getElementById("chat-send-form");
   var messageInput = document.getElementById("chat-message-input");
   var fileInput = document.getElementById("chat-file-input");
+  var filePicked = document.getElementById("chat-file-picked");
   var sendButton = document.getElementById("chat-send-btn");
 
   if (!conversationItems.length || !drawer || !drawerBackdrop || !closeDrawerButton || !drawerTitle
@@ -366,6 +367,44 @@
     messageInput.disabled = !enabled;
     fileInput.disabled = !enabled;
     sendButton.disabled = !enabled;
+    if (!enabled) {
+      clearSelectedFilesLabel();
+    }
+  }
+
+  function clearSelectedFilesLabel() {
+    if (!filePicked) {
+      return;
+    }
+    filePicked.textContent = "";
+    filePicked.hidden = true;
+  }
+
+  function renderSelectedFilesLabel(files) {
+    if (!filePicked) {
+      return;
+    }
+
+    if (!files || files.length === 0) {
+      clearSelectedFilesLabel();
+      return;
+    }
+
+    var names = [];
+    for (var i = 0; i < files.length; i++) {
+      names.push(files[i].name || "tep");
+    }
+
+    var text = files.length === 1
+      ? "Đã chọn 1 tệp: " + names[0]
+      : "Đã chọn " + files.length + " tệp: " + names.join(", ");
+
+    if (text.length > 180) {
+      text = text.substring(0, 177) + "...";
+    }
+
+    filePicked.textContent = text;
+    filePicked.hidden = false;
   }
 
   function setDrawerConversationState(isOpen) {
@@ -446,6 +485,8 @@
 
     activeConversationId = conversationId;
     activeRequestId = requestId;
+    clearSelectedFilesLabel();
+    fileInput.value = "";
 
     for (var idx = 0; idx < conversationItems.length; idx++) {
       conversationItems[idx].classList.remove("active");
@@ -485,6 +526,10 @@
   closeDrawerButton.addEventListener("click", closeDrawer);
   drawerBackdrop.addEventListener("click", closeDrawer);
 
+  fileInput.addEventListener("change", function () {
+    renderSelectedFilesLabel(fileInput.files);
+  });
+
   form.addEventListener("submit", function (event) {
     event.preventDefault();
 
@@ -506,6 +551,7 @@
         sendChatMessage(text, attachments);
         messageInput.value = "";
         fileInput.value = "";
+        clearSelectedFilesLabel();
       })
       .catch(function () {
         alert("Không thể gửi tệp đính kèm. Vui lòng thử lại.");

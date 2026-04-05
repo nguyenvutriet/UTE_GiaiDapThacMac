@@ -190,6 +190,10 @@
                 <span class="meta-icon"><i class="fas fa-folder"></i></span>
                 <span th:text="${#lists.isEmpty(selectedRequest.categories) ? 'Chưa phân loại' : #strings.listJoin(selectedRequest.categories.![subject], ', ')}">Học phí, Cơ sở vật chất</span>
               </span>
+              <span class="meta-chip location-chip">
+                <span class="meta-icon"><i class="fas fa-location-dot"></i></span>
+                <span th:text="${selectedRequest.location != null and !#strings.isEmpty(selectedRequest.location) ? selectedRequest.location : 'Chưa cập nhật địa điểm'}">Địa điểm</span>
+              </span>
             </div>
           </div>
           <h3>Nội dung:</h3>
@@ -306,6 +310,7 @@
             <input id="chat-file-input" type="file" multiple hidden>
             <input id="chat-message-input" type="text" placeholder="Nhập tin nhắn...">
             <button id="chat-send-btn" type="submit" class="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
+            <div id="chat-file-picked" class="chat-file-picked" hidden aria-live="polite"></div>
           </form>
         </aside>
       </section>
@@ -338,4 +343,7 @@
 </script>
 </body>
 </html>
+
+
+
 
