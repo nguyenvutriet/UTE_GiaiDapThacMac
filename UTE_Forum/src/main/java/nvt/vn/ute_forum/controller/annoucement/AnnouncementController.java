@@ -98,7 +98,7 @@ public class AnnouncementController {
 
         // 2. Giới hạn số lượng kết quả gợi ý (Top 7)
         // Lưu ý: PageRequest.of(0, 7) để lấy trang đầu tiên với 7 bản ghi
-        Pageable topSeven = PageRequest.of(0, 7);
+        Pageable topSeven = PageRequest.of(0, 20);
 
         // 3. Gọi Repo với keyword đã xử lý lỗi CAST @Lob lúc nãy
         List<Announcement> results = announcementRepository.searchByKeyword(keyword, topSeven);

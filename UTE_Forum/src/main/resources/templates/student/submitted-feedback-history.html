@@ -52,9 +52,7 @@
     </header>
 
     <section class="history-panel">
-      <div id="history-status-sync"
-           th:if="${selectedRequest != null}"
-           th:attr="data-request-id=${selectedRequest.id}"></div>
+      <div id="history-status-sync" th:attr="data-request-id=${selectedRequestId}"></div>
 
       <div class="feedback-success-modal-backdrop" id="feedback-success-modal" th:if="${successMessage}">
         <div class="feedback-success-modal" role="dialog" aria-modal="true" aria-labelledby="feedback-success-title">
@@ -89,7 +87,7 @@
       </form>
 
       <div class="feedback-grid" th:if="${selectedRequest == null}">
-        <article class="feedback-card" th:each="req : ${requests}">
+        <article class="feedback-card" th:each="req : ${requests}" th:attr="data-request-id=${req.id}">
           <div class="card-head">
             <span class="status-pill"
                   th:classappend="${req.currentStatus == 'PENDING' ? ' pending' : req.currentStatus == 'FORWARDING' ? ' forwarding' : req.currentStatus == 'APPROVED' ? ' approved' : req.currentStatus == 'RESOLVED' ? ' done' : req.currentStatus == 'REJECTED' ? ' rejected' : ' pending'}">

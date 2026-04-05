@@ -406,7 +406,19 @@ body {
   border: 1px solid #d5dbe5;
   background: #eef2f7;
   color: #475569;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
+
+.status-pill:hover {
+  filter: brightness(0.93);
+}
+
+.status-pill.pending:hover { color: #92400e; }
+.status-pill.forwarding:hover { color: #581c87; }
+.status-pill.approved:hover,
+.status-pill.processing:hover { color: #1e40af; }
+.status-pill.done:hover { color: #065f46; }
+.status-pill.rejected:hover { color: #7f1d1d; }
 
 .status-pill.done {
   color: #0f766e;
@@ -615,6 +627,11 @@ body {
   color: #475569;
   font-size: 11px;
   font-weight: 600;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, filter 0.18s ease;
+}
+
+.meta-chip:hover {
+  filter: brightness(0.94);
 }
 
 .meta-chip.mode-chip {
@@ -627,10 +644,18 @@ body {
   border-color: #93c5fd;
 }
 
+.meta-chip.mode-public:hover {
+  color: #1e40af;
+}
+
 .meta-chip.mode-department {
   color: #0f766e;
   background: #ecfeff;
   border-color: #67e8f9;
+}
+
+.meta-chip.mode-department:hover {
+  color: #0f5f56;
 }
 
 .meta-chip.time-chip {
@@ -639,10 +664,22 @@ body {
   border-color: #cbd5e1;
 }
 
+.meta-chip.time-chip:hover {
+  color: #1f2937;
+}
+
 .meta-chip.dept-chip {
   color: #92400e;
   background: #fef3c7;
   border-color: #fcd34d;
+}
+
+.meta-chip.dept-chip:hover {
+  color: #78350f;
+}
+
+.meta-chip.category-chip:hover {
+  color: #334155;
 }
 
 .detail-description {
@@ -724,7 +761,7 @@ body {
 
 .timeline-dot {
   position: absolute;
-  left: -32px;
+  left: -34px;
   top: 4px;
   width: 18px;
   height: 18px;
@@ -1473,5 +1510,3 @@ body {
     width: 100%;
   }
 }
-
-

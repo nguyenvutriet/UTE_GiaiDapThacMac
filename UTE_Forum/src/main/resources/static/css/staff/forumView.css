@@ -144,6 +144,8 @@
     display: flex;
     gap: 10px;
     margin-bottom: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
 }
 
 .tag {
@@ -152,11 +154,28 @@
     border-radius: 999px;
     background: #f1f5f9;
     font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
+/* Dept tag */
 .dept-tag {
     background: #dbeafe;
     color: #1d4ed8;
+}
+
+.dept-tag:hover {
+    background: #bfdbfe;
+}
+
+/* Category tag */
+.cat-tag {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.cat-tag:hover {
+    background: #fde68a;
 }
 
 /* ===== ACTION ===== */

@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
+                                "/uploads/**",
                                 "/forgot-password",
                                 "/send-otp",
                                 "/verify-otp",
@@ -69,21 +70,24 @@ public class SecurityConfig {
                                 "/feedback/send",
                                 "/apoi/department/**"
                         ).permitAll()
+                        .requestMatchers("/api/history/chat/upload").hasAnyRole("STUDENT", "DEPARTMENT")
                         .requestMatchers("/admin/forum/**", "/adannouncement/**",
                                 "/admin/category", "/admin/category/search", "/admin/category/create", "/admin/category/update",
                                 "/admin/category/activate/**", "/admin/category/deactivate/**", "/admin/reports",
                                 "/admin/reports/**", "/admin/list-feedbacks", "/admin/feedback-detail", "/admin/search-feedbacks",
                                 "/admin/filter-feedbacks", "/admin/forum/view", "/admin/forum/*", "/admin/forum/search-list",
+                                "/admin/notifications", "/admin/notifications/**",
                                 "/api/comments/admin/**").hasRole("ADMIN")
                         .requestMatchers("/staff/list-feedbacks", "/api/forum/staff", "/staff/create-conversation",
                                 "/chat.send/*", "/staff/close-conversation/*", "/staff/conversation/*/messages", "/staff/feedback-detail",
-                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**").hasRole("DEPARTMENT")
+                                "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**",
+                                "/staff/notifications", "/staff/notifications/**").hasRole("DEPARTMENT")
                         .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
                                 "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
                                 "/api/forum/search-list", "/announcement").hasRole("STUDENT")
                         .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
                         .requestMatchers("/api/departments/**", "/department/**", "/announcement/detail/**").hasAnyRole("ADMIN", "STUDENT")
-                        .requestMatchers("/ws", "/topic/**", "/app/**", "/api/history/chat/upload", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
+                        .requestMatchers("/ws", "/topic/**", "/app/**", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
                         .anyRequest().authenticated())
                 .formLogin(
                         form ->  form.loginPage("/login")

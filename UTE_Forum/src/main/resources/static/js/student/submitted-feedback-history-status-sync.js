@@ -6,8 +6,23 @@
     return;
   }
 
-  var requestId = syncRoot.getAttribute("data-request-id");
-  if (!requestId) {
+  var requestId = syncRoot.getAttribute("data-request-id") || "";
+
+  var requestIds = {};
+  if (requestId) {
+    requestIds[requestId] = true;
+  }
+
+  var cards = document.querySelectorAll(".feedback-card[data-request-id]");
+  for (var i = 0; i < cards.length; i++) {
+    var cardRequestId = cards[i].getAttribute("data-request-id");
+    if (cardRequestId) {
+      requestIds[cardRequestId] = true;
+    }
+  }
+
+  var topicRequestIds = Object.keys(requestIds);
+  if (topicRequestIds.length === 0) {
     return;
   }
 
@@ -32,7 +47,7 @@
 
     try {
       var payload = JSON.parse(frame.body);
-      if (!payload || payload.requestId !== requestId) {
+      if (!payload || !payload.requestId || !requestIds[payload.requestId]) {
         return;
       }
       reloadCurrentPage();
@@ -46,7 +61,9 @@
   client.debug = function () {};
 
   client.connect({}, function () {
-    client.subscribe("/topic/request-status/" + requestId, onStatusEvent);
+    for (var j = 0; j < topicRequestIds.length; j++) {
+      client.subscribe("/topic/request-status/" + topicRequestIds[j], onStatusEvent);
+    }
   });
 })();
 
