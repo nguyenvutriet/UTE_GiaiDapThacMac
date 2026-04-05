@@ -32,11 +32,12 @@
   var activeSubscriptions = [];
   var appendedMessageIds = {}; // Track message IDs đã được append để tránh duplicate
   var reconnectTimer = null;
-  var reconnectAttempt = 0;
+  var reconnectDelay = 2000;
+  var isConnected = false;
   var isConnecting = false;
   var healthCheckTimer = null;
   var pendingMessages = [];
-  var hadDisconnect = false;
+  var isManualDisconnect = false;
 
   function clearReconnectTimer() {
     if (reconnectTimer) {
@@ -45,61 +46,37 @@
     }
   }
 
-  function startHealthCheck() {
+  function stopHealthCheck() {
     if (healthCheckTimer) {
       clearInterval(healthCheckTimer);
+      healthCheckTimer = null;
     }
+  }
+
+  function startHealthCheck() {
+    stopHealthCheck();
 
     healthCheckTimer = setInterval(function () {
-      if (!activeConversationId) {
+      var isDrawerOpen = drawer && drawer.classList && drawer.classList.contains("open");
+      if (!activeConversationId || !isDrawerOpen) {
         return;
       }
 
-      if (!stompClient || !stompClient.connected) {
-        connectWebSocket();
+      if (!isConnected || !stompClient || !stompClient.connected) {
+        connectWebSocket(activeConversationId);
       }
     }, 5000);
   }
 
   function flushPendingMessages() {
-    if (!stompClient || !stompClient.connected || pendingMessages.length === 0) {
+    if (!isConnected || !stompClient || !stompClient.connected || pendingMessages.length === 0) {
       return;
     }
 
     while (pendingMessages.length > 0) {
       var pendingPayload = pendingMessages.shift();
-      stompClient.send("/app/clarification/send", {}, JSON.stringify(pendingPayload));
+      _doSend(pendingPayload);
     }
-  }
-
-  function resyncActiveConversation() {
-    if (!activeConversationId) {
-      return;
-    }
-
-    loadConversation(activeConversationId)
-      .then(function (payload) {
-        if (!payload || payload.conversationId !== activeConversationId) {
-          return;
-        }
-        renderMessages(payload.messages || []);
-      })
-      .catch(function () {
-        // Ignore sync errors; live stream may still continue normally.
-      });
-  }
-
-  function scheduleReconnect() {
-    if (reconnectTimer) {
-      return;
-    }
-
-    reconnectAttempt += 1;
-    var delay = Math.min(15000, 1000 * Math.pow(2, Math.min(reconnectAttempt, 4)));
-    reconnectTimer = setTimeout(function () {
-      reconnectTimer = null;
-      connectWebSocket();
-    }, delay);
   }
 
   function clearActiveSubscriptions() {
@@ -122,15 +99,21 @@
 
   setComposerEnabled(false);
 
-  function connectWebSocket() {
+  function connectWebSocket(conversationId) {
     if (typeof SockJS === "undefined" || typeof Stomp === "undefined") {
       return;
     }
 
-    if (isConnecting || (stompClient && stompClient.connected)) {
+    var targetConversationId = conversationId || activeConversationId;
+    if (!targetConversationId) {
       return;
     }
 
+    if (stompClient && (stompClient.connected || isConnecting)) {
+      return;
+    }
+
+    isManualDisconnect = false;
     isConnecting = true;
 
     var socket = new SockJS("/ws");
@@ -140,32 +123,52 @@
     stompClient.heartbeat.incoming = 20000;
 
     socket.onclose = function () {
+      if (isManualDisconnect) {
+        return;
+      }
       clearActiveSubscriptions();
       isConnecting = false;
-      hadDisconnect = true;
-      scheduleReconnect();
+      isConnected = false;
+
+      if (!targetConversationId) {
+        return;
+      }
+
+      clearReconnectTimer();
+      reconnectTimer = setTimeout(function () {
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+        connectWebSocket(targetConversationId);
+      }, reconnectDelay);
     };
 
     stompClient.connect({}, function () {
       isConnecting = false;
-      reconnectAttempt = 0;
+      isConnected = true;
+      activeConversationId = targetConversationId;
+      reconnectDelay = 2000;
       clearReconnectTimer();
-
-      if (activeConversationId) {
-        subscribeConversation(activeConversationId);
-      }
-
-      flushPendingMessages();
       startHealthCheck();
 
-      if (hadDisconnect) {
-        resyncActiveConversation();
-        hadDisconnect = false;
-      }
+      subscribeConversation(targetConversationId);
+      flushPendingMessages();
     }, function () {
+      if (isManualDisconnect) {
+        return;
+      }
+
+      stompClient = null;
       isConnecting = false;
-      hadDisconnect = true;
-      scheduleReconnect();
+      isConnected = false;
+
+      if (!targetConversationId) {
+        return;
+      }
+
+      clearReconnectTimer();
+      reconnectTimer = setTimeout(function () {
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+        connectWebSocket(targetConversationId);
+      }, reconnectDelay);
     });
   }
 
@@ -199,6 +202,22 @@
       });
   }
 
+  function _doSend(payload) {
+    if (!payload) {
+      return;
+    }
+
+    if (!isConnected || !stompClient || !stompClient.connected) {
+      pendingMessages.push(payload);
+      if (activeConversationId) {
+        connectWebSocket(activeConversationId);
+      }
+      return;
+    }
+
+    stompClient.send("/app/clarification/send", {}, JSON.stringify(payload));
+  }
+
   function sendChatMessage(text, attachments) {
     if (!activeRequestId) {
       return;
@@ -210,13 +229,7 @@
       attachments: attachments || []
     };
 
-    if (!stompClient || !stompClient.connected) {
-      pendingMessages.push(payload);
-      connectWebSocket();
-      return;
-    }
-
-    stompClient.send("/app/clarification/send", {}, JSON.stringify(payload));
+    _doSend(payload);
   }
 
    function parseMessagePayload(rawContent) {
@@ -464,6 +477,21 @@
     drawer.setAttribute("aria-hidden", "true");
     drawerBackdrop.hidden = true;
     document.body.style.overflow = "";
+
+    stopHealthCheck();
+    clearReconnectTimer();
+    clearActiveSubscriptions();
+    isManualDisconnect = true;
+    if (stompClient && stompClient.connected) {
+      try {
+        stompClient.disconnect(function () {});
+      } catch (e) {
+        // Ignore disconnect errors from closed transports.
+      }
+    }
+    stompClient = null;
+    isConnected = false;
+    isConnecting = false;
   }
 
   function clearMessages() {
@@ -637,7 +665,7 @@
           if (stompClient && stompClient.connected) {
             subscribeConversation(activeConversationId);
           } else {
-            connectWebSocket();
+            connectWebSocket(activeConversationId);
           }
         }
       })
@@ -690,7 +718,6 @@
       });
   });
 
-  connectWebSocket();
 })();
 
 
