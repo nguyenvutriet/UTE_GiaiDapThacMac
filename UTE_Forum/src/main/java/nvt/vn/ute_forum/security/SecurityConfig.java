@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/department/**",
 
-                                "/feedback/send",
+
                                 "/apoi/department/**"
                         ).permitAll()
                         .requestMatchers("/api/history/chat/upload").hasAnyRole("STUDENT", "DEPARTMENT")
@@ -83,7 +83,7 @@ public class SecurityConfig {
                                 "/staff/search-feedbacks", "/staff/filter-feedbacks", "/staff/update-status", "/staff/forward", "/api/forum/staff/**",
                                 "/staff/notifications", "/staff/notifications/**").hasRole("DEPARTMENT")
                         .requestMatchers("/api/forum/view", "/feedback/send", "/api/submit", "/api/edit-request",
-                                "/api/delete-request", "/feedback/send", "/api/update-request", "/api/history/**", "/api/forum/*",
+                                "/api/delete-request", "/api/update-request", "/api/history/**", "/api/forum/*",
                                 "/api/forum/search-list", "/announcement").hasRole("STUDENT")
                         .requestMatchers("/api/announcement/**", "/api/comments/**", "/api/vote-comment/**", "/api/forum/reactors/details", "/api/forum/search").hasAnyRole("STUDENT", "ADMIN", "DEPARTMENT")
                         .requestMatchers("/api/departments/**", "/department/**", "/announcement/detail/**").hasAnyRole("ADMIN", "STUDENT")

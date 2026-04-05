@@ -1004,7 +1004,7 @@
         <div class="msg-container" ${msg.id ? `data-mid="${msg.id}"` : ''}>
             <div class="msg ${isMe ? 'right' : 'left'}">
                 <div class="bubble">
-                    <div class="sender-name">${escapeHtml(senderName)}</div>
+                    <div class="sender-name">${isMe ? escapeHtml(senderName) : 'Ẩn danh'}</div>
                     <div class="message-content">${escapeHtml(actualText).replace(/\n/g, '<br>')}</div>
                     ${attachmentsHtml}
                     <time>${time}</time>
