@@ -215,7 +215,7 @@
       return;
     }
 
-    stompClient.send("/app/clarification/send", {}, JSON.stringify(payload));
+    stompClient.send("/app/chat.send/" + activeConversationId, {}, JSON.stringify(payload));
   }
 
   function sendChatMessage(text, attachments) {
@@ -590,7 +590,7 @@
 
      clearActiveSubscriptions();
 
-     // Message handler chung cho cả 2 topics
+     // Message handler chung cho conversation topic như staff
      var messageHandler = function (frame) {
        if (!frame || !frame.body) {
          return;
@@ -603,10 +603,6 @@
        }
      };
 
-     // Subscribe vào topic clarification (khi student gửi)
-     activeSubscriptions.push(stompClient.subscribe("/topic/clarification/" + conversationId, messageHandler));
-
-     // Subscribe thêm vào topic conversation (khi staff gửi)
      activeSubscriptions.push(stompClient.subscribe("/topic/conversation/" + conversationId, messageHandler));
    }
 
