@@ -34,12 +34,59 @@
   var reconnectTimer = null;
   var reconnectAttempt = 0;
   var isConnecting = false;
+  var healthCheckTimer = null;
+  var pendingMessages = [];
+  var hadDisconnect = false;
 
   function clearReconnectTimer() {
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
+  }
+
+  function startHealthCheck() {
+    if (healthCheckTimer) {
+      clearInterval(healthCheckTimer);
+    }
+
+    healthCheckTimer = setInterval(function () {
+      if (!activeConversationId) {
+        return;
+      }
+
+      if (!stompClient || !stompClient.connected) {
+        connectWebSocket();
+      }
+    }, 5000);
+  }
+
+  function flushPendingMessages() {
+    if (!stompClient || !stompClient.connected || pendingMessages.length === 0) {
+      return;
+    }
+
+    while (pendingMessages.length > 0) {
+      var pendingPayload = pendingMessages.shift();
+      stompClient.send("/app/clarification/send", {}, JSON.stringify(pendingPayload));
+    }
+  }
+
+  function resyncActiveConversation() {
+    if (!activeConversationId) {
+      return;
+    }
+
+    loadConversation(activeConversationId)
+      .then(function (payload) {
+        if (!payload || payload.conversationId !== activeConversationId) {
+          return;
+        }
+        renderMessages(payload.messages || []);
+      })
+      .catch(function () {
+        // Ignore sync errors; live stream may still continue normally.
+      });
   }
 
   function scheduleReconnect() {
@@ -89,10 +136,13 @@
     var socket = new SockJS("/ws");
     stompClient = Stomp.over(socket);
     stompClient.debug = function () {};
+    stompClient.heartbeat.outgoing = 20000;
+    stompClient.heartbeat.incoming = 20000;
 
     socket.onclose = function () {
       clearActiveSubscriptions();
       isConnecting = false;
+      hadDisconnect = true;
       scheduleReconnect();
     };
 
@@ -104,8 +154,17 @@
       if (activeConversationId) {
         subscribeConversation(activeConversationId);
       }
+
+      flushPendingMessages();
+      startHealthCheck();
+
+      if (hadDisconnect) {
+        resyncActiveConversation();
+        hadDisconnect = false;
+      }
     }, function () {
       isConnecting = false;
+      hadDisconnect = true;
       scheduleReconnect();
     });
   }
@@ -141,7 +200,7 @@
   }
 
   function sendChatMessage(text, attachments) {
-    if (!stompClient || !stompClient.connected || !activeRequestId) {
+    if (!activeRequestId) {
       return;
     }
 
@@ -150,6 +209,12 @@
       content: text,
       attachments: attachments || []
     };
+
+    if (!stompClient || !stompClient.connected) {
+      pendingMessages.push(payload);
+      connectWebSocket();
+      return;
+    }
 
     stompClient.send("/app/clarification/send", {}, JSON.stringify(payload));
   }
@@ -302,14 +367,14 @@
 
        // Phân loại attachment - image vs others
        for (var i = 0; i < attachments.length; i++) {
-         var attachment = attachments[i];
-         if (!attachment || !attachment.url) continue;
+         var incomingAttachment = attachments[i];
+         if (!incomingAttachment || !incomingAttachment.url) continue;
          
-         var isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachment.url);
+         var isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(incomingAttachment.url);
          if (isImage) {
-           imageAttachments.push(attachment);
+           imageAttachments.push(incomingAttachment);
          } else {
-           otherAttachments.push(attachment);
+           otherAttachments.push(incomingAttachment);
          }
        }
 
@@ -338,13 +403,13 @@
          list.className = "chat-attachment-list";
 
          for (var k = 0; k < otherAttachments.length; k++) {
-           var attachment = otherAttachments[k];
+           var fileAttachment = otherAttachments[k];
            var item = document.createElement("li");
            var link = document.createElement("a");
-           link.href = attachment.url;
+           link.href = fileAttachment.url;
            link.target = "_blank";
            link.rel = "noopener noreferrer";
-           link.textContent = attachment.name || "Tệp đính kèm";
+           link.textContent = fileAttachment.name || "Tệp đính kèm";
            item.appendChild(link);
            list.appendChild(item);
          }
