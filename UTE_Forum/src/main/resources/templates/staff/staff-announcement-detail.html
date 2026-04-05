@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Cán bộ - Chi tiết thông báo</title>
+	<link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+	<link rel="stylesheet" href="/css/staff/forumView.css">
+	<link rel="stylesheet" th:href="@{/css/staff/staff-style.css}">
+	<link rel="stylesheet" th:href="@{/css/staff/staff-announcement-detail.css}">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<div class="staff-layout">
+	<aside class="sidebar">
+		<div class="sidebar-header">
+			<img src="/images/logo_no_bg.png" class="logo" alt="logo">
+		</div>
+
+		<div class="user-profile">
+			<img src="/images/staff.png" class="avatar" alt="avatar">
+			<div class="user-info">
+				<span class="user-role" th:text="${#strings.replace(#strings.replace(#strings.replace(user.department.name, 'Khoa ', ''), 'Phòng ban ', ''), 'Phòng ', '')}">Phòng ban</span>
+				<span class="user-dept">Nhân viên phòng ban</span>
+			</div>
+		</div>
+
+		<nav class="sidebar-nav">
+			<a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+			<a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+			<a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+			<a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+			<a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+			<a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
+		</nav>
+
+		<a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
+	</aside>
+
+	<main class="main-content">
+		<header class="main-header">
+			<div class="main-header-top"><p class="school-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</p></div>
+			<div class="main-header-bottom"><h1 class="page-tab">CHI TIẾT THÔNG BÁO</h1></div>
+		</header>
+
+		<section class="table-card announcement-detail-card">
+			<a th:href="@{/staff/announcement-management}" class="back-link">
+				<i class="fas fa-arrow-left"></i> Quay lại quản lý thông báo
+			</a>
+
+			<div class="ann-meta">
+				<span><i class="fas fa-university"></i> <span th:text="${ann.creatorName}">Phòng ban</span></span>
+				<span><i class="fas fa-calendar-alt"></i> <span th:text="${ann.date}">26/03/2026</span></span>
+			</div>
+
+			<h1 class="ann-title" th:text="${ann.title}">Tiêu đề thông báo</h1>
+
+			<div class="ann-content" th:text="${ann.content}">
+				Nội dung chi tiết ở đây...
+			</div>
+
+			<div th:each="file : ${ann.attachments}" th:if="${file.fileName.matches('.*\\.(jpg|jpeg|png|gif|webp)$')}">
+				<div class="ann-image-preview">
+					<img th:src="${file.fileUrl}" alt="image">
+				</div>
+			</div>
+
+			<div class="attachment-list" th:if="${not #lists.isEmpty(ann.attachments)}">
+				<div class="attachment-item" th:each="file : ${ann.attachments}">
+					<a th:href="${file.fileUrl}" class="file-link" target="_blank">
+						<i class="fas fa-paperclip"></i> <span th:text="${file.fileName}">file_name.pdf</span>
+					</a>
+
+					<div th:if="${file.fileName.toLowerCase().endsWith('.pdf')}" class="preview-block">
+						<iframe th:src="${file.fileUrl + '#toolbar=0'}"></iframe>
+					</div>
+
+					<div th:if="${file.fileName.toLowerCase().endsWith('.doc') || file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.xlsx')}" class="preview-block">
+						<iframe th:src="'https://docs.google.com/viewer?url=' + ${file.fileUrl} + '&embedded=true'"></iframe>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+</div>
+</body>
+</html>
+
