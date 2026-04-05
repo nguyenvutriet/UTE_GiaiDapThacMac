@@ -26,11 +26,8 @@
     return;
   }
 
-  if (typeof SockJS === "undefined" || typeof Stomp === "undefined") {
-    return;
-  }
-
   var hasReloadTriggered = false;
+  var lastStatusByRequestId = {};
 
   function reloadCurrentPage() {
     if (hasReloadTriggered) {
@@ -40,30 +37,39 @@
     window.location.reload();
   }
 
-  function onStatusEvent(frame) {
-    if (!frame || !frame.body) {
-      return;
-    }
-
-    try {
-      var payload = JSON.parse(frame.body);
-      if (!payload || !payload.requestId || !requestIds[payload.requestId]) {
+  function pollStatus(requestId) {
+    return fetch("/api/history/status?requestId=" + encodeURIComponent(requestId), {
+      method: "GET",
+      credentials: "same-origin"
+    }).then(function (response) {
+      if (!response.ok) {
+        throw new Error("status-fetch-failed");
+      }
+      return response.json();
+    }).then(function (payload) {
+      if (!payload || !payload.requestId || !payload.currentStatus) {
         return;
       }
-      reloadCurrentPage();
-    } catch (e) {
-      // Ignore malformed frame and keep current page usable.
+
+      var prev = lastStatusByRequestId[payload.requestId];
+      if (prev && prev !== payload.currentStatus) {
+        reloadCurrentPage();
+        return;
+      }
+
+      lastStatusByRequestId[payload.requestId] = payload.currentStatus;
+    }).catch(function () {
+      // Ignore polling errors so the page stays usable on deploy.
+    });
+  }
+
+  function pollAllStatuses() {
+    for (var i = 0; i < topicRequestIds.length; i++) {
+      pollStatus(topicRequestIds[i]);
     }
   }
 
-  var socket = new SockJS("/ws");
-  var client = Stomp.over(socket);
-  client.debug = function () {};
-
-  client.connect({}, function () {
-    for (var j = 0; j < topicRequestIds.length; j++) {
-      client.subscribe("/topic/request-status/" + topicRequestIds[j], onStatusEvent);
-    }
-  });
+  pollAllStatuses();
+  setInterval(pollAllStatuses, 5000);
 })();
 

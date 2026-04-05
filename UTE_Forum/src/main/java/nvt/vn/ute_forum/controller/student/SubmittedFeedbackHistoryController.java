@@ -20,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -155,6 +156,27 @@ public class SubmittedFeedbackHistoryController {
         model.addAttribute("statusOptions", buildOptionItems(requestService.buildStatusOptionMap(allRequests)));
 
         return "student/submitted-feedback-history";
+    }
+
+    @GetMapping("/api/history/status")
+    @ResponseBody
+    public Map<String, String> getRequestStatus(@RequestParam("requestId") String requestId,
+                                                Authentication authentication) {
+        Users user = resolveAuthenticatedUser(authentication);
+        if (user == null || requestId == null || requestId.isBlank()) {
+            return Map.of();
+        }
+
+        Request request = requestService.getRequestByIdAndUserId(requestId, user.getId()).orElse(null);
+        if (request == null) {
+            return Map.of();
+        }
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("requestId", request.getId());
+        payload.put("currentStatus", safeValue(request.getCurrentStatus()));
+        payload.put("conversationOpen", Boolean.toString(!buildOpenConversations(user.getId(), request.getId()).isEmpty()));
+        return payload;
     }
 
 
