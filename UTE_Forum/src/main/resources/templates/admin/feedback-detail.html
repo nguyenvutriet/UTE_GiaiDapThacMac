@@ -446,6 +446,72 @@
         }
 
 
+        /* ITEM */
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -33px;
+            top: 0px;
+
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #e5e7eb;
+        }
+
+        /* vòng trắng */
+        .timeline-dot::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+
+            transform: translate(-50%, -50%);
+        }
+
+        /* chấm xanh */
+        .timeline-dot::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3b82f6;
+
+            transform: translate(-50%, -50%);
+        }
+
+        .timeline-item:hover .timeline-dot::before {
+            background: #3b82f6; /* trắng → xanh */
+        }
+
+        .timeline-item:hover .timeline-dot::after {
+            background: #ffffff; /* xanh → trắng */
+        }
+
+        .timeline-dot::before,
+        .timeline-dot::after {
+            transition: 0.3s;
+        }
+
+        .timeline-item:hover .timeline-content {
+            border-color: #3b82f6;
+            background: #f0f7ff;
+        }
+
+
 
         /* Ẩn breadcrumb cũ vì đã thay bằng header mới */
         .breadcrumb-bar {
