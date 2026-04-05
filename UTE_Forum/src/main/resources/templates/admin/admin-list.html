@@ -464,7 +464,7 @@
                 <img th:src="@{/images/admin.png}" alt="avatar" class="avatar">
                 <div>
                     <p class="student-name" th:text="${currentUser.fullName}">Tên Admin</p>
-                    <p class="student-id">Mã quản trị</p>
+                    <p class="student-id" th:text="'Mã quản trị: ' + ${currentUser.id}">Mã quản trị</p>
                     <p class="student-role">Quản trị viên hệ thống</p>
                 </div>
             </div>
