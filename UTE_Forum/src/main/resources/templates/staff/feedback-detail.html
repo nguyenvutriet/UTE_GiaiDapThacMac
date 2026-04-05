@@ -131,9 +131,9 @@
                     </span>
 
                     <!-- LOCATION (demo) -->
-                    <span class="badge green">
+                    <span class="badge green" th:if="${feedback.location != null}">
                         <i class="fas fa-map-marker-alt"></i>
-                        A101
+                        <span th:text="${feedback.location}"></span>
                     </span>
 
                 </div>

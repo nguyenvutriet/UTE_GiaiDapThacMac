@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Can bo - Tao thong bao moi</title>
+    <title>Cán bộ - Tạo thông báo mới</title>
     <link rel="stylesheet" th:href="@{/css/staff/staff-style.css}">
     <link rel="stylesheet" th:href="@{/css/staff/staff-announcement-create.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -19,45 +19,45 @@
         <div class="user-profile">
             <img src="/images/staff.png" class="avatar" alt="avatar">
             <div class="user-info">
-                <span class="user-role" th:text="${user.department.name}">Phong ban</span>
-                <span class="user-dept">Nhan vien phong ban</span>
+                <span class="user-role" th:text="${user.department.name}">Phòng ban</span>
+                <span class="user-dept">Nhân viên phòng ban</span>
             </div>
         </div>
 
         <nav class="sidebar-nav">
-            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Gop y tiep nhan</a>
-            <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Dien dan</a>
-            <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quan ly thong bao</a>
-            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thong bao <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
-            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thong ke</a>
-            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Doi mat khau</a>
+            <a th:href="@{/staff/list-feedbacks}" class="nav-item"><i class="fas fa-inbox"></i> Góp ý tiếp nhận</a>
+            <a th:href="@{/api/forum/staff}" class="nav-item"><i class="fas fa-comments"></i> Diễn đàn</a>
+            <a th:href="@{/staff/announcement-management}" class="nav-item active"><i class="fas fa-tasks"></i> Quản lý thông báo</a>
+            <a th:href="@{/staff/notifications}" class="nav-item"><i class="fas fa-bell"></i> Thông báo <span class="badge-count" th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</span></a>
+            <a href="/staff/dashboard" class="nav-item"><i class="fas fa-chart-line"></i> Thống kê</a>
+            <a href="/change-password" class="nav-item"><i class="fas fa-user-shield"></i> Đổi mật khẩu</a>
         </nav>
 
-        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Dang xuat</a>
+        <a href="/logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a>
     </aside>
 
     <main class="main-content">
         <section class="table-card create-wrapper">
             <div class="create-head">
-                <h1>Tao thong bao moi</h1>
-                <a href="/staff/announcement-management" class="back-link"><i class="fas fa-arrow-left"></i> Quay lai danh sach</a>
+                <h1>Tạo thông báo mới</h1>
+                <a href="/staff/announcement-management" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại danh sách</a>
             </div>
 
             <div id="createMessage" class="create-message hidden"></div>
 
             <form id="createAnnouncementForm" class="create-form">
-                <label for="titleInput">Tieu de thong bao</label>
-                <input id="titleInput" type="text" maxlength="255" placeholder="Nhap tieu de thong bao" required>
+                <label for="titleInput">Tiêu đề thông báo</label>
+                <input id="titleInput" type="text" maxlength="255" placeholder="Nhập tiêu đề thông báo" required>
 
-                <label for="contentInput">Noi dung thong bao</label>
-                <textarea id="contentInput" rows="10" placeholder="Nhap noi dung chi tiet" required></textarea>
+                <label for="contentInput">Nội dung thông báo</label>
+                <textarea id="contentInput" rows="10" placeholder="Nhập nội dung chi tiết" required></textarea>
 
-                <label for="attachmentInput">Tap dinh kem (neu co)</label>
+                <label for="attachmentInput">Tệp đính kèm (nếu có)</label>
                 <div id="uploadZone" class="upload-zone" role="button" tabindex="0">
                     <i class="fas fa-upload"></i>
-                    <p>Chon tep hoac keo tha tep vao day de tai len</p>
-                    <span>Kich thuoc toi da moi tep: 100 MB</span>
-                    <button type="button" id="chooseFileBtn" class="choose-file-btn">Chon tep</button>
+                    <p>Chọn tệp hoặc kéo thả tệp vào đây để tải lên</p>
+                    <span>Kích thước tối đa mỗi tệp: 100 MB</span>
+                    <button type="button" id="chooseFileBtn" class="choose-file-btn">Chọn tệp</button>
                 </div>
                 <input id="attachmentInput" type="file" multiple class="hidden-input">
                 <ul id="fileList" class="file-list"></ul>
@@ -65,11 +65,11 @@
                 <div class="create-actions">
                     <button id="resetBtn" type="button" class="modal-btn secondary">
                         <i class="fas fa-rotate-left"></i>
-                        Lam moi
+                        Làm mới
                     </button>
                     <button id="submitBtn" type="submit" class="modal-btn primary">
                         <i class="fas fa-paper-plane"></i>
-                        Tao
+                        Tạo
                     </button>
                 </div>
             </form>
@@ -156,7 +156,7 @@
         renderFiles();
 
         if (tooLarge.length > 0) {
-            showMessage("error", `Tep vuot 100MB: ${tooLarge.join(", ")}`);
+            showMessage("error", `Tệp vượt 100MB: ${tooLarge.join(", ")}`);
         } else {
             clearMessage();
         }
@@ -220,12 +220,12 @@
         const title = titleInput.value.trim();
         const content = contentInput.value.trim();
         if (!title || !content) {
-            showMessage("error", "Tieu de va noi dung khong duoc de trong.");
+            showMessage("error", "Tiêu đề và nội dung không được để trống.");
             return;
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Dang tao';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tạo';
 
         try {
             const formData = new FormData();
