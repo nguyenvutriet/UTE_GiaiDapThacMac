@@ -74,6 +74,7 @@ public class RoleNotificationController {
     @PostMapping("/staff/notifications/read")
     public String markStaffNotificationAsRead(@RequestParam("notificationId") String notificationId,
                                               @RequestParam(value = "requestId", required = false) String requestId,
+                                              @RequestParam(value = "tabKey", required = false) String tabKey,
                                               @RequestParam(value = "tab", defaultValue = "all") String tab,
                                               @RequestParam(value = "filter", defaultValue = "all") String filter,
                                               Authentication authentication) {
@@ -91,10 +92,13 @@ public class RoleNotificationController {
             normalizedRequestId = normalizeRequestId(extractRequestId(notificationId));
         }
         if (normalizedRequestId != null) {
+            if ("feedback".equals(normalizeTab(tabKey))) {
+                return "redirect:/staff/feedback-detail?id=" + normalizedRequestId;
+            }
             return "redirect:/api/forum/staff/" + normalizedRequestId;
         }
-        log.warn("[NOTI-DEBUG][STAFF] Cannot resolve requestId for notificationId={} rawRequestId={} userId={}",
-                notificationId, requestId, user.getId());
+        log.warn("[NOTI-DEBUG][STAFF] Cannot resolve requestId for notificationId={} rawRequestId={} tabKey={} userId={}",
+                notificationId, requestId, tabKey, user.getId());
         return "redirect:/staff/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
@@ -231,6 +235,15 @@ public class RoleNotificationController {
             return null;
         }
 
+        int reqRefMarker = notificationId.indexOf("REQREF_");
+        if (reqRefMarker >= 0) {
+            int fromIndex = reqRefMarker + "REQREF_".length();
+            int endIndex = notificationId.indexOf("__", fromIndex);
+            if (endIndex > fromIndex) {
+                return notificationId.substring(fromIndex, endIndex);
+            }
+        }
+
         // Synthetic IDs from NotificationService:
         // VOTE_POST_<actorUserId>_<requestId>
         // COMMENT_POST_<commentId>
@@ -282,7 +295,7 @@ public class RoleNotificationController {
     }
 
     private String tabBySignal(String signal, String requestId) {
-        if (containsAny(signal, "FEEDBACK", "GOP Y", "REPORT", "BAO CAO")) {
+        if (containsAny(signal, "FEEDBACK", "GOP Y", "REPORT", "BAO CAO", "MESSAGE", "CHAT", "TIN NHAN", "TRAO DOI")) {
             return "feedback";
         }
         if (containsAny(signal, "FORUM", "COMMENT", "BINH LUAN", "VOTE", "REACTION", "LIKE", "LOVE", "TIM", "THICH")) {

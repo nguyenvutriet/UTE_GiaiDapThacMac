@@ -446,14 +446,16 @@ public class RequestService {
                 "NEW_FEEDBACK_RECEIVED",
                 "Góp ý mới gửi đến phòng ban",
                 "Góp ý: " + savedRequest.getSubject(),
-                deptStaffs
+                deptStaffs,
+                savedRequest.getId()
         );
 
         notificationService.createNotificationForUsers(
                 "FEEDBACK_SUBMITTED_NOTIFICATION",
                 "Gửi phản hồi thành công",
                 "Bạn đã gửi phản hồi \"" + savedRequest.getSubject() + "\" thành công.",
-                List.of(user)
+                List.of(user),
+                savedRequest.getId()
         );
     }
 

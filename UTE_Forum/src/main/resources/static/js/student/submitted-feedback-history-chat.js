@@ -29,9 +29,49 @@
   var stompClient = null;
   var activeConversationId = "";
   var activeRequestId = "";
-  var activeSubscription = null;
-  var subscriptions = {}; // Lưu trữ tất cả subscriptions theo conversationId
+  var activeSubscriptions = [];
   var appendedMessageIds = {}; // Track message IDs đã được append để tránh duplicate
+  var reconnectTimer = null;
+  var reconnectAttempt = 0;
+  var isConnecting = false;
+
+  function clearReconnectTimer() {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  }
+
+  function scheduleReconnect() {
+    if (reconnectTimer) {
+      return;
+    }
+
+    reconnectAttempt += 1;
+    var delay = Math.min(15000, 1000 * Math.pow(2, Math.min(reconnectAttempt, 4)));
+    reconnectTimer = setTimeout(function () {
+      reconnectTimer = null;
+      connectWebSocket();
+    }, delay);
+  }
+
+  function clearActiveSubscriptions() {
+    if (!activeSubscriptions || activeSubscriptions.length === 0) {
+      activeSubscriptions = [];
+      return;
+    }
+
+    for (var i = 0; i < activeSubscriptions.length; i++) {
+      try {
+        if (activeSubscriptions[i] && typeof activeSubscriptions[i].unsubscribe === "function") {
+          activeSubscriptions[i].unsubscribe();
+        }
+      } catch (e) {
+        // Ignore unsubscribe failures from stale subscriptions.
+      }
+    }
+    activeSubscriptions = [];
+  }
 
   setComposerEnabled(false);
 
@@ -40,11 +80,34 @@
       return;
     }
 
+    if (isConnecting || (stompClient && stompClient.connected)) {
+      return;
+    }
+
+    isConnecting = true;
+
     var socket = new SockJS("/ws");
     stompClient = Stomp.over(socket);
     stompClient.debug = function () {};
 
-    stompClient.connect({}, function () {});
+    socket.onclose = function () {
+      clearActiveSubscriptions();
+      isConnecting = false;
+      scheduleReconnect();
+    };
+
+    stompClient.connect({}, function () {
+      isConnecting = false;
+      reconnectAttempt = 0;
+      clearReconnectTimer();
+
+      if (activeConversationId) {
+        subscribeConversation(activeConversationId);
+      }
+    }, function () {
+      isConnecting = false;
+      scheduleReconnect();
+    });
   }
 
   function uploadFiles(files) {
@@ -432,10 +495,7 @@
        return;
      }
 
-     if (activeSubscription) {
-       activeSubscription.unsubscribe();
-       activeSubscription = null;
-     }
+     clearActiveSubscriptions();
 
      // Message handler chung cho cả 2 topics
      var messageHandler = function (frame) {
@@ -451,10 +511,10 @@
      };
 
      // Subscribe vào topic clarification (khi student gửi)
-     activeSubscription = stompClient.subscribe("/topic/clarification/" + conversationId, messageHandler);
+     activeSubscriptions.push(stompClient.subscribe("/topic/clarification/" + conversationId, messageHandler));
 
      // Subscribe thêm vào topic conversation (khi staff gửi)
-     stompClient.subscribe("/topic/conversation/" + conversationId, messageHandler);
+     activeSubscriptions.push(stompClient.subscribe("/topic/conversation/" + conversationId, messageHandler));
    }
 
   function loadConversation(conversationId) {
@@ -509,7 +569,11 @@
         setDrawerConversationState(payload.open !== false);
         renderMessages(payload.messages || []);
         if (payload.open !== false) {
-          subscribeConversation(activeConversationId);
+          if (stompClient && stompClient.connected) {
+            subscribeConversation(activeConversationId);
+          } else {
+            connectWebSocket();
+          }
         }
       })
       .catch(function () {

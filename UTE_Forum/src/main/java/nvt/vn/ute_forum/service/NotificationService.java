@@ -302,15 +302,31 @@ public class NotificationService {
         return n;
     }
 
+    private Notification buildNoti(String content, String type, String title, String requestId) {
+        Notification notification = buildNoti(content, type, title);
+        if (requestId != null && !requestId.isBlank()) {
+            notification.setId("NOTI_REQREF_" + requestId.trim() + "__" + UUID.randomUUID().toString().substring(0, 6));
+        }
+        return notification;
+    }
+
     public void createNotificationForUsers(String type,
                                            String title,
                                            String content,
                                            List<Users> receivers) {
+        createNotificationForUsers(type, title, content, receivers, null);
+    }
+
+    public void createNotificationForUsers(String type,
+                                           String title,
+                                           String content,
+                                           List<Users> receivers,
+                                           String requestId) {
         if (receivers == null || receivers.isEmpty()) {
             return;
         }
 
-        Notification notification = buildNoti(content, type, title);
+        Notification notification = buildNoti(content, type, title, requestId);
         notification.setUsers(receivers);
         notificationRepo.save(notification);
     }
@@ -328,7 +344,8 @@ public class NotificationService {
         Notification studentNoti = buildNoti(
                 "Góp ý \"" + title + "\" đã được chuyển sang " + toDept.getName(),
                 "FEEDBACK_FORWARDED_NOTIFICATION",
-                "Góp ý được chuyển tiếp"
+                "Góp ý được chuyển tiếp",
+                request.getId()
         );
         studentNoti.getUsers().add(request.getUser());
         notificationRepo.save(studentNoti);
@@ -340,7 +357,8 @@ public class NotificationService {
         Notification deptNoti = buildNoti(
                 "Bạn nhận được góp ý \"" + title + "\" từ " + fromDept.getName(),
                 "FEEDBACK_FORWARDED_TO_YOU",
-                "Góp ý mới"
+                "Góp ý mới",
+                request.getId()
         );
         deptNoti.setUsers(toDeptUsers);
         notificationRepo.save(deptNoti);
@@ -350,7 +368,8 @@ public class NotificationService {
         Notification staffNoti = buildNoti(
                 "Bạn đã chuyển góp ý \"" + title + "\" sang " + toDept.getName(),
                 "FEEDBACK_FORWARDED_BY_YOU",
-                "Chuyển tiếp thành công"
+                "Chuyển tiếp thành công",
+                request.getId()
         );
         staffNoti.getUsers().add(staff);
         notificationRepo.save(staffNoti);
@@ -386,7 +405,7 @@ public class NotificationService {
                 break;
         }
 
-        Notification noti = buildNoti(content, type, notiTitle);
+        Notification noti = buildNoti(content, type, notiTitle, request.getId());
 
         // 🎓 chỉ gửi cho sinh viên
         noti.getUsers().add(request.getUser());

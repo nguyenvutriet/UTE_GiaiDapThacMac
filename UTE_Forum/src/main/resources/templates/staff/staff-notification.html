@@ -100,6 +100,7 @@
                       th:id="'read-notification-' + ${item.id}">
                     <input type="hidden" name="notificationId" th:value="${item.id}">
                     <input type="hidden" name="requestId" th:value="${item.requestId}">
+                    <input type="hidden" name="tabKey" th:value="${item.tabKey}">
                     <input type="hidden" name="tab" th:value="${activeTab}">
                     <input type="hidden" name="filter" th:value="${activeFilter}">
                 </form>

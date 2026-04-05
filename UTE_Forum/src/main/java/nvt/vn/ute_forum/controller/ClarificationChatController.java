@@ -1,11 +1,10 @@
 package nvt.vn.ute_forum.controller;
 
 import nvt.vn.ute_forum.model.*;
-import nvt.vn.ute_forum.repository.NotificationRepo;
 import nvt.vn.ute_forum.repository.UsersRepo;
 import nvt.vn.ute_forum.service.ClarificationConversationService;
-import nvt.vn.ute_forum.service.IdGeneratorService;
 import nvt.vn.ute_forum.service.MessageService;
+import nvt.vn.ute_forum.service.NotificationService;
 import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.UsersService;
 import org.slf4j.Logger;
@@ -47,10 +46,7 @@ public class ClarificationChatController {
     private MessageService messService;
 
     @Autowired
-    private NotificationRepo notificationRepo;
-
-    @Autowired
-    private IdGeneratorService idGeneratorService;
+    private NotificationService notificationService;
 
     @Autowired
     private UsersRepo usersRepo;
@@ -382,11 +378,6 @@ public class ClarificationChatController {
             return;
         }
 
-        Notification notification = new Notification();
-        notification.setId(idGeneratorService.nextNotificationId());
-        notification.setNotificationType("MESSAGE_NEW_NOTIFICATION");
-        notification.setTitle("Tin nhắn trao đổi mới");
-
         String safeSubject = request.getSubject() == null || request.getSubject().isBlank()
                 ? request.getId()
                 : request.getSubject();
@@ -395,12 +386,15 @@ public class ClarificationChatController {
             safeContent = safeContent.substring(0, 120) + "...";
         }
 
-        notification.setContent("Sinh viên vừa nhắn về yêu cầu: " + safeSubject
-                + (safeContent.isBlank() ? "" : " | " + safeContent));
-        notification.setRead(false);
-        notification.setCreateAt(LocalDateTime.now());
-        notification.setUsers(receivers);
+        String notificationContent = "Sinh viên vừa nhắn về yêu cầu: " + safeSubject
+                + (safeContent.isBlank() ? "" : " | " + safeContent);
 
-        notificationRepo.save(notification);
+        notificationService.createNotificationForUsers(
+                "MESSAGE_NEW_NOTIFICATION",
+                "Tin nhắn trao đổi mới",
+                notificationContent,
+                receivers,
+                request.getId()
+        );
     }
 }

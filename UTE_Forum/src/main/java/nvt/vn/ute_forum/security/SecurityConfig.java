@@ -88,7 +88,7 @@ public class SecurityConfig {
                                 "/api/forum/search-list", "/announcement").hasRole("STUDENT")
 
                         .requestMatchers("/api/departments/**", "/department/**", "/announcement/detail/**").hasAnyRole("ADMIN", "STUDENT")
-                        .requestMatchers("/ws", "/topic/**", "/app/**", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
+                        .requestMatchers("/ws/**", "/topic/**", "/app/**", "/clarification/send").hasAnyRole("STUDENT", "DEPARTMENT")
                         .anyRequest().authenticated())
                 .formLogin(
                         form ->  form.loginPage("/login")
