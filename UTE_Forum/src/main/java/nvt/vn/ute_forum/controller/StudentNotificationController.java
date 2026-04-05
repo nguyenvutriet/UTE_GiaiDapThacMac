@@ -1,10 +1,12 @@
 package nvt.vn.ute_forum.controller;
 
 import nvt.vn.ute_forum.model.Notification;
+import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.CommentRepo;
 import nvt.vn.ute_forum.service.NotificationService;
+import nvt.vn.ute_forum.service.RequestService;
 import nvt.vn.ute_forum.service.UsersService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,20 +20,27 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class StudentNotificationController {
+    private static final Pattern REQUEST_ID_PATTERN = Pattern.compile("\\bREQ_[A-Za-z0-9_\\-]+\\b");
+    private static final Pattern QUOTED_SUBJECT_PATTERN = Pattern.compile("\"([^\"]+)\"");
 
     private final UsersService usersService;
     private final NotificationService notificationService;
     private final CommentRepo commentRepo;
+    private final RequestService requestService;
 
     public StudentNotificationController(UsersService usersService,
                                          NotificationService notificationService,
-                                         CommentRepo commentRepo) {
+                                         CommentRepo commentRepo,
+                                         RequestService requestService) {
         this.usersService = usersService;
         this.notificationService = notificationService;
         this.commentRepo = commentRepo;
+        this.requestService = requestService;
     }
 
     @GetMapping("/api/notifications")
@@ -44,9 +53,10 @@ public class StudentNotificationController {
             return "redirect:/login";
         }
 
+        List<Request> studentRequests = requestService.getRequestsByUserId(user.getId());
         List<NotificationItem> allItems = notificationService.getByUserIdWithForumData(user.getId())
                 .stream()
-                .map(this::toItem)
+                .map(notification -> toItem(notification, studentRequests))
                 .toList();
 
         List<NotificationItem> byTab = allItems.stream()
@@ -84,6 +94,8 @@ public class StudentNotificationController {
 
     @PostMapping("/api/notifications/read")
     public String markNotificationAsRead(@RequestParam("notificationId") String notificationId,
+                                         @RequestParam(value = "requestId", required = false) String requestId,
+                                         @RequestParam(value = "targetUrl", required = false) String targetUrl,
                                          @RequestParam(value = "tab", defaultValue = "all") String tab,
                                          @RequestParam(value = "filter", defaultValue = "all") String filter,
                                          Authentication authentication) {
@@ -93,10 +105,21 @@ public class StudentNotificationController {
         }
 
         notificationService.markAsReadForUser(notificationId, user.getId());
+        String normalizedTargetUrl = normalizeTargetUrl(targetUrl);
+        if (normalizedTargetUrl != null) {
+            return "redirect:" + normalizedTargetUrl;
+        }
+        String normalizedRequestId = normalizeRequestId(requestId);
+        if (normalizedRequestId == null) {
+            normalizedRequestId = normalizeRequestId(extractRequestId(notificationId));
+        }
+        if (normalizedRequestId != null) {
+            return "redirect:/api/forum/" + normalizedRequestId;
+        }
         return "redirect:/api/notifications?tab=" + normalizeTab(tab) + "&filter=" + normalizeFilter(filter);
     }
 
-    private NotificationItem toItem(Notification notification) {
+    private NotificationItem toItem(Notification notification, List<Request> studentRequests) {
         String tabKey = tabByType(notification.getNotificationType());
         String icon = iconByType(notification.getNotificationType());
         String iconClass = iconClassByType(notification.getNotificationType());
@@ -106,8 +129,86 @@ public class StudentNotificationController {
         String content = notification.getContent() == null ? "" : notification.getContent();
         String timeLabel = humanTime(notification.getCreateAt());
         boolean isRead = Boolean.TRUE.equals(notification.getRead());
-        String requestId = extractRequestId(notification.getId());
-        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead, requestId);
+        String requestId = resolveRequestId(notification, studentRequests);
+        String targetUrl = buildTargetUrl(tabKey, requestId);
+        return new NotificationItem(notification.getId(), title, content, timeLabel, icon, iconClass, tabKey, isRead, requestId, targetUrl);
+    }
+
+    private String resolveRequestId(Notification notification, List<Request> studentRequests) {
+        if (notification == null) {
+            return null;
+        }
+
+        String fromId = normalizeRequestId(extractRequestId(notification.getId()));
+        if (fromId != null) {
+            return fromId;
+        }
+
+        String fromContent = normalizeRequestId(findRequestIdInText(notification.getContent()));
+        if (fromContent != null) {
+            return fromContent;
+        }
+
+        String fromTitle = normalizeRequestId(findRequestIdInText(notification.getTitle()));
+        if (fromTitle != null) {
+            return fromTitle;
+        }
+
+        String subject = extractQuotedSubject(notification.getContent());
+        if (subject == null || subject.isBlank() || studentRequests == null || studentRequests.isEmpty()) {
+            return null;
+        }
+
+        for (Request request : studentRequests) {
+            if (request == null || request.getId() == null || request.getSubject() == null) {
+                continue;
+            }
+            if (request.getSubject().trim().equalsIgnoreCase(subject.trim())) {
+                return request.getId();
+            }
+        }
+        return null;
+    }
+
+    private String findRequestIdInText(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        Matcher matcher = REQUEST_ID_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group() : null;
+    }
+
+    private String extractQuotedSubject(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        Matcher matcher = QUOTED_SUBJECT_PATTERN.matcher(text);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private String buildTargetUrl(String tabKey, String requestId) {
+        String normalizedRequestId = normalizeRequestId(requestId);
+        if (normalizedRequestId == null) {
+            return null;
+        }
+        if ("feedback".equals(tabKey)) {
+            return "/api/history?requestId=" + normalizedRequestId;
+        }
+        return "/api/forum/" + normalizedRequestId;
+    }
+
+    private String normalizeTargetUrl(String targetUrl) {
+        if (targetUrl == null) {
+            return null;
+        }
+        String normalized = targetUrl.trim();
+        if (normalized.isEmpty() || "null".equalsIgnoreCase(normalized)) {
+            return null;
+        }
+        if (normalized.startsWith("/api/forum/") || normalized.startsWith("/api/history")) {
+            return normalized;
+        }
+        return null;
     }
 
     private String extractRequestId(String notificationId) {
@@ -121,7 +222,18 @@ public class StudentNotificationController {
         // VOTE_COMMENT_<actorUserId>_<commentId>
         if (notificationId.startsWith("VOTE_POST_")) {
             int reqMarker = notificationId.lastIndexOf("_REQ_");
-            return reqMarker >= 0 ? notificationId.substring(reqMarker + 1) : null;
+            if (reqMarker >= 0) {
+                return notificationId.substring(reqMarker + 1);
+            }
+
+            int lastUnderscore = notificationId.lastIndexOf('_');
+            if (lastUnderscore >= 0 && lastUnderscore + 1 < notificationId.length()) {
+                String tail = notificationId.substring(lastUnderscore + 1);
+                if (tail.startsWith("REQ")) {
+                    return tail;
+                }
+            }
+            return null;
         }
 
         if (notificationId.startsWith("COMMENT_POST_")) {
@@ -133,16 +245,34 @@ public class StudentNotificationController {
 
         if (notificationId.startsWith("VOTE_COMMENT_")) {
             int cmtMarker = notificationId.lastIndexOf("_CMT_");
-            if (cmtMarker < 0) {
-                return null;
+            if (cmtMarker >= 0) {
+                String commentId = notificationId.substring(cmtMarker + 1);
+                return commentRepo.findById(commentId)
+                        .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                        .orElse(null);
             }
-            String commentId = notificationId.substring(cmtMarker + 1);
-            return commentRepo.findById(commentId)
-                    .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
-                    .orElse(null);
+
+            int lastUnderscore = notificationId.lastIndexOf('_');
+            if (lastUnderscore >= 0 && lastUnderscore + 1 < notificationId.length()) {
+                String commentId = notificationId.substring(lastUnderscore + 1);
+                return commentRepo.findById(commentId)
+                        .map(comment -> comment.getRequest() != null ? comment.getRequest().getId() : null)
+                        .orElse(null);
+            }
         }
 
         return null;
+    }
+
+    private String normalizeRequestId(String requestId) {
+        if (requestId == null) {
+            return null;
+        }
+        String normalized = requestId.trim();
+        if (normalized.isEmpty() || "null".equalsIgnoreCase(normalized)) {
+            return null;
+        }
+        return normalized;
     }
 
     private String tabByType(String type) {
@@ -284,7 +414,8 @@ public class StudentNotificationController {
                                     String iconClass,
                                     String tabKey,
                                     boolean read,
-                                    String requestId) {
+                                    String requestId,
+                                    String targetUrl) {
     }
 }
 

@@ -77,8 +77,7 @@
             <div class="notification-list" th:if="${not #lists.isEmpty(notifications)}">
                 <article class="notification-item"
                          th:classappend="${item.read} ? ' read' : ' unread'"
-                         th:attr="data-read-form-id='read-notification-' + ${item.id},
-                                  data-request-id=${item.requestId}"
+                         th:attr="data-read-form-id='read-notification-' + ${item.id}"
                          th:each="item : ${notifications}">
                     <div class="item-icon" th:classappend="${' ' + item.iconClass}" th:text="${item.icon}">✓</div>
                     <div class="item-content">
@@ -102,6 +101,8 @@
                     <form method="post" th:action="@{/api/notifications/read}" class="read-form"
                           th:id="'read-notification-' + ${item.id}">
                         <input type="hidden" name="notificationId" th:value="${item.id}">
+                        <input type="hidden" name="requestId" th:value="${item.requestId}">
+                        <input type="hidden" name="targetUrl" th:value="${item.targetUrl}">
                         <input type="hidden" name="tab" th:value="${activeTab}">
                         <input type="hidden" name="filter" th:value="${activeFilter}">
                     </form>
@@ -132,13 +133,6 @@
             item.classList.remove('unread');
             item.classList.add('read', 'pending-read');
             form.submit();
-        }
-
-        const requestId = item.getAttribute('data-request-id');
-        if (requestId && requestId !== 'null' && requestId !== '') {
-            setTimeout(() => {
-                window.location.href = `/api/forum/${requestId}`;
-            }, 100);
         }
     });
 </script>
