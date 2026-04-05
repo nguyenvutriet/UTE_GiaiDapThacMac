@@ -7,11 +7,11 @@
     <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
 
     <!-- CSS forum để lấy sidebar + header -->
-    <link rel="stylesheet" href="../../css/student/forumView.css" th:href="@{/css/student/forumView.css}">
     <!-- CSS riêng cho trang chi tiết -->
-    <link rel="stylesheet" href="/css/admin/feedback_admin.css">
-
+    <link rel="stylesheet" href="../../css/student/forumView.css">
+    <link rel="stylesheet" href="/css/staff/staff-style.css">
     <link rel="stylesheet" href="/css/admin/admin-detail.css">
+
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -28,86 +28,51 @@
             --radius-sm: 8px;
         }
 
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 100%;
+        body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: var(--bg-page);
             color: var(--text-main);
-        }
-
-        .page-layout {
-            display: flex;
-            align-items: flex-start;
             min-height: 100vh;
+            margin: 0;
         }
 
+        /* ===== MAIN CONTENT: canh theo sidebar forum ===== */
         .main-content {
             flex: 1;
+            padding: 0 24px 32px;
             min-height: 100vh;
-            padding: 0 20px 32px 16px;
             margin-left: 0;
         }
 
+        /* ===== HEADER phụ thêm cho page này ===== */
         .main-header {
-            margin-bottom: 20px;
-        }
-
-        .sidebar {
-            width: 250px !important;
-            min-width: 250px !important;
-        }
-
-        .school-title {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-            color: #ababab;
-            letter-spacing: 0.3px;
-        }
-
-        .main-header-top {
-            background: #00558b;
-            border-top: 3px solid #0c79b4;
-            padding: 2px 32px 5px 32px;
-            margin-top: 0 !important;
-            position: relative;
-            top: 0;
-            width: 100%;
-            box-sizing: border-box;
+            margin-bottom: 28px;
         }
 
         .main-header-bottom {
-            min-height: 58px;
-            border-top: 1px solid #b8bec8;
-            border-bottom: 2px solid #ccc;
-            padding: 22px 0 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
-        .page-tab {
-            margin: 0;
-            position: relative;
+        .page-tab-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .page-total-badge {
             display: inline-flex;
             align-items: center;
-            background: #00558b;
-            color: #ffffff;
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 1;
-            padding: 5px 22px;
-            letter-spacing: 0.3px;
-        }
-
-        .page-tab::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: -20px;
-            width: 0;
-            height: 0;
-            border-bottom: 28px solid #7d7d7d;
-            border-right: 20px solid transparent;
+            width: fit-content;
+            background: linear-gradient(90deg, #4f6ef7, #a78bfa);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 999px;
         }
 
         .forum-tabs {
@@ -161,6 +126,137 @@
             color: #00558b;
             border-color: #bfd5f3;
         }
+
+        /* ===== copy style sidebar bên list qua feedback-detail ===== */
+        .page-layout {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 250px minmax(0, 1fr);
+        }
+
+        .sidebar {
+            background: #00558b;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #0b2558;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            align-self: start;
+        }
+
+        .brand-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 22px 16px 18px;   /* giống list */
+            border-bottom: 1px solid #9aa0af; /* giữ đường phân cách trên */
+        }
+
+        .brand-logo {
+            width: 118px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 14px;
+        }
+
+        .student-info {
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 12px;
+            position: relative;
+        }
+
+        .student-info::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -16px;
+            right: -16px;
+            border-top: 1px solid #9aa0af;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .student-info p {
+            margin: 2px 0;
+            font-size: 15px;
+            color: var(--sidebar-muted);
+        }
+
+        .student-name {
+            color: #f5f8ff !important;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .student-id {
+            color: #d7e4ff !important;
+        }
+
+        .sidebar-nav {
+            margin-top: 16px;   /* giống list */
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 0 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #d7e4ff;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            margin: 0; /* nếu muốn như file detail hiện tại thì giữ, không ảnh hưởng nhiều */
+        }
+
+        .nav-icon {
+            filter: grayscale(100%) brightness(1.5);
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 12px;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--sidebar-active);
+            border-color: rgba(159, 181, 222, 0.35);
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            display: block;
+            color: #dce9ff;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-top: 1px solid #163364;
+        }
+
 
         .chat-box {
             max-height: 420px;
@@ -335,6 +431,20 @@
             gap: 8px;
             justify-content: flex-start;
         }
+
+        .brand-block {
+            padding: 22px 16px 10px; /* giảm dưới */
+        }
+
+        .nav-item {
+            margin: 0; /* bỏ margin dưới */
+        }
+
+        .brand-block {
+            padding: 22px 16px 18px;
+            border-bottom: 1px solid #9aa0af;
+        }
+
 
 
         /* Ẩn breadcrumb cũ vì đã thay bằng header mới */

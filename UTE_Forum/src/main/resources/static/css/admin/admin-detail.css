@@ -936,3 +936,19 @@
 .empty-state p {
     font-size: 14px;
 }
+
+.sidebar-nav {
+    border-top: none !important;
+}
+
+.sidebar-nav::before {
+    display: none !important;
+}
+
+/*.brand-block {*/
+/*    border-bottom: none !important;*/
+/*}*/
+
+/*.student-info::before {*/
+/*    display: none !important;*/
+/*}*/

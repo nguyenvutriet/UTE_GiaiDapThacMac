@@ -70,190 +70,193 @@
     padding: 8px 12px;
     font-size: 14px;
     font-weight: 600;
-.tab-row .tab-item.active {
-    background: #bfdbfe;
-}
 
-.notification-list {
-    margin-top: 12px;
-    border: 1px solid #dce4ef;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.notification-item {
-    display: grid;
-    grid-template-columns: 44px 1fr;
-    gap: 12px;
-    padding: 12px 14px;
-    background: #fff;
-    border-bottom: 1px solid #e5e7eb;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.notification-item:last-child {
-    border-bottom: none;
-}
-
-.notification-item.unread {
-    background: #eef5ff;
-}
-
-.notification-item.read,
-.notification-item.pending-read {
-    background: #ffffff;
-}
-
-.notification-item.read .item-content p,
-.notification-item.read .item-head h3,
-.notification-item.pending-read .item-content p,
-.notification-item.pending-read .item-head h3 {
-    font-weight: 500;
-}
-
-.notification-item.unread .item-head h3,
-.notification-item.unread .item-content p {
-    font-weight: 700;
-}
-
-.notification-item {
-    cursor: pointer;
-}
-
-.item-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-}
-
-.icon-success {
-    background: #dcfce7;
-    color: #0f766e;
-}
-
-.icon-processing {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.icon-forum {
-    background: #dbeafe;
-    color: #1e3a8a;
-}
-
-.icon-default {
-    background: #e2e8f0;
-    color: #475569;
-}
-
-.item-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.item-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.delete-form {
-    margin: 0;
-}
-
-.read-form {
-    display: none;
-}
-
-.delete-noti-btn {
-    border: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: #fee2e2;
-    color: #dc2626;
-    cursor: pointer;
-}
-
-.delete-noti-btn:hover {
-    background: #fecaca;
-}
-
-.item-head h3 {
-    margin: 0;
-    font-size: 16px;
-}
-
-.item-head span {
-    color: #64748b;
-    font-size: 13px;
-}
-
-.item-content p {
-    margin: 4px 0 0;
-    color: #334155;
-}
-
-.empty-state {
-    margin-top: 12px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 12px;
-    background: #fff;
-    padding: 28px;
-    text-align: center;
-    color: #64748b;
-}
-
-@media (max-width: 1200px) {
-    .main-content {
-        margin-left: 0;
-        padding: 20px 16px 24px;
+    .tab-row .tab-item.active {
+        background: #bfdbfe;
     }
-}
 
-/* Notification text hierarchy: title stronger than content */
-.notification-item .item-title-row h3,
-.notification-item .item-head h3 {
-    font-weight: 800;
-    color: #1d4ed8;
-    letter-spacing: 0.1px;
-}
+    .notification-list {
+        margin-top: 12px;
+        border: 1px solid #dce4ef;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-.notification-item .item-content p {
-    font-weight: 500;
-    color: #475569;
-    line-height: 1.55;
-}
+    .notification-item {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 12px;
+        padding: 12px 14px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
 
-.notification-item.unread .item-title-row h3,
-.notification-item.unread .item-head h3 {
-    font-weight: 900;
-    color: #0f172a;
-}
+    .notification-item:last-child {
+        border-bottom: none;
+    }
 
-.notification-item.unread .item-content p {
-    font-weight: 600;
-    color: #334155;
-}
+    .notification-item.unread {
+        background: #eef5ff;
+    }
 
-.notification-item.read .item-title-row h3,
-.notification-item.read .item-head h3,
-.notification-item.pending-read .item-title-row h3,
-.notification-item.pending-read .item-head h3 {
-    font-weight: 700;
-    color: #1e293b;
-}
+    .notification-item.read,
+    .notification-item.pending-read {
+        background: #ffffff;
+    }
 
-.notification-item.read .item-content p,
-.notification-item.pending-read .item-content p {
-    font-weight: 500;
-    color: #64748b;
+    .notification-item.read .item-content p,
+    .notification-item.read .item-head h3,
+    .notification-item.pending-read .item-content p,
+    .notification-item.pending-read .item-head h3 {
+        font-weight: 500;
+    }
+
+    .notification-item.unread .item-head h3,
+    .notification-item.unread .item-content p {
+        font-weight: 700;
+    }
+
+    .notification-item {
+        cursor: pointer;
+    }
+
+    .item-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+    }
+
+    .icon-success {
+        background: #dcfce7;
+        color: #0f766e;
+    }
+
+    .icon-processing {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .icon-forum {
+        background: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .icon-default {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .item-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+    }
+
+    .item-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .delete-form {
+        margin: 0;
+    }
+
+    .read-form {
+        display: none;
+    }
+
+    .delete-noti-btn {
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: #fee2e2;
+        color: #dc2626;
+        cursor: pointer;
+    }
+
+    .delete-noti-btn:hover {
+        background: #fecaca;
+    }
+
+    .item-head h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .item-head span {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .item-content p {
+        margin: 4px 0 0;
+        color: #334155;
+    }
+
+    .empty-state {
+        margin-top: 12px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        background: #fff;
+        padding: 28px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    @media (max-width: 1200px) {
+        .main-content {
+            margin-left: 0;
+            padding: 20px 16px 24px;
+        }
+    }
+
+    /* Notification text hierarchy: title stronger than content */
+
+    .notification-item .item-title-row h3,
+    .notification-item .item-head h3 {
+        font-weight: 800;
+        color: #1d4ed8;
+        letter-spacing: 0.1px;
+    }
+
+    .notification-item .item-content p {
+        font-weight: 500;
+        color: #475569;
+        line-height: 1.55;
+    }
+
+    .notification-item.unread .item-title-row h3,
+    .notification-item.unread .item-head h3 {
+        font-weight: 900;
+        color: #0f172a;
+    }
+
+    .notification-item.unread .item-content p {
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .notification-item.read .item-title-row h3,
+    .notification-item.read .item-head h3,
+    .notification-item.pending-read .item-title-row h3,
+    .notification-item.pending-read .item-head h3 {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .notification-item.read .item-content p,
+    .notification-item.pending-read .item-content p {
+        font-weight: 500;
+        color: #64748b;
+    }
 }
 
 
