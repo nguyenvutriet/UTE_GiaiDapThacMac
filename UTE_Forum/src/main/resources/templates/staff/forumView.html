@@ -215,9 +215,9 @@
 
 
                 <div class="pagination" th:if="${totalPages > 0}">
-                    <a th:href="@{/api/forum/view(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> < </a>
+                    <a th:href="@{/api/forum/staff(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="page-btn"> < </a>
                     <span th:text="'Trang ' + (${currentPage + 1}) + ' / ' + ${totalPages}"></span>
-                    <a th:href="@{/api/forum/view(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> > </a>
+                    <a th:href="@{/api/forum/staff(page=${currentPage + 1})}" th:if="${currentPage + 1 < totalPages}" class="page-btn"> > </a>
                 </div>
             </div>
 
