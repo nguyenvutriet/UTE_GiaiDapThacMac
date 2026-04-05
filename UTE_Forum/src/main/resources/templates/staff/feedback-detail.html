@@ -143,6 +143,23 @@
                     <h4>Nội dung:</h4>
                     <p th:text="${feedback.description}"></p>
                 </div>
+
+                <!-- ATTACHMENTS -->
+                <div th:if="${feedback.fileAttachments != null and !feedback.fileAttachments.isEmpty()}"
+                     style="margin-top:15px;">
+
+                    <h4>Tệp đính kèm:</h4>
+
+                    <ul style="margin-top:8px; padding-left:18px;">
+                        <li th:each="file : ${feedback.fileAttachments}">
+                            <a th:href="${file.fileUrl}" target="_blank"
+                               style="color:#2563eb; text-decoration:none;">
+
+                                📎 <span th:text="${file.fileName}"></span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
             <!-- RIGHT: ACTION -->
             <div class="action-card">
