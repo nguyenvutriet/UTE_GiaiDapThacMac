@@ -78,6 +78,7 @@ public class SubmitFeedbackController {
     @PostMapping({"/api/submit", "/feedback/send"})
     public String sendFeedback(@RequestParam(value = "subject") String subject,
                                @RequestParam(value = "description") String description,
+                               @RequestParam(value = "location", required = false) String location,
                                @RequestParam(value = "categories", required = false) List<String> categoryIds,
                                @RequestParam(value = "department", required = false) String departmentId,
                                @RequestParam(value = "privacy", required = false) String privacy,
@@ -94,6 +95,7 @@ public class SubmitFeedbackController {
             requestService.submitStudentFeedback(
                     subject,
                     description,
+                    location,
                     categoryIds,
                     departmentId,
                     privacy,
@@ -127,6 +129,7 @@ public class SubmitFeedbackController {
     public String updateFeedback(@RequestParam(value = "request_id") String requestId,
                                  @RequestParam(value = "subject") String subject,
                                  @RequestParam(value = "description") String description,
+                                 @RequestParam(value = "location", required = false) String location,
                                  @RequestParam(value = "categories", required = false) List<String> categoryIds,
                                  @RequestParam(value = "department", required = false) String departmentId,
                                  @RequestParam(value = "privacy", required = false) String privacy,
@@ -144,6 +147,7 @@ public class SubmitFeedbackController {
                     requestId,
                     subject,
                     description,
+                    location,
                     categoryIds,
                     departmentId,
                     privacy,

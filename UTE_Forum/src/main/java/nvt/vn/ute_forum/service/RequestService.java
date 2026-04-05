@@ -408,6 +408,7 @@ public class RequestService {
     @Transactional
     public void submitStudentFeedback(String subject,
                                       String description,
+                                      String location,
                                       List<String> categoryIds,
                                       String departmentId,
                                       String privacy,
@@ -425,6 +426,7 @@ public class RequestService {
         request.setUser(user);
         request.setSubject(subject);
         request.setDescription(description);
+        request.setLocation(normalizeOptionalText(location));
         request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
         request.setDepartment(department);
         request.getCategories().clear();
@@ -459,6 +461,7 @@ public class RequestService {
     public void updateStudentFeedback(String requestId,
                                       String subject,
                                       String description,
+                                      String location,
                                       List<String> categoryIds,
                                       String departmentId,
                                       String privacy,
@@ -483,6 +486,7 @@ public class RequestService {
         request.getCategories().clear();
         request.setSubject(subject);
         request.setDescription(description);
+        request.setLocation(normalizeOptionalText(location));
         request.setPostStatus("public".equals(privacy) ? "PUBLIC" : "PRIVATE");
         request.setDepartment(department);
         request.getCategories().addAll(resolveCategories(categoryIds));
@@ -605,6 +609,14 @@ public class RequestService {
             }
         }
         return false;
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private boolean hasDepartment(Request request, String departmentId) {

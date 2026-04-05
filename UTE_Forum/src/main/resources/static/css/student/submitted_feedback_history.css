@@ -678,6 +678,16 @@ body {
   color: #78350f;
 }
 
+.meta-chip.location-chip {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.meta-chip.location-chip:hover {
+  color: #14532d;
+}
+
 .meta-chip.category-chip:hover {
   color: #334155;
 }
@@ -1040,6 +1050,21 @@ body {
   background: #3b82f6;
   color: #ffffff;
   cursor: pointer;
+}
+
+.chat-file-picked {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  padding: 6px 8px;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-message {
