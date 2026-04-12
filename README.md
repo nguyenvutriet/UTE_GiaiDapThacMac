@@ -1,51 +1,48 @@
-# 🎓 NỀN TẢNG GIẢI ĐÁP THẮC MẮC SINH VIÊN
+# 🎓 Developing a student Q&A platform to support inquiries and reduce student dropout rates
 
-## 📖 Giới thiệu
-Trong thời đại công nghệ số, nhu cầu trao đổi thông tin và giải đáp thắc mắc của sinh viên ngày càng tăng cao. Tuy nhiên, nhiều sinh viên gặp khó khăn trong việc tìm người hỗ trợ hoặc ngại liên hệ trực tiếp với các phòng ban.
+## 📖 Introduction
+In the digital age, the demand for information exchange and answering students’ questions is increasingly growing. However, many students face difficulties in finding support or feel hesitant to directly contact administrative departments.
 
-👉 Dự án này được xây dựng nhằm:
-- Hỗ trợ sinh viên đặt câu hỏi nhanh chóng
-- Kết nối trực tiếp với các phòng ban
-- Tạo môi trường trao đổi minh bạch, tiện lợi
-- Đáp ứng xu hướng chuyển đổi số trong giáo dục
-
----
-
-## 🚀 Tính năng chính
-
-### 👨‍🎓 Đối với sinh viên
-- Đăng tải thắc mắc
-- Xem thông báo từ nhà trường
-- Tham gia diễn đàn
-- Nhắn tin riêng với phòng ban
-
-### 🏫 Đối với phòng/khoa/viện
-- Quản lý thông báo
-- Trả lời thắc mắc trên diễn đàn
-- Xử lý tin nhắn riêng
-- Xem thống kê
-
-### ⚙️ Đối với Admin
-- Quản lý diễn đàn
-- Quản lý danh mục
-- Xử lý báo cáo vi phạm
-- Quản lý thắc mắc
+👉 This project is developed to:
+- Support students in asking questions quickly
+- Enable direct connection with administrative departments
+- Create a transparent and convenient communication environment
+- Meet the digital transformation trends in education
 
 ---
 
-## 🛠️ Công nghệ sử dụng
+## 🚀 Key Features
+### 👨‍🎓 For Students
+- Post questions
+- View announcements from the institution
+- Participate in forums
+- Send private messages to departments
+### 🏫 For Departments / Faculties / Institutes
+- Manage announcements
+- Respond to questions on the forum
+- Handle private messages
+- View statistics
+### ⚙️ For Admins
+- Manage forums
+- Manage categories
+- Handle violation reports
+- Manage inquiries
 
-| Thành phần        | Công nghệ |
+---
+
+## 🛠️ Technologies Used
+
+| Component        | Technology |
 |------------------|----------|
-| Ngôn ngữ         | ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white) |
+| Language         | ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white) |
 | Framework        | ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
 | JDK              | ![JDK](https://img.shields.io/badge/JDK-21-007396?style=for-the-badge&logo=openjdk&logoColor=white) |
-| Cơ sở dữ liệu    | ![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white) |
+| Database         | ![MySQL](https://img.shields.io/badge/MySQL-Database-4479A1?style=for-the-badge&logo=mysql&logoColor=white) |
 | Build Tool       | ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white) |
 
 ---
 
-## ⚙️ Cài đặt & chạy dự án
+## ⚙️ Installation & Running the Project
 
 ### 1. Clone project
 ```bash
@@ -55,7 +52,7 @@ Trong thời đại công nghệ số, nhu cầu trao đổi thông tin và gi�
 ```bash
     mvn clean install
  ```
-### 3. Cấu hình  ``` application.propertise ```
+### 3. Config  ``` application.propertise ```
  ```bash 
     # Spring Datasource
     spring.datasource.url=jdbc:mysql://localhost:3306/<name_db>
@@ -84,48 +81,48 @@ Trong thời đại công nghệ số, nhu cầu trao đổi thông tin và gi�
     app.upload.dir=../uploads/
  ```
 
-## 📚 Tài liệu & Demo
+## 📚 Documentation & Demo
 - 🌐 Demo: [online-hcmute-edu-vn](https://online-hcmute-edu-vn.duckdns.org/login)
-- 🎥 Video demo: [Video]()
-- 📄 Tài liệu chi tiết: [document](https://onedrive.live.com/:w:/g/personal/24e5b2f2c6c2d532/IQDRXsXDDHMSQr3G-VRotjA6ARFgyZWLfo-GEf35EY7aG2c?rtime=5vsIet-T3kg&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3cvYy8yNGU1YjJmMmM2YzJkNTMyL0lRRFJYc1hEREhNU1FyM0ctVlJvdGpBNkFSRmd5WldMZm8tR0VmMzVFWTdhRzJjP2U9QzhTSk5P)
+- 🎥 Video demo: [Video](https://youtu.be/aWmb6k8u9hM)
+- 📄 Detailed Documentation: [document](https://onedrive.live.com/:w:/g/personal/24e5b2f2c6c2d532/IQDRXsXDDHMSQr3G-VRotjA6ARFgyZWLfo-GEf35EY7aG2c?rtime=5vsIet-T3kg&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3cvYy8yNGU1YjJmMmM2YzJkNTMyL0lRRFJYc1hEREhNU1FyM0ctVlJvdGpBNkFSRmd5WldMZm8tR0VmMzVFWTdhRzJjP2U9QzhTSk5P)
 
-📌 Lưu ý: Sử dụng UML để thiết kế hệ thống.
+📌 Note: UML is used for system design.
 
-## 📜 Giấy phép
-Dự án này là tài sản trí tuệ của nhóm tác giả. Hiện tại, mã nguồn này được công khai với các điều kiện sau:
+## 📜 License
+This project is the intellectual property of the author team. The source code is currently made public under the following conditions:
 
-- 👀 **Quyền xem:** Người dùng có quyền xem và tham khảo mã nguồn cho mục đích học tập.  
-- ✏️❌ **Cấm chỉnh sửa:** Không cho phép sao chép, chỉnh sửa hoặc tạo các bản phái sinh khi chưa có sự đồng ý từ nhóm tác giả.  
-- 🚫📦 **Cấm phân phối:** Không được phép chia sẻ hoặc tái xuất bản mã nguồn dưới bất kỳ hình thức nào vì mục đích thương mại.  
+- 👀 **View Permission:** Users are allowed to view and reference the source code for learning purposes.  
+- ✏️❌ **No Modification:** Copying, modifying, or creating derivative works is not permitted without prior consent from the author team.  
+- 🚫📦 **No Distribution:** Sharing or redistributing the source code in any form for commercial purposes is strictly prohibited.  
 
-📩 Mọi yêu cầu sử dụng khác vui lòng liên hệ trực tiếp với nhóm tác giả.
+📩 For any other usage requests, please contact the author team directly.
 
-## 👨‍💻 Nhóm tác giả
+## 👨‍💻 Author Team
 <table>
   <tr>
     <td align="center">
       <img src="./uploads/pthb.png" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/banghoang-hub">Phan Tống Hoàng Bang</a></b><br><br>
+      <b><a href="https://github.com/banghoang-hub">Phan Tong Hoang Bang</a></b><br><br>
     </td>
     <td align="center">
       <img src="./uploads/hgdn.png" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/NgocHuynh1509">Huỳnh Gia Diễm Ngọc</a></b><br><br>
+      <b><a href="https://github.com/NgocHuynh1509">Huynh Gia Diem Ngoc</a></b><br><br>
     </td>
         <td align="center">
       <img src="./uploads/vtmq.png" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/maiquynhvnlhb-ship-it">Võ Thị Mai Quỳnh</a></b><br><br>
+      <b><a href="https://github.com/maiquynhvnlhb-ship-it">Vo Thi Mai Quynh</a></b><br><br>
     </td>
         <td align="center">
       <img src="./uploads/pttt.png" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/thtra-TT">Phan Thị Thanh Trà</a></b><br><br>
+      <b><a href="https://github.com/thtra-TT">Phan Thi Thanh Tra</a></b><br><br>
     </td>
         <td align="center">
       <img src="./uploads/nvt.jpg" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/nguyenvutriet">Nguyễn Vũ Triết</a></b><br><br>
+      <b><a href="https://github.com/nguyenvutriet">Nguyen Vu Triet</a></b><br><br>
     </td>
         <td align="center">
       <img src="./uploads/htt.png" width="150" style="border-radius: 8px;"><br><br>
-      <b><a href="https://github.com/thanhtu05">Hoàng Thanh Thú</a></b><br><br>
+      <b><a href="https://github.com/thanhtu05">Hoang Thanh Tu</a></b><br><br>
     </td>
   </tr>
 </table>
