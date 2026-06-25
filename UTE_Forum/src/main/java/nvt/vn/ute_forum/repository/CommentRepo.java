@@ -5,16 +5,46 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
 @Repository
 public interface CommentRepo extends JpaRepository<Comment, String> {
 
-    // Lấy danh sách comment theo ID của Request (Bài viết)
-    // Sắp xếp theo thứ tự mới nhất hoặc cũ nhất tùy bạn (thường comment cũ hiện trước)
+    // =====================================================================
+    // COMMENT GỐC (top-level) — parentId IS NULL
+    // =====================================================================
+
+    /** Lấy tất cả comment gốc (kể cả bị ẩn) — dùng cho admin */
+    @Query("SELECT c FROM Comment c WHERE c.request.id = :requestId AND c.parentId IS NULL ORDER BY c.date ASC")
+    List<Comment> findRootByRequestId(@Param("requestId") String requestId);
+
+    /** Lấy comment gốc đang active — dùng cho user thường */
+    @Query("SELECT c FROM Comment c WHERE c.request.id = :requestId AND c.parentId IS NULL AND (c.isActive = true OR c.isActive IS NULL) ORDER BY c.date ASC")
+    List<Comment> findActiveRootByRequestId(@Param("requestId") String requestId);
+
+    // =====================================================================
+    // REPLY — parentId IS NOT NULL
+    // =====================================================================
+
+    /**
+     * Lấy TẤT CẢ reply trong 1 thread (theo parentId = ID comment gốc).
+     * Service dùng query này để build cây Composite 1 lần duy nhất,
+     * tránh N+1 query (không dùng lazy load từng comment một).
+     */
+    @Query("SELECT c FROM Comment c WHERE c.parentId = :parentId AND (c.isActive = true OR c.isActive IS NULL) ORDER BY c.date ASC")
+    List<Comment> findActiveRepliesByParentId(@Param("parentId") String parentId);
+
+    /** Lấy tất cả reply kể cả bị ẩn — cho admin */
+    @Query("SELECT c FROM Comment c WHERE c.parentId = :parentId ORDER BY c.date ASC")
+    List<Comment> findAllRepliesByParentId(@Param("parentId") String parentId);
+
+    // =====================================================================
+    // GIỮ LẠI — tương thích ngược với code cũ
+    // =====================================================================
+
     List<Comment> findByRequestId(String requestId);
 
-    // Nếu muốn đếm số lượng comment để hiển thị ngoài giao diện
     long countByRequest_Id(String requestId);
 
     @Query("SELECT c FROM Comment c WHERE c.request.id = :requestId AND (c.isActive = true OR c.isActive IS NULL)")
