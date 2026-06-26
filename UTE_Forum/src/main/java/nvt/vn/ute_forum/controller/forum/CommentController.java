@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import nvt.vn.ute_forum.model.factory.CommentReportFactory;
+import nvt.vn.ute_forum.model.factory.CommentReportProduct;
+import nvt.vn.ute_forum.model.factory.DefaultCommentReportFactory;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -202,15 +205,18 @@ public class CommentController {
                 return ResponseEntity.badRequest().body("Bạn đã báo cáo bình luận này rồi!");
             }
 
-            CommentReport report = new CommentReport();
-            report.setId(UUID.randomUUID().toString());
-            report.setComment(comment);
-            report.setStudent(reporter);
-            report.setReason(reason);
-            report.setStatus("pending");
-            report.setCreatedAt(LocalDateTime.now());
-            report.setAdmin(null);
+            // ===== Factory Method =====
+            CommentReportFactory factory = new DefaultCommentReportFactory();
 
+            CommentReportProduct product = factory.factoryMethod(
+                    comment,
+                    reporter,
+                    reason
+            );
+
+            CommentReport report = (CommentReport) product;
+
+            // Lưu xuống database
             commentService.saveCommentReport(report);
             return ResponseEntity.ok("SUCCESS");
 

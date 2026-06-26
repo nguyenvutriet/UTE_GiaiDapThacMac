@@ -3,6 +3,9 @@ package nvt.vn.ute_forum.controller.admin;
 import nvt.vn.ute_forum.dto.CommentReportDTO;
 import nvt.vn.ute_forum.model.Comment;
 import nvt.vn.ute_forum.model.Users;
+import nvt.vn.ute_forum.model.strategy.commentreport.NotViolationStrategy;
+import nvt.vn.ute_forum.model.strategy.commentreport.ReportActionContext;
+import nvt.vn.ute_forum.model.strategy.commentreport.ViolationStrategy;
 import nvt.vn.ute_forum.repository.CommentRepo;
 import nvt.vn.ute_forum.repository.CommentReportRepo;
 import nvt.vn.ute_forum.service.CommentReportService;
@@ -114,21 +117,29 @@ public class CommentReportController {
 
         return reportService.findById(id).map(report -> {
 
-            if ("not_violation".equalsIgnoreCase(action)) {
-                reportService.markDone(report, admin);
-                return ResponseEntity.ok("Report đã đánh dấu là đã xử lý");
-            } else if ("violation".equalsIgnoreCase(action)) {
-                Comment comment = report.getComment();
-                if (comment != null) {
-                    reportService.deleteComment(comment, report, admin);
-                    return ResponseEntity.ok("Bình luận đã bị ẩn và report đã xử lý");
-                } else {
-                    reportService.markDone(report, admin); // Nếu comment null vẫn đánh dấu done
-                    return ResponseEntity.ok("Bình luận không tồn tại, report đã xử lý");
-                }
-            } else {
+            ReportActionContext context = new ReportActionContext();
+
+            if ("violation".equalsIgnoreCase(action)) {
+
+                context.setStrategy(
+                        new ViolationStrategy(reportService)
+                );
+
+            }
+            else if ("not_violation".equalsIgnoreCase(action)) {
+
+                context.setStrategy(
+                        new NotViolationStrategy(reportService)
+                );
+
+            }
+            else{
                 return ResponseEntity.badRequest().body("Hành động không hợp lệ");
             }
+
+            context.execute(report, admin);
+
+            return ResponseEntity.ok("Xử lý thành công");
 
         }).orElse(ResponseEntity.badRequest().body("Report không tồn tại"));
     }

@@ -1,13 +1,14 @@
 package nvt.vn.ute_forum.model;
 
 import jakarta.persistence.*;
+import nvt.vn.ute_forum.model.factory.CommentReportProduct;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "commentreport")
-public class CommentReport {
-
+//public class CommentReport {
+public class CommentReport implements CommentReportProduct {
     @Id
     @Column(name = "id")
     private String id;
