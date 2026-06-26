@@ -2,18 +2,23 @@ package nvt.vn.ute_forum.service;
 
 import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.model.ClarificationConversation;
+import nvt.vn.ute_forum.model.Request;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.repository.ClarificationConversationRepo;
+import nvt.vn.ute_forum.repository.MessageRepo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import nvt.vn.ute_forum.model.Message;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class ClarificationConversationService {
+
+    @Autowired
+    private MessageService messageService;
 
     private final ClarificationConversationRepo clarificationConversationRepo;
 
@@ -137,5 +142,41 @@ public class ClarificationConversationService {
         }
 
         return conversation;
+    }
+
+    public ClarificationConversation createConversation(String content, Users sender, Request request, String subject) {
+
+        Message mess = new Message();
+        mess.setId(UUID.randomUUID().toString());
+        mess.setContent(content);
+        mess.setSender(sender);
+        mess.setReceiver(request.getUser());
+        mess.setCreateAt(LocalDateTime.now());
+        messageService.save(mess);
+
+        List<Message> messages = new ArrayList<>();
+        messages.add(mess);
+
+        ClarificationConversation conversation = new ClarificationConversation();
+        conversation.setId(createClarificationConversationId());
+        conversation.setRequest(request);
+        conversation.setSubject(subject);
+        conversation.setOpen(true);
+        conversation.setCreateAt(LocalDate.now());
+        conversation.setMessages(messages);
+
+        clarificationConversationRepo.save(conversation);
+        mess.setClarificationConversation(conversation);
+        messageService.save(mess);
+
+        return conversation;
+    }
+
+    public void closeConversation(String conversationId) {
+        ClarificationConversation conversation = clarificationConversationRepo.findById(conversationId).orElse(null);
+        if(conversation != null){
+            conversation.setOpen(false);
+            clarificationConversationRepo.save(conversation);
+        }
     }
 }

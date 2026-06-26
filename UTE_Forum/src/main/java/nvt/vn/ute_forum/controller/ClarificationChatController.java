@@ -1,12 +1,10 @@
 package nvt.vn.ute_forum.controller;
 
+import nvt.vn.ute_forum.adapter.IMessageService;
+import nvt.vn.ute_forum.command.*;
 import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.UsersRepo;
-import nvt.vn.ute_forum.service.ClarificationConversationService;
-import nvt.vn.ute_forum.service.MessageService;
-import nvt.vn.ute_forum.service.NotificationService;
-import nvt.vn.ute_forum.service.RequestService;
-import nvt.vn.ute_forum.service.UsersService;
+import nvt.vn.ute_forum.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -50,6 +46,12 @@ public class ClarificationChatController {
 
     @Autowired
     private UsersRepo usersRepo;
+
+    @Autowired
+    private IMessageService messInterfaceTarget;
+
+    @Autowired
+    private CommandInvoker commandInvoker;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClarificationChatController.class);
 
@@ -197,28 +199,33 @@ public class ClarificationChatController {
         }
 
         String mess = req.get("initialMessage");
-        Message message = new Message();
-        message.setId(UUID.randomUUID().toString());
-        message.setContent(mess);
-        message.setCreateAt(LocalDateTime.now());
-        message.setReceiver(request.getUser());
-        message.setSender(userPrincipal.getUser());
-        messService.save(message);
+        // Start - Command Pattern
+//        Message message = new Message();
+//        message.setId(UUID.randomUUID().toString());
+//        message.setContent(mess);
+//        message.setCreateAt(LocalDateTime.now());
+//        message.setReceiver(request.getUser());
+//        message.setSender(userPrincipal.getUser());
+//        messService.save(message);
+//
+//        List<Message> messages = new ArrayList<>();
+//        messages.add(message);
+//
+//        ClarificationConversation conversation = new ClarificationConversation();
+//        conversation.setId(clarificationService.createClarificationConversationId());
+//        conversation.setRequest(request);
+//        conversation.setOpen(true);
+//        conversation.setSubject(req.get("subject"));
+//        conversation.setCreateAt(LocalDate.now());
+//        conversation.setMessages(messages);
+//
+//        clarificationConversationService.save(conversation);
+//        message.setClarificationConversation(conversation);
+//        messService.save(message);
 
-        List<Message> messages = new ArrayList<>();
-        messages.add(message);
-
-        ClarificationConversation conversation = new ClarificationConversation();
-        conversation.setId(clarificationService.createClarificationConversationId());
-        conversation.setRequest(request);
-        conversation.setOpen(true);
-        conversation.setSubject(req.get("subject"));
-        conversation.setCreateAt(LocalDate.now());
-        conversation.setMessages(messages);
-
-        clarificationConversationService.save(conversation);
-        message.setClarificationConversation(conversation);
-        messService.save(message);
+        IConversationCommand command = new OpenConversationCommand(clarificationConversationService, mess, userPrincipal.getUser(), request, req.get("subject"));
+        ClarificationConversation conversation = command.execute();
+        // End - Command Pattern
 
         publishRequestSyncEvent(request.getId());
 
@@ -245,25 +252,28 @@ public class ClarificationChatController {
 
         String content = (String) payload.get("content");
 
-        ClarificationConversation c =
-                clarificationService.getConversationById(conversationId);
+        // Start - Adapter Pattern
+//        ClarificationConversation c =
+//                clarificationService.getConversationById(conversationId);
+//
+//        Users sender = userService.getByEmail(principal.getName());
+//
+//        Message message = new Message();
+//        message.setId(UUID.randomUUID().toString());
+//        message.setContent(content);
+//        message.setCreateAt(LocalDateTime.now());
+//        message.setClarificationConversation(c);
+//        message.setSender(sender);
+//
+//        Request request = requestService.getRequestById(c.getRequest().getId());
+//        Users receiver = request.getUser();
+//        message.setReceiver(receiver);
+//
+//        messService.save(message);
+        Message message = messInterfaceTarget.saveMessage(content, conversationId, principal.getName());
+        // End - Adapter Pattern
 
-        Users sender = userService.getByEmail(principal.getName());
-
-        Message message = new Message();
-        message.setId(UUID.randomUUID().toString());
-        message.setContent(content);
-        message.setCreateAt(LocalDateTime.now());
-        message.setClarificationConversation(c);
-        message.setSender(sender);
-
-        Request request = requestService.getRequestById(c.getRequest().getId());
-        Users receiver = request.getUser();
-        message.setReceiver(receiver);
-
-        messService.save(message);
-
-        notifyDepartmentStaffWhenStudentSentMessage(c.getRequest() == null ? null : c.getRequest().getId(), sender, content);
+        notifyDepartmentStaffWhenStudentSentMessage(message.getClarificationConversation().getRequest() == null ? null : message.getClarificationConversation().getRequest().getId(), message.getSender(), content);
 
         List<AttachmentDTO> attDtos = new ArrayList<>();
 
@@ -271,7 +281,7 @@ public class ClarificationChatController {
                 message.getId(),
                 message.getContent(),
                 message.getCreateAt().toString(),
-                new SenderDTO(sender.getId(), sender.getFullName()),
+                new SenderDTO(message.getSender().getId(), message.getSender().getFullName()),
                 attDtos
         );
 
@@ -282,13 +292,21 @@ public class ClarificationChatController {
     @PostMapping("/staff/close-conversation/{id}")
     @ResponseBody
     public ResponseEntity<?> closeConversation(@PathVariable String id) {
-        ClarificationConversation c = clarificationService.getConversationById(id);
-        if (c != null) {
-            c.setOpen(false);
-            clarificationService.save(c);
-            return ResponseEntity.ok(Map.of("message", "Closed successfully"));
-        }
-        return ResponseEntity.notFound().build();
+        // Start - Command Pattern
+
+//        ClarificationConversation c = clarificationService.getConversationById(id);
+//        if (c != null) {
+//            c.setOpen(false);
+//            clarificationService.save(c);
+//            return ResponseEntity.ok(Map.of("message", "Closed successfully"));
+//        }
+//        return ResponseEntity.notFound().build();
+//
+        ICommand command = new CloseConversationCommand(clarificationConversationService, id);
+        command.execute();
+
+        return ResponseEntity.ok(Map.of("message", "Closed successfully"));
+        // End - Command Pattern
     }
 
     @GetMapping("/staff/conversation/{id}/messages")

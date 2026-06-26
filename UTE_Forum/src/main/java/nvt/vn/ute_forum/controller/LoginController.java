@@ -1,5 +1,7 @@
 package nvt.vn.ute_forum.controller;
 
+import nvt.vn.ute_forum.command.ICommand;
+import nvt.vn.ute_forum.command.SendEmailCommand;
 import nvt.vn.ute_forum.model.UserPrincipal;
 import nvt.vn.ute_forum.model.Users;
 import nvt.vn.ute_forum.service.EmailService;
@@ -51,7 +53,11 @@ public class LoginController {
         context.setVariable("fullName", user.getFullName());
         context.setVariable("otp", emailService.getOtp());
 
-        emailService.sendOtpAdmin(email, context, "otp-email");
+        // Start - Command Pattern
+//        emailService.sendOtpAdmin(email, context, "otp-email");
+        ICommand command = new SendEmailCommand(emailService, email, context, "otp-email");
+        command.execute();
+        // End - Command Pattern
 
         model.addFlashAttribute("user", user);
 
