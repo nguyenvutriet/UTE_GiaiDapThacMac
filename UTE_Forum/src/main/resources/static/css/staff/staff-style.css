@@ -1338,3 +1338,6 @@ body {
     color: #3b82f6;
 }
 
+#tableBody {
+    transition: opacity 0.2s ease;
+}

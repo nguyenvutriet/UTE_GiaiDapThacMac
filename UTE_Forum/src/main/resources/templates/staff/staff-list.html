@@ -527,5 +527,46 @@
         }, 500); // delay nhẹ cho mượt
     });
 </script>
+<script>
+    let lastData = "";
+
+    // 🔥 load bảng mượt
+    function reloadTableSmooth() {
+        fetch(window.location.href)
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const newTable = doc.querySelector("#tableBody");
+                const currentTable = document.querySelector("#tableBody");
+
+                if (!newTable || !currentTable) return;
+
+                const newContent = newTable.innerHTML;
+
+                // ✅ chỉ update khi có thay đổi
+                if (newContent !== lastData) {
+
+                    // fade nhẹ cho mượt
+                    currentTable.style.opacity = "0";
+
+                    setTimeout(() => {
+                        currentTable.innerHTML = newContent;
+                        currentTable.style.opacity = "1";
+                    }, 150);
+
+                    lastData = newContent;
+                }
+            });
+    }
+
+    // 🔥 chạy mỗi 5s
+    setInterval(() => {
+        if (!document.hidden) {
+            reloadTableSmooth();
+        }
+    }, 5000);
+</script>
 </body>
 </html>

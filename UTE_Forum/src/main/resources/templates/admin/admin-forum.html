@@ -335,7 +335,7 @@
                     <h4 style="margin-bottom: 15px;">
                         Tất cả bình luận (<span id="modal-total-count">0</span>)
                     </h4>
-                    <div id="modal-comment-list"></div>
+                    <div id="modal-comment-list" class="comment-list"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -409,8 +409,27 @@
             });
     }
 
+    // Gộp tất cả reply (dù lồng bao nhiêu cấp ở backend) thành 1 danh sách phẳng
+    function flattenReplies(replies) {
+        let result = [];
+        if (!replies) return result;
+        replies.forEach(r => {
+            result.push(r);
+            if (r.replies && r.replies.length > 0) {
+                result = result.concat(flattenReplies(r.replies));
+            }
+        });
+        return result;
+    }
+
+    // Đếm tổng số comment (gồm cả reply lồng nhau) để hiển thị số lượng đúng
+    function countAllComments(list) {
+        if (!list || list.length === 0) return 0;
+        return list.reduce((sum, c) => sum + 1 + countAllComments(c.replies), 0);
+    }
+
     // ── Render comment (thay báo cáo → ẩn bình luận) ────────────────
-    function renderCommentHTML(cmt) {
+    function renderCommentHTML(cmt, isReply = false, depth = 0, requestId = ''){
         const reactionData = {
             'LIKE':  { text: 'Thích',    color: '#0866ff', icon: '👍' },
             'LOVE':  { text: 'Yêu thích',color: '#f33e58', icon: '❤️' },
@@ -438,10 +457,15 @@
             });
         }
 
+        // --- @mention tag (chỉ hiện với reply) ---
+        const mentionTag = (cmt.replyToUserName && isReply)
+            ? `<span style="color:#0866ff; font-weight:600; margin-right:4px; font-size:12px;">@${cmt.replyToUserName}</span>`
+            : '';
+
         // Nội dung comment (ẩn nếu đã bị ẩn)
         const contentEl = isHidden
             ? `<span style="font-size:13px; color:#94a3b8; font-style:italic;">🚫 Bình luận đã bị ẩn</span>`
-            : `<span style="font-size:${isPriority ? '14px' : '12.5px'}; color: #111; line-height: 1.4; font-weight: ${isPriority ? '500' : 'normal'};">${cmt.content}</span>`;
+            : `${mentionTag}<span style="font-size:${isPriority ? '14px' : '12.5px'}; color: #111; line-height: 1.4; font-weight: ${isPriority ? '500' : 'normal'};">${cmt.content}</span>`;
 
         // Nút admin: ẩn bình luận (thay thế hoàn toàn nút báo cáo)
         const adminActionsHTML = `
@@ -460,11 +484,30 @@
                 `}
             </div>`;
 
+
+
+        // --- Số reply để hiện "Xem N trả lời" ---
+        const replyCount = cmt.replyCount || (cmt.replies ? cmt.replies.length : 0);
+
+        // --- Replies: làm PHẲNG mọi cấp lồng nhau, chỉ hiển thị 1 cấp indent duy nhất ---
+        let repliesHTML = '';
+        if (cmt.replies && cmt.replies.length > 0) {
+            const flatList = flattenReplies(cmt.replies);
+            repliesHTML = `
+        <div class="replies-container" id="replies-${cmt.id}"
+             style="margin-left:42px; margin-top:8px; border-left: 2px solid #e4e6ea; padding-left:10px;">
+            ${flatList.map(r => renderCommentHTML({...r, replies: []}, true, 1, requestId)).join('')}
+        </div>`;
+        }
+
+        // Nếu là comment gốc -> parentId = id của nó. Nếu là reply -> parentId = cmt.parentId (thread gốc)
+        const threadParentId = cmt.parentId || cmt.id;
+
         return `
     <div class="comment-item" id="cmt-${cmt.id}"
-         style="display:flex; gap:10px; margin-bottom:15px; align-items:flex-start;
+         style="display:flex; gap:10px; margin-bottom:${isReply ? '8px' : '15px'}; align-items:flex-start;
                 animation: zoomIn 0.3s ease; ${isHidden ? 'opacity:0.55;' : ''}">
-        <img src="/images/student.png" style="width:32px; height:32px; border-radius:50%;">
+        <img src="/images/student.png" style="width:${isReply ? '28px' : '32px'}; height:${isReply ? '28px' : '32px'}; border-radius:50%; flex-shrink:0;">
         <div style="max-width:85%; flex:1;">
             <div style="background: ${isPriority ? (isAdmin ? '#fff0f0' : '#f0f7ff') : '#f0f2f5'};
                         padding: 10px 14px;
@@ -489,7 +532,7 @@
                 ${adminActionsHTML}
             </div>
 
-            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items:center;">
+            <div style="padding-left:10px; margin-top:2px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
                 <small style="color:#65676b; font-size:11px;">
                     ${formatDirectDate(cmt.date)}
                 </small>
@@ -517,10 +560,183 @@
                     <span id="reaction-icons-${cmt.id}" style="font-size:12px;">${iconsHTML}</span>
                     <small id="reaction-count-${cmt.id}" style="color:#65676b; font-size:12px;">${totalCount}</small>
                 </div>
+
+                <small onclick="openReplyBox(this, '${cmt.id}', '${threadParentId}', '${escapeAttr(cmt.userName)}')"
+                       style="color:#0866ff; font-weight:600; cursor:pointer; font-size:11px;">
+                    <i class="fas fa-reply"></i> Trả lời
+                </small>
+
+                ${(!isReply && replyCount > 0) ? `
+                <small id="toggle-replies-${cmt.id}"
+                       onclick="toggleReplies(this, '${cmt.id}')"
+                       style="color:#65676b; cursor:pointer; font-size:11px;">
+                    <i class="fas fa-chevron-down"></i> ${replyCount} trả lời
+                </small>` : ''}
                 ` : ''}
             </div>
+
+            ${!isHidden ? `
+            <div id="reply-box-${cmt.id}" style="display:none; margin-top:8px; padding-left:10px;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <img src="/images/student.png" style="width:28px; height:28px; border-radius:50%;">
+                    <div style="flex:1; display:flex; gap:6px;">
+                        <input type="text"
+                               id="reply-input-${cmt.id}"
+                               placeholder="Trả lời ${escapeAttr(cmt.userName)}..."
+                               style="flex:1; border:none; border-radius:20px; padding:6px 12px;
+                                      background:#f0f2f5; font-size:13px; outline:none;"
+                               onkeydown="if(event.key==='Enter') submitReply(this, '${cmt.id}', '${threadParentId}', '${requestId}')">
+                        <button onclick="submitReply(this, '${cmt.id}', '${threadParentId}', '${requestId}')"
+                                style="background:#0866ff; color:white; border:none; border-radius:50%;
+                                       width:32px; height:32px; cursor:pointer; font-size:14px;">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            ${repliesHTML}
         </div>
     </div>`;
+    }
+
+    // === Escape dùng cho attribute HTML (placeholder, onclick...) ===
+    function escapeAttr(text) {
+        if (!text) return '';
+        return String(text).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    // === Mở ô nhập reply (scope đúng theo vị trí bấm: list ngoài hoặc Modal) ===
+    function openReplyBox(triggerEl, commentId, parentId, userName) {
+        const root = triggerEl.closest('.comment-list') || document;
+
+        root.querySelectorAll('[id^="reply-box-"]').forEach(box => {
+            box.style.display = 'none';
+        });
+
+        const box = root.querySelector(`#reply-box-${commentId}`);
+        if (box) {
+            box.style.display = 'block';
+            const input = box.querySelector('input[type="text"]');
+            if (input) {
+                input.focus();
+                input.placeholder = `Trả lời ${userName}...`;
+            }
+        }
+    }
+
+    // === Gửi reply lên server (scope đúng theo nơi bấm nút gửi) ===
+    async function submitReply(triggerEl, replyId, parentId, requestId) {
+        const box = triggerEl.closest('[id^="reply-box-"]');
+        if (!box) return;
+
+        const input = box.querySelector('input[type="text"]');
+        if (!input) return;
+
+        const root = triggerEl.closest('.comment-list') || document;
+
+        const content = input.value.trim();
+        if (!content) {
+            input.focus();
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/comments/reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requestId, content, parentId, replyId })
+            });
+
+            if (res.status === 401) {
+                alert('Vui lòng đăng nhập để trả lời!');
+                return;
+            }
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || 'Có lỗi xảy ra!');
+                return;
+            }
+
+            const newReply = await res.json();
+            const targetParentId = newReply.parentId || replyId;
+
+            let repliesContainer = root.querySelector(`#replies-${targetParentId}`);
+            if (!repliesContainer) {
+                const parentCommentItem = root.querySelector(`#cmt-${targetParentId}`);
+                if (parentCommentItem) {
+                    repliesContainer = document.createElement('div');
+                    repliesContainer.className = 'replies-container';
+                    repliesContainer.id = `replies-${targetParentId}`;
+                    repliesContainer.style.cssText = 'margin-left:42px; margin-top:8px; border-left:2px solid #e4e6ea; padding-left:10px;';
+                    parentCommentItem.querySelector('div[style*="flex:1"]')?.appendChild(repliesContainer);
+                }
+            }
+
+            if (repliesContainer) {
+                repliesContainer.insertAdjacentHTML('beforeend', renderCommentHTML(newReply, true, 1, requestId));
+            }
+
+            updateReplyCount(targetParentId, root);
+
+            // Reply cũng tính vào tổng số "X Bình luận"
+            updateCommentCountUI(requestId);
+            if (typeof activePostId !== 'undefined' && activePostId == requestId) {
+                updateModalCommentCountUI();
+            }
+
+            input.value = '';
+            box.style.display = 'none';
+
+        } catch (err) {
+            console.error('submitReply error:', err);
+            alert('Có lỗi kết nối, vui lòng thử lại!');
+        }
+    }
+
+    // === Toggle hiển thị/ẩn replies (scope theo nơi bấm) ===
+    function toggleReplies(triggerEl, commentId) {
+        const root = triggerEl.closest('.comment-list') || document;
+        const container = root.querySelector(`#replies-${commentId}`);
+        if (!container) return;
+
+        if (container.style.display === 'none') {
+            container.style.display = 'block';
+            triggerEl.innerHTML = `<i class="fas fa-chevron-up"></i> Ẩn trả lời`;
+        } else {
+            container.style.display = 'none';
+            const count = container.querySelectorAll('.comment-item').length;
+            triggerEl.innerHTML = `<i class="fas fa-chevron-down"></i> ${count} trả lời`;
+        }
+    }
+
+    // === Cập nhật số lượng reply hiển thị trong toggle button (scope theo root) ===
+    function updateReplyCount(parentId, root) {
+        root = root || document;
+        const container = root.querySelector(`#replies-${parentId}`);
+        if (!container) return;
+
+        let toggleBtn = root.querySelector(`#toggle-replies-${parentId}`);
+        const count = container.querySelectorAll(':scope > .comment-item').length;
+
+        if (toggleBtn) {
+            toggleBtn.style.display = 'inline';
+            toggleBtn.innerHTML = `<i class="fas fa-chevron-up"></i> ${count} trả lời`;
+        } else {
+            const parentItem = root.querySelector(`#cmt-${parentId}`);
+            if (!parentItem) return;
+            const actionBar = parentItem.querySelector('div[style*="padding-left:10px"]');
+            if (actionBar) {
+                actionBar.insertAdjacentHTML('beforeend', `
+                <small id="toggle-replies-${parentId}"
+                       onclick="toggleReplies(this, '${parentId}')"
+                       style="color:#65676b; cursor:pointer; font-size:11px;">
+                    <i class="fas fa-chevron-up"></i> ${count} trả lời
+                </small>`);
+            }
+        }
     }
 
     function toggleComments(requestId) {
@@ -547,7 +763,7 @@
                             if (pA !== pB) return pA - pB;
                             return new Date(b.date) - new Date(a.date);
                         });
-                        data.forEach(cmt => commentList.insertAdjacentHTML('beforeend', renderCommentHTML(cmt)));
+                        data.forEach(cmt => commentList.insertAdjacentHTML('beforeend', renderCommentHTML(cmt, false, 0, requestId)));
                     }
                 })
                 .catch(err => {
@@ -619,8 +835,9 @@
             .then(res => res.json())
             .then(data => {
                 commentList.innerHTML = '';
+                const totalCount = countAllComments(data);
                 const countHeader = document.querySelector('.modal-comments-area h4');
-                if (countHeader) countHeader.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${data.length}</span>)`;
+                if (countHeader) countHeader.innerHTML = `Tất cả bình luận (<span id="modal-total-count">${totalCount}</span>)`;
 
                 if (!data || data.length === 0) {
                     commentList.innerHTML = '<p style="text-align:center; color:gray; padding:20px;">Chưa có bình luận.</p>';
@@ -632,7 +849,7 @@
                         if (pA !== pB) return pA - pB;
                         return new Date(b.date) - new Date(a.date);
                     });
-                    commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt)).join('');
+                    commentList.innerHTML = data.map(cmt => renderCommentHTML(cmt, false, 0, post.id)).join('');
                 }
             })
             .catch(err => {
@@ -663,7 +880,7 @@
                 if (emptyMsg && emptyMsg === listElement) listElement.innerHTML = '';
                 else if (emptyMsg) emptyMsg.remove();
 
-                listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                listElement.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt, false, 0, requestId));
                 inputElement.value = '';
                 updateCommentCountUI(requestId);
 
@@ -672,7 +889,7 @@
                     const modalList = document.getElementById('modal-comment-list');
                     if (modalList && listElement.id !== 'modal-comment-list') {
                         if (modalList.innerText.includes('Chưa có bình luận')) modalList.innerHTML = '';
-                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt));
+                        modalList.insertAdjacentHTML('beforeend', renderCommentHTML(newCmt, false, 0, requestId));
                     }
                 }
                 if (listElement.id === 'modal-comment-list') {
