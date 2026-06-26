@@ -9,6 +9,7 @@ import nvt.vn.ute_forum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import nvt.vn.ute_forum.model.observer.FeedbackObserver;
 
 import java.util.*;
 
@@ -61,6 +62,9 @@ public class RequestService {
 
     @Autowired
     private IdGeneratorService idGeneratorService;
+
+    @Autowired
+    private List<FeedbackObserver> observers;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -945,8 +949,15 @@ public class RequestService {
         forwardingLogService.createLog(request, fromDept, toDept, note, user);
 
         statusHistoryService.createForwardStatus(request);
+
+        notifyObservers(request, fromDept, toDept, user);
     }
 
+    private void notifyObservers(Request request, Department fromDept, Department toDept, Users actor) {
+        for (FeedbackObserver observer : observers) {
+            observer.update(request, fromDept, toDept, actor);
+        }
+    }
 
 }
 

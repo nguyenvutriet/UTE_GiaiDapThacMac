@@ -268,23 +268,6 @@ public class RequestController {
         // xử lý forward
         requestService.forwardRequest(requestId, toDeptId, note, staffUser);
 
-        // lấy lại request
-        Request request = requestRepo.findById(requestId).orElseThrow();
-
-        // phòng hiện tại
-        Department currentDept = staffUser.getDepartment();
-
-        // phòng được chuyển đến
-        Department toDept = departmentRepo.findById(toDeptId).orElseThrow();
-
-        // tạo notification
-        notificationService.createForwardNotifications(
-                request,
-                currentDept,
-                toDept,
-                staffUser
-        );
-
         publishRequestStatusSyncEvent(requestId, "FORWARDING", "FORWARDED");
 
         return ResponseEntity.ok("Forward success");
