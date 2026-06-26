@@ -10,7 +10,7 @@
 <body>
 <div class="page-layout">
     <aside class="sidebar">
-    <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
+        <link rel="icon" type="image/png" th:href="@{/images/ute_logo.png}" href="/images/ute_logo.png">
         <div class="brand-block">
             <img class="brand-logo" th:src="@{/images/ute_logo.png}" alt="UTE Logo">
             <div class="student-info">
@@ -55,43 +55,45 @@
 
                 <h1 class="ann-title-detail" th:text="${ann.title}">Tiêu đề thông báo</h1>
 
-
-
                 <div class="ann-content-full" th:text="${ann.content}">
                     Nội dung chi tiết ở đây...
                 </div>
-                <div th:each="file : ${ann.attachments}" th:if="${file.fileName.matches('.*\.(jpg|jpeg|png|gif|webp)$')}">
-                    <div class="ann-image-preview">
-                        <img th:src="${file.fileUrl}" alt="image">
-                    </div>
-                </div>
 
-
-
+                <!-- ========================================================= -->
+                <!-- KHU VỰC XỬ LÝ FILE ĐÍNH KÈM: ĐÃ CHUẨN HÓA CHAIN PATTERN -->
+                <!-- ========================================================= -->
                 <div th:each="file : ${ann.attachments}">
-                    <a th:href="${file.fileUrl}" class="file-link" target="_blank" style="margin-bottom: 15px;">
+
+                    <a th:href="@{/api/files/download(url=${file.fileUrl}, name=${file.fileName})}"
+                       class="file-link"
+                       style="margin-bottom: 15px; display: inline-block;">
                         <i class="fas fa-paperclip"></i> <span th:text="${file.fileName}">file_name.pdf</span>
                     </a>
 
-                    <div th:if="${file.fileName.toLowerCase().endsWith('.pdf')}" class="pdf-preview-container">
-                        <iframe th:src="${file.fileUrl + '#toolbar=0'}"
-                                width="60%"
-                                height="450px"
-                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
-                        </iframe>
+                    <div th:if="${file.fileName.matches('.*\.(jpg|jpeg|png|gif|webp)$')}" class="ann-image-preview">
+                        <img th:src="${file.fileUrl}" alt="image" style="max-width: 100%; height: auto; border-radius: 8px;">
                     </div>
 
-                    <div th:if="${file.fileName.toLowerCase().endsWith('.doc') || file.fileName.toLowerCase().endsWith('.docx') || file.fileName.toLowerCase().endsWith('.xlsx')}"
-                         class="office-preview-container">
-                        <iframe th:src="'https://docs.google.com/viewer?url=' + ${file.fileUrl} + '&embedded=true'"
+                    <div th:if="${file.fileName.toLowerCase().endsWith('.pdf')}" class="pdf-preview-container">
+                        <iframe th:if="${file.fileUrl.startsWith('https://res.cloudinary.com')}"
+                                th:src="'https://docs.google.com/viewer?url=' + ${file.fileUrl} + '&embedded=true'"
+                                width="100%"
+                                height="600px"
+                                style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
+                        </iframe>
+
+                        <iframe th:if="${!file.fileUrl.startsWith('https://res.cloudinary.com')}"
+                                th:src="${file.fileUrl + '#toolbar=0'}"
                                 width="100%"
                                 height="600px"
                                 style="border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 10px;">
                         </iframe>
                     </div>
                 </div>
+                <!-- ========================================================= -->
 
-                <a href="javascript:history.back()" class="btn-back">
+                <!-- Nút quay lại độc nhất -->
+                <a href="javascript:history.back()" class="btn-back" style="margin-top: 20px; display: inline-block;">
                     <i class="fas fa-arrow-left"></i> Quay lại danh sách
                 </a>
             </div>
