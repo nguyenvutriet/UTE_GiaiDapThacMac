@@ -5,8 +5,13 @@ import nvt.vn.ute_forum.model.Request;
 import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.model.*;
+import nvt.vn.ute_forum.model.decorator.BadgeDecoratorFactory;
+import nvt.vn.ute_forum.model.observer.forum.ForumPostEventPublisher;
+import nvt.vn.ute_forum.model.strategy.forum.ForumSortContext;
 import nvt.vn.ute_forum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import nvt.vn.ute_forum.model.observer.FeedbackObserver;
@@ -73,6 +78,19 @@ public class RequestService {
 
     @Autowired
     private FeedbackSearchContext feedbackSearchContext;
+
+    // 1. THÊM VÀO PHẦN @Autowired (sau các field hiện có):
+// -------------------------------------------------------
+
+    @Autowired
+    private ForumSortContext forumSortContext;           // Strategy Pattern
+
+    @Autowired
+    private ForumPostEventPublisher forumEventPublisher; // Observer Pattern
+
+    @Autowired
+    private BadgeDecoratorFactory badgeDecoratorFactory; // Decorator Pattern
+
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -144,8 +162,8 @@ public class RequestService {
         if (vote != null) {
             if (vote.getType() == type) {
                 voteRepo.delete(vote);
-                voteRepo.flush(); // Xóa xong phải flush để tính tổng cho đúng
-                currentType = ""; // Trạng thái sau khi Unvote
+                voteRepo.flush();
+                currentType = "";
             } else {
                 vote.setType(type);
                 vote.setVoteAt(LocalDateTime.now());
@@ -158,27 +176,55 @@ public class RequestService {
             currentType = type.name();
         }
 
-        // Lấy tổng số lượng
         List<Vote> votes = voteRepo.findByRequest_Id(requestId);
         Map<String, Long> counts = new HashMap<>();
         for (ReactionType r : ReactionType.values()) counts.put(r.name(), 0L);
         votes.forEach(v -> counts.put(v.getType().name(), counts.get(v.getType().name()) + 1));
 
-        // Trả về cả 2: Số lượng và Trạng thái của user này
+        long totalReactions = counts.values().stream().mapToLong(Long::longValue).sum();
+
+        // Observer: kiểm tra milestone sau khi reaction thay đổi
+        ForumPostDTO postSnapshot = getPostDetail(requestId, userId);
+        if (postSnapshot != null) {
+            forumEventPublisher.checkReactionMilestone(postSnapshot);
+        }
+
         return Map.of("counts", counts, "currentType", currentType);
     }
 
-    public List<ForumPostDTO> getFilteredPosts(String catId, String deptId, String sort, String currentUserId) {
-        // Chuyển chuỗi rỗng thành null để câu Query IS NULL ở trên chạy đúng
+    public List<ForumPostDTO> getFilteredPosts(String catId, String deptId,
+                                               String sortBy, String currentUserId) {
         String cid = (catId == null || catId.trim().isEmpty()) ? null : catId;
         String did = (deptId == null || deptId.trim().isEmpty()) ? null : deptId;
 
-        // Gọi Repo với các giá trị đã chuẩn hóa
-        List<Request> entities = requestRepo.findByFilters(cid, did, sort);
+        List<Request> entities = requestRepo.findByFilters(cid, did, "newest"); // lấy thô, sort sau
 
-        return entities.stream()
+        List<ForumPostDTO> posts = entities.stream()
                 .map(r -> convertToFullDTO(r, currentUserId))
                 .collect(Collectors.toList());
+
+        // Strategy: sắp xếp theo chiến lược được chọn
+        List<ForumPostDTO> sorted = forumSortContext.sort(sortBy, posts);
+
+        // Decorator: gắn badge Hot / Trending
+        return badgeDecoratorFactory.decorateAll(sorted);
+    }
+
+    public List<ForumPostDTO> getPublicPostsSorted(String sortBy, String currentUserId) {
+        List<Request> entities = requestRepo.findByPostStatus("PUBLIC",
+                        PageRequest.of(0, 200, Sort.by("timeCreate").descending()))
+                .getContent();
+
+        List<ForumPostDTO> posts = entities.stream()
+                .map(r -> convertToFullDTO(r, currentUserId))
+                .collect(Collectors.toList());
+
+        List<ForumPostDTO> sorted = forumSortContext.sort(sortBy, posts);
+        return badgeDecoratorFactory.decorateAll(sorted);
+    }
+
+    public List<ForumSortContext.SortOption> getForumSortOptions() {
+        return forumSortContext.getAvailableOptions();
     }
 
     // --- HÀM TÁI SỬ DỤNG ĐỂ CONVERT DỮ LIỆU ĐẦY ĐỦ ---

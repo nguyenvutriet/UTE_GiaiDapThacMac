@@ -215,30 +215,61 @@
             </div>
 
             <aside class="forum-sidebar">
-
                 <div class="sidebar-widget">
                     <h3>Bộ lọc</h3>
                     <div class="filter-stack">
+
+                        <!-- Lọc danh mục -->
                         <select id="filterCategory">
-                            <option value="">Tất cả danh mục</option> <th:block th:each="cat : ${allCategories}">
-                            <option th:value="${cat.id}" th:text="${cat.subject}"></option>
-                        </th:block>
+                            <option value="">Tất cả danh mục</option>
+                            <th:block th:each="cat : ${allCategories}">
+                                <option th:value="${cat.id}" th:text="${cat.subject}"></option>
+                            </th:block>
                         </select>
 
+                        <!-- Lọc phòng ban -->
                         <select id="filterDepartment">
-                            <option value="">Tất cả phòng ban</option> <th:block th:each="dept : ${allDepartments}">
-                            <option th:value="${dept.id}" th:text="${dept.name}"></option>
-                        </th:block>
+                            <option value="">Tất cả phòng ban</option>
+                            <th:block th:each="dept : ${allDepartments}">
+                                <option th:value="${dept.id}" th:text="${dept.name}"></option>
+                            </th:block>
                         </select>
 
+                        <!--
+                            Strategy Pattern: danh sách sắp xếp được render tự động
+                            từ ForumSortContext.getAvailableOptions() — không cần hardcode HTML.
+
+                            Mỗi SortOption có: name (value) và label (text hiển thị).
+                        -->
                         <select id="filterSort">
-                            <option value="newest">Mới nhất</option>
-                            <option value="oldest">Cũ nhất</option>
+                            <th:block th:each="opt : ${sortOptions}">
+                                <option th:value="${opt.name()}"
+                                        th:text="${opt.label()}"
+                                        th:selected="${currentSort == opt.name()}">
+                                </option>
+                            </th:block>
+                            <!-- Fallback khi sortOptions chưa có (trang cũ / fragment cũ) -->
+                            <th:block th:if="${sortOptions == null or #lists.isEmpty(sortOptions)}">
+                                <option value="newest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="most_liked">Nhiều lượt thích nhất</option>
+                                <option value="most_commented">Nhiều bình luận nhất</option>
+                                <option value="hot_trending">🔥 Đang hot</option>
+                            </th:block>
                         </select>
+
                     </div>
                     <button class="btn-apply" onclick="applyFilter()">Áp dụng lọc</button>
                 </div>
 
+                <!--
+                    BADGE LEGEND: giải thích ý nghĩa badge (tùy chọn thêm vào)
+                -->
+                <div class="sidebar-widget" style="font-size: 13px; color: #555;">
+                    <h3>Chú thích</h3>
+                    <p>🔥 Bài đạt 10+ lượt cảm xúc</p>
+                    <p>💬 Bài đạt 10+ bình luận</p>
+                </div>
             </aside>
         </section>
     </main>
@@ -1612,9 +1643,9 @@
 
 
     function applyFilter() {
-        const categoryId = document.getElementById("filterCategory").value;
+        const categoryId   = document.getElementById("filterCategory").value;
         const departmentId = document.getElementById("filterDepartment").value;
-        const sortBy = document.getElementById("filterSort").value;
+        const sortBy       = document.getElementById("filterSort").value;
 
         const postList = document.querySelector(".post-list");
         postList.style.opacity = "0.5";
@@ -1622,20 +1653,23 @@
         fetch(`/api/forum/filter?categoryId=${categoryId}&departmentId=${departmentId}&sortBy=${sortBy}`)
             .then(response => response.text())
             .then(html => {
-                // 1. Đổ HTML mới vào (HTML này đã có sẵn các Fragment từ Thymeleaf)
                 postList.innerHTML = html;
                 postList.style.opacity = "1";
-
-                // 2. 🔥 QUAN TRỌNG: Đánh thức các nút bấm vừa mới load về
-                initReactionEvents();
-
-                console.log("Lọc xong và đã kích hoạt lại các sự kiện Reaction!");
+                initReactionEvents();  // đã có sẵn trong file của bạn
             })
             .catch(error => {
-                console.error("Lỗi:", error);
+                console.error("Lỗi lọc:", error);
                 postList.style.opacity = "1";
             });
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentSort = /*[[${currentSort}]]*/ 'newest';
+        const sortSelect  = document.getElementById("filterSort");
+        if (sortSelect && currentSort) {
+            sortSelect.value = currentSort;
+        }
+    });
 
     // Khi vừa load trang lần đầu cũng phải gọi nó
     document.addEventListener('DOMContentLoaded', initReactionEvents);
