@@ -1,5 +1,6 @@
 package nvt.vn.ute_forum.controller.staff;
 
+import nvt.vn.ute_forum.model.facade.FeedbackManagementFacade;
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.model.*;
 import nvt.vn.ute_forum.repository.CategoryRepo;
@@ -61,6 +62,9 @@ public class RequestController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private FeedbackManagementFacade feedbackManagementFacade;
+
     @GetMapping("/list-feedbacks")
     public String getAllFeedbacks(
             @RequestParam(defaultValue = "0") int page,
@@ -79,20 +83,14 @@ public class RequestController {
         // 🔥 2. Lấy user hiện tại
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
-        // 🔥 3. Gọi service (role xử lý bên service)
-        Page<Request> requestPage = requestService.getAllFeedbacks(pageable, user);
-
-        // 🔥 4. Đẩy data ra view
-        model.addAttribute("feedbacks", requestPage.getContent());
-        List<Category> categories =
-                categoryService.getCategoriesByDepartment(user);
-
-        model.addAttribute("categories", categories);
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", requestPage.getTotalPages());
-        model.addAttribute("sortField", sortField);
-        model.addAttribute("sortDir", sortDir);
-        model.addAttribute("currentUser", user);
+        feedbackManagementFacade.prepareFeedbackListPage(
+                model,
+                pageable,
+                user,
+                page,
+                sortField,
+                sortDir
+        );
 
         return "staff/staff-list";
     }
@@ -106,18 +104,8 @@ public class RequestController {
         // 🔥 lấy user hiện tại
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
-        // 🔥 truyền user vào service
-        Request request = requestService.getFeedbackDetail(id, user);
+        feedbackManagementFacade.prepareFeedbackDetailPage(model, id, user);
 
-        ClarificationConversation conversation = clarificationConversationService.getClarificationConversation(request.getId());
-
-        model.addAttribute("conversation", conversation);
-        model.addAttribute("feedback", request);
-        model.addAttribute("currentUser", user);
-        model.addAttribute("forwardLogs", request.getForwardingLogs());
-        model.addAttribute("histories",
-                requestStatusHistoryService.getByRequestId(request.getId()));
-        model.addAttribute("departments", departmentRepo.findAll());
         return "staff/feedback-detail";
     }
 
@@ -142,26 +130,15 @@ public class RequestController {
         // user hiện tại
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
-        // gọi service
-        Page<Request> resultPage = requestService.searchFeedbacks(keyword, pageable, user);
-
-        // 🔥 alt flow
-        if (resultPage.isEmpty()) {
-            model.addAttribute("message", "Không tìm thấy");
-        }
-
-        // data
-        model.addAttribute("feedbacks", resultPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", resultPage.getTotalPages());
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("currentUser", user);
-
-        // 🔥 GIỮ STATE (THÊM 3 DÒNG NÀY LÀ ĐỦ)
-        model.addAttribute("selectedCategory", categoryId);
-        model.addAttribute("selectedStatus", status);
-        model.addAttribute("categories",
-                categoryService.getCategoriesByDepartment(user));
+        feedbackManagementFacade.prepareSearchPage(
+                model,
+                keyword,
+                pageable,
+                user,
+                page,
+                categoryId,
+                status
+        );
 
         return "staff/staff-list";
     }
@@ -177,57 +154,17 @@ public class RequestController {
         // 🔥 lấy user
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
-        // 🔥 xử lý ALL + fix lambda (tạo biến final)
-        String finalCategoryId = "ALL".equals(categoryId) ? null : categoryId;
-        String finalStatus = "ALL".equals(status) ? null : status;
-
-        // 🔥 map status -> name
-        Map<String, String> statusMap = Map.of(
-                "PENDING", "Đang chờ tiếp nhận",
-                "APPROVED", "Đang xử lý",
-                "RESOLVED", "Đã xử lý",
-                "FORWARDING", "Chuyển tiếp",
-                "REJECTED", "Từ chối"
-        );
-
-        //  giữ trạng thái selected
-        model.addAttribute("selectedStatus", finalStatus);
-        model.addAttribute("selectedCategory", finalCategoryId);
-
-        //  tên status (fix nút bị reset)
-        model.addAttribute("selectedStatusName",
-                finalStatus != null ? statusMap.get(finalStatus) : null);
-
-        //  tên category (fix lambda error luôn)
-        String categoryName = null;
-        if (finalCategoryId != null) {
-            categoryName = categoryService.getCategoriesByDepartment(user).stream()
-                    .filter(c -> c.getId().equals(finalCategoryId))
-                    .map(Category::getSubject)
-                    .findFirst()
-                    .orElse(null);
-        }
-        model.addAttribute("selectedCategoryName", categoryName);
-
         // 🔥 paging
         Pageable pageable = PageRequest.of(page, 12);
 
-        // 🔥 gọi service
-        Page<Request> resultPage =
-                requestService.getFeedbacks(finalCategoryId, finalStatus, pageable, user);
-
-        // 🔥 data ra view
-        model.addAttribute("feedbacks", resultPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", resultPage.getTotalPages());
-
-        model.addAttribute("categories",
-                categoryService.getCategoriesByDepartment(user));
-
-        model.addAttribute("statuses",
-                requestService.getAvailableStatuses(user));
-
-        model.addAttribute("currentUser", user);
+        feedbackManagementFacade.prepareFilterPage(
+                model,
+                categoryId,
+                status,
+                pageable,
+                user,
+                page
+        );
 
         return "staff/staff-list";
     }
