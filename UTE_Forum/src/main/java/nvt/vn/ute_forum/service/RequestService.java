@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import nvt.vn.ute_forum.model.observer.FeedbackObserver;
+import nvt.vn.ute_forum.model.state.FeedbackStatusContext;
 
 import java.util.*;
 
@@ -65,6 +66,9 @@ public class RequestService {
 
     @Autowired
     private List<FeedbackObserver> observers;
+
+    @Autowired
+    private FeedbackStatusContext feedbackStatusContext;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -890,22 +894,7 @@ public class RequestService {
 
         String current = request.getCurrentStatus();
 
-        // 🚫 RULE: Không cho update nếu đã kết thúc
-        if (current.equals("RESOLVED") || current.equals("REJECTED")) {
-            throw new RuntimeException("Không thể cập nhật trạng thái này nữa!");
-        }
-
-        // ✅ RULE chuyển trạng thái hợp lệ
-        boolean valid = switch (current) {
-            case "PENDING" ->
-                    newStatus.equals("APPROVED") ||
-                            newStatus.equals("RESOLVED") ||
-                            newStatus.equals("REJECTED");
-            case "APPROVED" -> newStatus.equals("RESOLVED") || newStatus.equals("REJECTED") || newStatus.equals("FORWARDING");
-            default -> false;
-        };
-
-        if (!valid) {
+        if (!feedbackStatusContext.canChange(current, newStatus)) {
             throw new RuntimeException("Chuyển trạng thái không hợp lệ!");
         }
 
