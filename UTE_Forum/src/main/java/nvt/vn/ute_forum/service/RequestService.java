@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import nvt.vn.ute_forum.model.observer.FeedbackObserver;
 import nvt.vn.ute_forum.model.state.FeedbackStatusContext;
+import nvt.vn.ute_forum.model.strategy.FeedbackSearchContext;
 
 import java.util.*;
 
@@ -69,6 +70,9 @@ public class RequestService {
 
     @Autowired
     private FeedbackStatusContext feedbackStatusContext;
+
+    @Autowired
+    private FeedbackSearchContext feedbackSearchContext;
 
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
@@ -713,24 +717,7 @@ public class RequestService {
     }
 
     public Page<Request> searchFeedbacks(String keyword, Pageable pageable, Users user) {
-
-        String role = user.getRole();
-
-        // ADMIN → search tất cả
-        if (role.equals("ROLE_ADMIN")) {
-            return requestRepo.findByContentContaining(keyword, pageable);
-        }
-
-        //  DEPARTMENT → chỉ search trong phòng ban
-        if (role.equals("ROLE_DEPARTMENT")) {
-            return requestRepo.findByContentContainingAndDepartment_Id(
-                    keyword,
-                    user.getDepartment().getId(),
-                    pageable
-            );
-        }
-
-        return Page.empty();
+        return feedbackSearchContext.execute("KEYWORD", keyword, pageable, user);
     }
 
     // Thêm vào sau hàm getPublicPosts hoặc cuối file đều được bà nhé
@@ -745,42 +732,13 @@ public class RequestService {
     }
 
     public Page<Request> filterFeedbacks(String categoryId, Pageable pageable, Users user) {
-
-        if (user.getRole().equals("ROLE_ADMIN")) {
-            return requestRepo.findByCategory(categoryId, pageable);
-        }
-
-        if (user.getRole().equals("ROLE_DEPARTMENT")) {
-            return requestRepo.findByCategoryAndDepartment(
-                    categoryId,
-                    user.getDepartment().getId(),
-                    pageable
-            );
-        }
-
-        return Page.empty();
+        return feedbackSearchContext.execute("CATEGORY", categoryId, pageable, user);
     }
 
     public Page<Request> filterByStatus(String status, Pageable pageable, Users user) {
-
-        if ("ALL".equals(status)) {
-            return getAllFeedbacks(pageable, user);
-        }
-
-        if (user.getRole().equals("ROLE_ADMIN")) {
-            return requestRepo.findByCurrentStatus(status, pageable);
-        }
-
-        if (user.getRole().equals("ROLE_DEPARTMENT")) {
-            return requestRepo.findByCurrentStatusAndDepartment_Id(
-                    status,
-                    user.getDepartment().getId(),
-                    pageable
-            );
-        }
-
-        return Page.empty();
+        return feedbackSearchContext.execute("STATUS", status, pageable, user);
     }
+
     public Page<Request> getFeedbacks(
             String category,
             String status,
