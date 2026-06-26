@@ -142,10 +142,10 @@ public class RequestController {
         // user hiện tại
         Users user = usersRepo.findByEmail(userDetails.getUsername());
 
-        // gọi service (đúng sequence)
+        // gọi service
         Page<Request> resultPage = requestService.searchFeedbacks(keyword, pageable, user);
 
-        // 🔥 alt flow (match sequence diagram)
+        // 🔥 alt flow
         if (resultPage.isEmpty()) {
             model.addAttribute("message", "Không tìm thấy");
         }
@@ -190,15 +190,15 @@ public class RequestController {
                 "REJECTED", "Từ chối"
         );
 
-        // 🔥 giữ trạng thái selected
+        //  giữ trạng thái selected
         model.addAttribute("selectedStatus", finalStatus);
         model.addAttribute("selectedCategory", finalCategoryId);
 
-        // 🔥 tên status (fix nút bị reset)
+        //  tên status (fix nút bị reset)
         model.addAttribute("selectedStatusName",
                 finalStatus != null ? statusMap.get(finalStatus) : null);
 
-        // 🔥 tên category (fix lambda error luôn)
+        //  tên category (fix lambda error luôn)
         String categoryName = null;
         if (finalCategoryId != null) {
             categoryName = categoryService.getCategoriesByDepartment(user).stream()
@@ -212,7 +212,7 @@ public class RequestController {
         // 🔥 paging
         Pageable pageable = PageRequest.of(page, 12);
 
-        // 🔥 gọi service (NHỚ dùng final biến)
+        // 🔥 gọi service
         Page<Request> resultPage =
                 requestService.getFeedbacks(finalCategoryId, finalStatus, pageable, user);
 
@@ -241,10 +241,10 @@ public class RequestController {
 
         requestService.updateStatus(requestId, status);
 
-        // 🔥 lấy lại request
+        //  lấy lại request
         Request request = requestRepo.findById(requestId).orElseThrow();
 
-        // 🔥 tạo notification
+        //  tạo notification
         notificationService.createStatusNotification(request, status);
 
         publishRequestStatusSyncEvent(requestId, status, "STATUS_UPDATED");
@@ -262,22 +262,22 @@ public class RequestController {
             @AuthenticationPrincipal UserDetails userDetails
     ) {
 
-        // 🔥 user hiện tại
+        // user hiện tại
         Users staffUser = usersRepo.findByEmail(userDetails.getUsername());
 
-        // 🔥 xử lý forward
+        // xử lý forward
         requestService.forwardRequest(requestId, toDeptId, note, staffUser);
 
-        // 🔥 lấy lại request
+        // lấy lại request
         Request request = requestRepo.findById(requestId).orElseThrow();
 
-        // 🔥 phòng hiện tại
+        // phòng hiện tại
         Department currentDept = staffUser.getDepartment();
 
-        // 🔥 phòng được chuyển đến
+        // phòng được chuyển đến
         Department toDept = departmentRepo.findById(toDeptId).orElseThrow();
 
-        // 🔥 tạo notification
+        // tạo notification
         notificationService.createForwardNotifications(
                 request,
                 currentDept,
