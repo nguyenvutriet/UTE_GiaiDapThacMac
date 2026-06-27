@@ -5,6 +5,7 @@ import nvt.vn.ute_forum.model.Request;
 import jakarta.transaction.Transactional;
 import nvt.vn.ute_forum.dto.ForumPostDTO;
 import nvt.vn.ute_forum.model.*;
+import nvt.vn.ute_forum.model.observer.FeedbackObserver;
 import nvt.vn.ute_forum.repository.*;
 import nvt.vn.ute_forum.service.pattern.template_method.FeedbackParams;
 import nvt.vn.ute_forum.service.pattern.template_method.SubmitFeedbackHandler;
@@ -67,6 +68,16 @@ public class RequestService {
 
     @Autowired
     private FeedbackStatusContext feedbackStatusContext;
+
+    @Autowired
+    private List<FeedbackObserver> observers;
+
+    private void notifyObservers(Request request, Department fromDept,
+                                 Department toDept, Users user) {
+        for (FeedbackObserver observer : observers) {
+            observer.update(request, fromDept, toDept, user);
+        }
+    }
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
      * @param pageable phân trang
@@ -898,7 +909,7 @@ public class RequestService {
 
         statusHistoryService.createForwardStatus(request);
 
-        notificationService.createForwardNotifications(request, fromDept, toDept, user);
+        notifyObservers(request, fromDept, toDept, user);
     }
 
 
