@@ -897,7 +897,10 @@ public class RequestService {
         forwardingLogService.createLog(request, fromDept, toDept, note, user);
 
         statusHistoryService.createForwardStatus(request);
+
+        notificationService.createForwardNotifications(request, fromDept, toDept, user);
     }
+
 
 
 }
