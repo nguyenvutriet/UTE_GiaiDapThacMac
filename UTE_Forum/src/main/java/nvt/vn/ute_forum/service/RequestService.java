@@ -12,7 +12,6 @@ import nvt.vn.ute_forum.service.pattern.template_method.UpdateFeedbackHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.*;
 
 import java.time.LocalDateTime;
@@ -21,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import nvt.vn.ute_forum.model.state.FeedbackStatusContext;
 
 @Service
 public class RequestService {
@@ -65,6 +65,8 @@ public class RequestService {
     @Autowired
     private IdGeneratorService idGeneratorService;
 
+    @Autowired
+    private FeedbackStatusContext feedbackStatusContext;
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
      * @param pageable phân trang
@@ -859,30 +861,13 @@ public class RequestService {
 
         String current = request.getCurrentStatus();
 
-        // 🚫 RULE: Không cho update nếu đã kết thúc
-        if (current.equals("RESOLVED") || current.equals("REJECTED")) {
-            throw new RuntimeException("Không thể cập nhật trạng thái này nữa!");
-        }
-
-        // ✅ RULE chuyển trạng thái hợp lệ
-        boolean valid = switch (current) {
-            case "PENDING" ->
-                    newStatus.equals("APPROVED") ||
-                            newStatus.equals("RESOLVED") ||
-                            newStatus.equals("REJECTED");
-            case "APPROVED" -> newStatus.equals("RESOLVED") || newStatus.equals("REJECTED") || newStatus.equals("FORWARDING");
-            default -> false;
-        };
-
-        if (!valid) {
+        if (!feedbackStatusContext.canChange(current, newStatus)) {
             throw new RuntimeException("Chuyển trạng thái không hợp lệ!");
         }
 
-        // 🔥 1. update current status
         request.setCurrentStatus(newStatus);
         requestRepo.save(request);
 
-        // 🔥 2. lưu history
         RequestStatusHistory history = new RequestStatusHistory();
         history.setId("RSH_" + System.nanoTime());
         history.setStatus(newStatus);
