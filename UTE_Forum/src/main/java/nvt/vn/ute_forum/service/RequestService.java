@@ -11,6 +11,7 @@ import nvt.vn.ute_forum.model.observer.forum.ForumPostEventPublisher;
 import nvt.vn.ute_forum.model.state.FeedbackStatusContext;
 import nvt.vn.ute_forum.model.strategy.FeedbackSearchContext;
 import nvt.vn.ute_forum.model.strategy.forum.ForumSortContext;
+import nvt.vn.ute_forum.model.observer.FeedbackObserver;
 import nvt.vn.ute_forum.repository.*;
 import nvt.vn.ute_forum.service.pattern.template_method.FeedbackParams;
 import nvt.vn.ute_forum.service.pattern.template_method.SubmitFeedbackHandler;
@@ -20,7 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.*;
 
 import java.time.LocalDateTime;
@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import nvt.vn.ute_forum.model.state.FeedbackStatusContext;
 
 @Service
 public class RequestService {
@@ -94,6 +95,18 @@ public class RequestService {
     @Autowired
     private BadgeDecoratorFactory badgeDecoratorFactory; // Decorator Pattern
 
+    @Autowired
+    private FeedbackStatusContext feedbackStatusContext;
+
+    @Autowired
+    private List<FeedbackObserver> observers;
+
+    private void notifyObservers(Request request, Department fromDept,
+                                 Department toDept, Users user) {
+        for (FeedbackObserver observer : observers) {
+            observer.update(request, fromDept, toDept, user);
+        }
+    }
     /**
      * Lấy các bài viết PUBLIC theo trang, kèm reaction, comment count
      * @param pageable phân trang
@@ -918,22 +931,7 @@ public class RequestService {
 
         String current = request.getCurrentStatus();
 
-        // 🚫 RULE: Không cho update nếu đã kết thúc
-        if (current.equals("RESOLVED") || current.equals("REJECTED")) {
-            throw new RuntimeException("Không thể cập nhật trạng thái này nữa!");
-        }
-
-        // ✅ RULE chuyển trạng thái hợp lệ
-        boolean valid = switch (current) {
-            case "PENDING" ->
-                    newStatus.equals("APPROVED") ||
-                            newStatus.equals("RESOLVED") ||
-                            newStatus.equals("REJECTED");
-            case "APPROVED" -> newStatus.equals("RESOLVED") || newStatus.equals("REJECTED") || newStatus.equals("FORWARDING");
-            default -> false;
-        };
-
-        if (!valid) {
+        if (!feedbackStatusContext.canChange(current, newStatus)) {
             throw new RuntimeException("Chuyển trạng thái không hợp lệ!");
         }
 
@@ -941,14 +939,7 @@ public class RequestService {
         request.setCurrentStatus(newStatus);
         requestRepo.save(request);
 
-        // 🔥 2. lưu history
-        RequestStatusHistory history = new RequestStatusHistory();
-        history.setId("RSH_" + System.nanoTime());
-        history.setStatus(newStatus);
-        history.setCreateAt(LocalDateTime.now());
-        history.setRequest(request);
-
-        requestStatushistoryRepo.save(history);
+        statusHistoryService.createStatusHistory(request, newStatus);
     }
 
     @Transactional
@@ -977,7 +968,7 @@ public class RequestService {
         forwardingLogService.createLog(request, fromDept, toDept, note, user);
 
         statusHistoryService.createForwardStatus(request);
+
+        notifyObservers(request, fromDept, toDept, user);
     }
-
-
 }
