@@ -868,13 +868,7 @@ public class RequestService {
         request.setCurrentStatus(newStatus);
         requestRepo.save(request);
 
-        RequestStatusHistory history = new RequestStatusHistory();
-        history.setId("RSH_" + System.nanoTime());
-        history.setStatus(newStatus);
-        history.setCreateAt(LocalDateTime.now());
-        history.setRequest(request);
-
-        requestStatushistoryRepo.save(history);
+        statusHistoryService.createStatusHistory(request, newStatus);
     }
 
     @Transactional

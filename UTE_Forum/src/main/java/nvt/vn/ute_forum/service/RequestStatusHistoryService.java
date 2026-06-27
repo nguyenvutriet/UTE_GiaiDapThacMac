@@ -47,4 +47,13 @@ public class RequestStatusHistoryService {
         requestStatushistoryRepo.save(history);
     }
 
+    public void createStatusHistory(Request request, String status) {
+        RequestStatusHistory history = new RequestStatusHistory();
+        history.setId("RSH_" + System.nanoTime());
+        history.setStatus(status);
+        history.setCreateAt(LocalDateTime.now());
+        history.setRequest(request);
+
+        requestStatushistoryRepo.save(history);
+    }
 }
